@@ -114,7 +114,9 @@ class CalendarService extends ChangeNotifier {
       ..start = _time(med.startsAt)
       ..end = _time(med.startsAt.add(_doseDuration))
       ..recurrence = [recurrence(med)]
-      ..reminders = _popup();
+      // The app's own notification already alerts on every dose (and names
+      // the pet), so Calendar must not alert a second time.
+      ..reminders = _noReminders();
   }
 
   gcal.Event _visitEvent(Pet pet, VetVisit visit) {
@@ -134,13 +136,17 @@ class CalendarService extends ChangeNotifier {
     ..dateTime = t.toUtc()
     ..timeZone = tz.local.name;
 
-  gcal.EventReminders _popup({int minutes = 0}) => gcal.EventReminders()
+  gcal.EventReminders _popup({required int minutes}) => gcal.EventReminders()
     ..useDefault = false
     ..overrides = [
       gcal.EventReminder()
         ..method = 'popup'
         ..minutes = minutes,
     ];
+
+  gcal.EventReminders _noReminders() => gcal.EventReminders()
+    ..useDefault = false
+    ..overrides = [];
 
   Future<void> _upsert(gcal.CalendarApi api, gcal.Event event) async {
     try {
