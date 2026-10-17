@@ -182,6 +182,16 @@ class CalendarService extends ChangeNotifier {
     }
   }
 
+  Future<void> syncMedication(Pet pet, Medication med) async {
+    final api = await _api();
+    if (api != null) await _upsert(api, _medicationEvent(pet, med));
+  }
+
+  Future<void> syncVisit(Pet pet, VetVisit visit) async {
+    final api = await _api();
+    if (api != null) await _upsert(api, _visitEvent(pet, visit));
+  }
+
   Future<void> syncAll(Iterable<Pet> pets) async {
     for (final pet in pets) {
       await syncPet(pet);

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -13,14 +15,24 @@ Future<void> main() async {
   await initializeDateFormatting('es');
   final pets = PetsState();
   await pets.load();
+  await CalendarService.instance.load();
   NotificationService.instance.onDoseGiven =
       (petId, medId) => pets.logDose(petId, medId);
-  await NotificationService.instance.init();
-  await NotificationService.instance.syncAll(pets.pets);
-  await CalendarService.instance.load();
   runApp(
     ChangeNotifierProvider.value(value: pets, child: const PetTimeApp()),
   );
+  // Scheduling the alarms takes hundreds of platform calls; do it after the
+  // first frame so the app opens right away.
+  unawaited(_startAlarms(pets));
+}
+
+Future<void> _startAlarms(PetsState pets) async {
+  try {
+    await NotificationService.instance.init();
+    await NotificationService.instance.syncAll(pets.pets);
+  } catch (e) {
+    debugPrint('Could not schedule the alarms: $e');
+  }
 }
 
 class PetTimeApp extends StatelessWidget {
