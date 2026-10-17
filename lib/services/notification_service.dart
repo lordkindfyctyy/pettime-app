@@ -53,9 +53,10 @@ class NotificationService {
   static final instance = NotificationService._();
 
   /// Every alarm is a slow call into Android and the plugin rewrites its whole
-  /// list each time, so keep few: the next [dosesAhead] doses within [horizon].
-  static const dosesAhead = 24;
-  static const horizon = Duration(hours: 48);
+  /// list each time, so keep few: only the next [dosesAhead] doses of each
+  /// medication (10 days at every 6 h). The rest are added whenever the app
+  /// is opened.
+  static const dosesAhead = 40;
   static const _slots = 64;
 
   /// Android details for one pet's alarm; the pet's photo, when it has one
@@ -160,15 +161,13 @@ class NotificationService {
   /// Ids of the alarms of one medication: [baseId] plus a slot below [_slots].
   static bool _isSlotOf(int id, int base) => id >= base && id < base + _slots;
 
-  /// Which doses get an alarm: the next [dosesAhead] ones, but never further
-  /// than [horizon] from [now]. Each is (dose number, notification id).
+  /// Which doses get an alarm: the next [dosesAhead] ones, up to the end of the
+  /// treatment. Each is (dose number, notification id).
   static List<(int, int)> plannedDoses(Medication med, DateTime now) {
     final base = baseId(med.id);
     final planned = <(int, int)>[];
     var k = med.nextDoseIndex(now);
-    while (planned.length < dosesAhead) {
-      final time = med.doseTimeIfActive(k);
-      if (time == null || time.isAfter(now.add(horizon))) break;
+    while (planned.length < dosesAhead && med.doseTimeIfActive(k) != null) {
       planned.add((k, base + k % _slots));
       k++;
     }

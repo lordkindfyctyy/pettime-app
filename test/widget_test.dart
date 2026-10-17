@@ -198,7 +198,7 @@ void main() {
     expect(pet.copyWith(clearPhoto: true).photoPath, isNull);
   });
 
-  test('alarms are planned by dose number, few and within the horizon', () {
+  test('alarms are planned by dose number and capped', () {
     final med = Medication(
       id: 'm',
       name: 'X',
@@ -207,8 +207,8 @@ void main() {
     );
     final now = DateTime(2026, 1, 1, 9);
     final plan = NotificationService.plannedDoses(med, now);
-    // Every 8 h over 48 h from 09:00: 16:00, 00:00, 08:00, ... (6 doses).
-    expect(plan.map((p) => p.$1), [1, 2, 3, 4, 5, 6]);
+    expect(plan.length, NotificationService.dosesAhead);
+    expect(plan.first.$1, 1);
     final base = NotificationService.baseId('m');
     expect(plan.first.$2, base + 1);
 
@@ -217,10 +217,17 @@ void main() {
     expect(later.first.$1, 2);
     expect(later.map((p) => p.$2), contains(base + 2));
 
-    // Short intervals are capped.
-    final often = med.copyWith(everyMinutes: 2);
-    expect(NotificationService.plannedDoses(often, now).length,
-        NotificationService.dosesAhead);
+    // Every 6 h until a set date: alarms stop at the end of the treatment.
+    final sixHours = med.copyWith(
+      everyMinutes: 360,
+      endsAt: DateTime(2026, 1, 3, 8),
+    );
+    final times = NotificationService.plannedDoses(sixHours, now)
+        .map((p) => sixHours.doseTime(p.$1))
+        .toList();
+    expect(times.first, DateTime(2026, 1, 1, 14));
+    expect(times.last, DateTime(2026, 1, 3, 8));
+    expect(times.length, 8);
 
     // A finished treatment has no alarms.
     final ended = med.copyWith(endsAt: DateTime(2026, 1, 1, 12));
