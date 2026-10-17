@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/medication.dart';
 import '../models/pet.dart';
+import '../models/vet_visit.dart';
 import '../services/notification_service.dart';
 
 class PetsState extends ChangeNotifier {
@@ -75,6 +76,27 @@ class PetsState extends ChangeNotifier {
       meds[i] = med;
     }
     await savePet(pet.copyWith(medications: meds));
+  }
+
+  Future<void> saveVisit(String petId, VetVisit visit) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final visits = [...pet.visits];
+    final i = visits.indexWhere((v) => v.id == visit.id);
+    if (i == -1) {
+      visits.add(visit);
+    } else {
+      visits[i] = visit;
+    }
+    await savePet(pet.copyWith(visits: visits));
+  }
+
+  Future<void> deleteVisit(String petId, String visitId) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    await savePet(pet.copyWith(
+      visits: pet.visits.where((v) => v.id != visitId).toList(),
+    ));
   }
 
   Future<void> deleteMedication(String petId, String medId) async {

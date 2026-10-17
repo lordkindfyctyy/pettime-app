@@ -3,9 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/medication.dart';
+import '../models/vet_visit.dart';
 import '../state/pets_state.dart';
 import 'medication_form_screen.dart';
 import 'pet_form_screen.dart';
+import 'visit_form_screen.dart';
 
 class PetDetailScreen extends StatelessWidget {
   const PetDetailScreen({super.key, required this.petId});
@@ -20,6 +22,11 @@ class PetDetailScreen extends StatelessWidget {
 
     final theme = Theme.of(context);
     final fmt = DateFormat.yMMMd('es').add_Hm();
+    // Upcoming soonest first; past most recent first.
+    final upcoming = pet.visits.where((v) => !v.isDone).toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    final past = pet.visits.where((v) => v.isDone).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
 
     Widget row(String label, String value) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
@@ -134,6 +141,61 @@ class PetDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
+          const Divider(height: 32),
+          Row(
+            children: [
+              Expanded(
+                child: Text('Veterinaria', style: theme.textTheme.titleMedium),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Visita'),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VisitFormScreen(petId: pet.id),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (pet.visits.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text('Sin visitas registradas'),
+            ),
+          for (final (label, list) in [
+            ('Próximas', upcoming),
+            ('Anteriores', past),
+          ])
+            if (list.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 4),
+                child: Text(label, style: theme.textTheme.labelLarge),
+              ),
+              for (final VetVisit v in list)
+                Card(
+                  child: ListTile(
+                    title: Text(v.clinic),
+                    subtitle: Text([
+                      fmt.format(v.date),
+                      if (v.reason.isNotEmpty) v.reason,
+                    ].join(' · ')),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            VisitFormScreen(petId: pet.id, visit: v),
+                      ),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      tooltip: 'Eliminar visita',
+                      onPressed: () => state.deleteVisit(pet.id, v.id),
+                    ),
+                  ),
+                ),
+            ],
         ],
       ),
     );

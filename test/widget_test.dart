@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:pettime_app/main.dart';
 import 'package:pettime_app/models/medication.dart';
 import 'package:pettime_app/models/pet.dart';
+import 'package:pettime_app/models/vet_visit.dart';
 import 'package:pettime_app/services/notification_service.dart';
 import 'package:pettime_app/state/pets_state.dart';
 import 'package:provider/provider.dart';
@@ -55,6 +56,21 @@ void main() {
     expect(a, isNot(NotificationService.baseId('b')));
     expect(a + NotificationService.dosesAhead, lessThan(1 << 31));
     expect(a % 64, 0);
+  });
+
+  test('PetsState saves, edits and deletes visits', () async {
+    final state = PetsState();
+    await state.savePet(Pet(id: 'p', name: 'Luna'));
+    final date = DateTime.now().add(const Duration(days: 3));
+    await state.saveVisit('p', VetVisit(id: 'v', clinic: 'Vet Sur', date: date));
+    expect(state.byId('p')!.visits.single.isDone, isFalse);
+
+    await state.saveVisit(
+        'p', VetVisit(id: 'v', clinic: 'Vet Norte', date: date, reason: 'Vacuna'));
+    expect(state.byId('p')!.visits.single.clinic, 'Vet Norte');
+
+    await state.deleteVisit('p', 'v');
+    expect(state.byId('p')!.visits, isEmpty);
   });
 
   test('Pet.ageLabel', () {
