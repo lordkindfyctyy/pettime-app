@@ -1,9 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../services/calendar_service.dart';
 import '../state/pets_state.dart';
 import 'pet_detail_screen.dart';
 import 'pet_form_screen.dart';
+
+class _CalendarButton extends StatelessWidget {
+  const _CalendarButton();
+
+  Future<void> _toggle(BuildContext context) async {
+    final calendar = CalendarService.instance;
+    final messenger = ScaffoldMessenger.of(context);
+    final pets = context.read<PetsState>().pets;
+    try {
+      if (calendar.enabled) {
+        await calendar.disable();
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Google Calendar desconectado')),
+        );
+      } else {
+        await calendar.enable();
+        await calendar.syncAll(pets);
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Agenda sincronizada con Google Calendar')),
+        );
+      }
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudo conectar con Google Calendar: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final calendar = CalendarService.instance;
+    if (!calendar.supported) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: calendar,
+      builder: (context, _) => IconButton(
+        icon: Icon(
+          calendar.enabled ? Icons.event_available : Icons.event_busy_outlined,
+        ),
+        tooltip: calendar.enabled
+            ? 'Desconectar Google Calendar'
+            : 'Conectar Google Calendar',
+        onPressed: () => _toggle(context),
+      ),
+    );
+  }
+}
 
 class PetsScreen extends StatelessWidget {
   const PetsScreen({super.key});
@@ -12,7 +59,10 @@ class PetsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final pets = context.watch<PetsState>().pets;
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis mascotas')),
+      appBar: AppBar(
+        title: const Text('Mis mascotas'),
+        actions: const [_CalendarButton()],
+      ),
       body: pets.isEmpty
           ? const Center(child: Text('Todavía no agregaste ninguna mascota'))
           : ListView.builder(

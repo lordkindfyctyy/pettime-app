@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/pets_screen.dart';
+import 'services/calendar_service.dart';
 import 'services/notification_service.dart';
 import 'state/pets_state.dart';
 
@@ -14,6 +15,7 @@ Future<void> main() async {
   await pets.load();
   await NotificationService.instance.init();
   await NotificationService.instance.syncAll(pets.pets);
+  await CalendarService.instance.load();
   runApp(
     ChangeNotifierProvider.value(value: pets, child: const PetTimeApp()),
   );

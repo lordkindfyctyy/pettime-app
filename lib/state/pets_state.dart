@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
 import '../models/vet_visit.dart';
+import '../services/calendar_service.dart';
 import '../services/notification_service.dart';
 
 class PetsState extends ChangeNotifier {
@@ -54,6 +55,7 @@ class PetsState extends ChangeNotifier {
     for (final med in pet.medications) {
       await NotificationService.instance.scheduleMedication(pet, med);
     }
+    await _calendar(() => CalendarService.instance.syncPet(pet));
   }
 
   Future<void> deletePet(String id) async {
@@ -62,6 +64,20 @@ class PetsState extends ChangeNotifier {
     await _save();
     for (final med in pet?.medications ?? const <Medication>[]) {
       await NotificationService.instance.cancelMedication(med.id);
+      await _calendar(() => CalendarService.instance.deleteMedication(med.id));
+    }
+    for (final visit in pet?.visits ?? const <VetVisit>[]) {
+      await _calendar(() => CalendarService.instance.deleteVisit(visit.id));
+    }
+  }
+
+  /// The local data is already saved; a Calendar failure (offline, revoked
+  /// permission) must not undo or block it.
+  Future<void> _calendar(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (e) {
+      debugPrint('Google Calendar sync failed: $e');
     }
   }
 
@@ -94,6 +110,7 @@ class PetsState extends ChangeNotifier {
   Future<void> deleteVisit(String petId, String visitId) async {
     final pet = byId(petId);
     if (pet == null) return;
+    await _calendar(() => CalendarService.instance.deleteVisit(visitId));
     await savePet(pet.copyWith(
       visits: pet.visits.where((v) => v.id != visitId).toList(),
     ));
@@ -103,6 +120,7 @@ class PetsState extends ChangeNotifier {
     final pet = byId(petId);
     if (pet == null) return;
     await NotificationService.instance.cancelMedication(medId);
+    await _calendar(() => CalendarService.instance.deleteMedication(medId));
     await savePet(pet.copyWith(
       medications: pet.medications.where((m) => m.id != medId).toList(),
     ));
