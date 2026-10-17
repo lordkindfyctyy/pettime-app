@@ -234,6 +234,30 @@ void main() {
     expect(NotificationService.plannedDoses(ended, now), isEmpty);
   });
 
+  test('Medication keeps, replaces and clears its photo', () {
+    final med = Medication(
+      id: 'm',
+      name: 'X',
+      everyMinutes: 60,
+      startsAt: DateTime(2026, 1, 1),
+      photoPath: '/a.jpg',
+    );
+    expect(Medication.fromJson(med.toJson()).photoPath, '/a.jpg');
+    expect(med.copyWith(dose: '1').photoPath, '/a.jpg');
+    expect(med.copyWith(photoPath: '/b.jpg').photoPath, '/b.jpg');
+    expect(med.copyWith(clearPhoto: true).photoPath, isNull);
+    // Data saved before photos existed has none.
+    expect(
+      Medication.fromJson({
+        'id': 'm',
+        'name': 'X',
+        'everyMinutes': 60,
+        'startsAt': DateTime(2026, 1, 1).toIso8601String(),
+      }).photoPath,
+      isNull,
+    );
+  });
+
   test('Pet.ageLabel', () {
     final pet = Pet(id: 'p', name: 'Luna', birthDate: DateTime(2023, 3, 10));
     expect(pet.ageLabel(DateTime(2026, 5, 10)), '3 años y 2 meses');

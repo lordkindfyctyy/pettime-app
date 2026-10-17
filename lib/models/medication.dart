@@ -7,6 +7,7 @@ class Medication {
     required this.startsAt,
     this.endsAt,
     this.notes = '',
+    this.photoPath,
     List<DateTime>? givenDoses,
   }) : givenDoses = givenDoses ?? [];
 
@@ -26,6 +27,9 @@ class Medication {
   final DateTime startsAt;
   final DateTime? endsAt;
   final String notes;
+
+  /// Absolute path of a photo of the medicine inside the app's own storage.
+  final String? photoPath;
 
   /// When each dose was actually given, oldest first.
   final List<DateTime> givenDoses;
@@ -61,6 +65,8 @@ class Medication {
     DateTime? endsAt,
     bool clearEndsAt = false,
     String? notes,
+    String? photoPath,
+    bool clearPhoto = false,
     List<DateTime>? givenDoses,
   }) {
     return Medication(
@@ -71,6 +77,7 @@ class Medication {
       startsAt: startsAt ?? this.startsAt,
       endsAt: clearEndsAt ? null : (endsAt ?? this.endsAt),
       notes: notes ?? this.notes,
+      photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
       givenDoses: givenDoses ?? this.givenDoses,
     );
   }
@@ -83,6 +90,7 @@ class Medication {
         'startsAt': startsAt.toIso8601String(),
         'endsAt': endsAt?.toIso8601String(),
         'notes': notes,
+        'photoPath': photoPath,
         'givenDoses': givenDoses.map((d) => d.toIso8601String()).toList(),
       };
 
@@ -98,6 +106,7 @@ class Medication {
             ? null
             : DateTime.parse(json['endsAt'] as String),
         notes: json['notes'] as String? ?? '',
+        photoPath: json['photoPath'] as String?,
         givenDoses: (json['givenDoses'] as List? ?? [])
             .map((d) => DateTime.parse(d as String))
             .toList(),

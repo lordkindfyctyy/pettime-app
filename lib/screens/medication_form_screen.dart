@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../models/medication.dart';
 import '../services/notification_service.dart';
+import '../services/photo_service.dart';
 import '../state/pets_state.dart';
+import '../widgets/medication_photo.dart';
+import '../widgets/photo_source_sheet.dart';
 
 class MedicationFormScreen extends StatefulWidget {
   const MedicationFormScreen({super.key, required this.petId, this.medication});
@@ -34,9 +37,40 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   late final _notes = TextEditingController(text: widget.medication?.notes);
   late DateTime _startsAt = widget.medication?.startsAt ?? DateTime.now();
   late DateTime? _endsAt = widget.medication?.endsAt;
+  late final String _medId =
+      widget.medication?.id ?? context.read<PetsState>().newId();
+  late String? _photoPath = widget.medication?.photoPath;
+  bool _saved = false;
+
+  Future<void> _choosePhoto() async {
+    final choice = await showPhotoSourceSheet(context, hasPhoto: _photoPath != null);
+    switch (choice) {
+      case PickPhoto(:final source):
+        final path = await PhotoService.instance.pick(source, _medId);
+        if (path == null || !mounted) return;
+        await _dropUnsavedPhoto();
+        setState(() => _photoPath = path);
+      case RemovePhoto():
+        await _dropUnsavedPhoto();
+        setState(() => _photoPath = null);
+      case null:
+        break;
+    }
+  }
+
+  /// A photo picked in this form and replaced again before saving is never used.
+  Future<void> _dropUnsavedPhoto() async {
+    if (_photoPath != widget.medication?.photoPath) {
+      await PhotoService.instance.delete(_photoPath);
+    }
+  }
 
   @override
   void dispose() {
+    // Left without saving: drop a photo that was picked but never kept.
+    if (!_saved && _photoPath != widget.medication?.photoPath) {
+      PhotoService.instance.delete(_photoPath);
+    }
     _name.dispose();
     _dose.dispose();
     _interval.dispose();
@@ -64,15 +98,20 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     if (!_formKey.currentState!.validate()) return;
     final state = context.read<PetsState>();
     final med = Medication(
-      id: widget.medication?.id ?? state.newId(),
+      id: _medId,
       name: _name.text.trim(),
       dose: _dose.text.trim(),
       everyMinutes: int.parse(_interval.text.trim()) * (_inHours ? 60 : 1),
       startsAt: _startsAt,
       endsAt: _endsAt,
       notes: _notes.text.trim(),
+      photoPath: _photoPath,
       givenDoses: widget.medication?.givenDoses,
     );
+    _saved = true;
+    if (widget.medication?.photoPath != _photoPath) {
+      await PhotoService.instance.delete(widget.medication?.photoPath);
+    }
     await NotificationService.instance.requestPermission();
     await state.saveMedication(widget.petId, med);
     if (mounted) Navigator.pop(context);
@@ -97,6 +136,22 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             16 + MediaQuery.viewPaddingOf(context).bottom,
           ),
           children: [
+            Center(
+              child: GestureDetector(
+                onTap: _choosePhoto,
+                child: Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    MedicationPhoto(path: _photoPath, size: 96),
+                    const CircleAvatar(
+                      radius: 14,
+                      child: Icon(Icons.photo_camera, size: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _name,
               decoration: const InputDecoration(labelText: 'Medicamento'),

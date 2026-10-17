@@ -114,6 +114,7 @@ class PetsState extends ChangeNotifier {
     _background(() async {
       await PhotoService.instance.delete(pet?.photoPath);
       for (final med in pet?.medications ?? const <Medication>[]) {
+        await PhotoService.instance.delete(med.photoPath);
         await NotificationService.instance.cancelMedication(med.id);
         await CalendarService.instance.deleteMedication(med.id);
       }
@@ -192,10 +193,12 @@ class PetsState extends ChangeNotifier {
   Future<void> deleteMedication(String petId, String medId) async {
     final pet = byId(petId);
     if (pet == null) return;
+    final photo = pet.medications.where((m) => m.id == medId).firstOrNull?.photoPath;
     await _store(pet.copyWith(
       medications: pet.medications.where((m) => m.id != medId).toList(),
     ));
     _background(() async {
+      await PhotoService.instance.delete(photo);
       await NotificationService.instance.cancelMedication(medId);
       await CalendarService.instance.deleteMedication(medId);
     });

@@ -7,6 +7,7 @@ import '../models/pet.dart';
 import '../services/photo_service.dart';
 import '../state/pets_state.dart';
 import '../widgets/pet_avatar.dart';
+import '../widgets/photo_source_sheet.dart';
 
 class PetFormScreen extends StatefulWidget {
   const PetFormScreen({super.key, this.pet});
@@ -40,42 +41,17 @@ class _PetFormScreenState extends State<PetFormScreen> {
   }
 
   Future<void> _choosePhoto() async {
-    final choice = await showModalBottomSheet<String>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Elegir de la galería'),
-              onTap: () => Navigator.pop(ctx, 'gallery'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Sacar una foto'),
-              onTap: () => Navigator.pop(ctx, 'camera'),
-            ),
-            if (_photoPath != null)
-              ListTile(
-                leading: const Icon(Icons.delete_outline),
-                title: const Text('Quitar foto'),
-                onTap: () => Navigator.pop(ctx, 'remove'),
-              ),
-          ],
-        ),
-      ),
-    );
+    final choice = await showPhotoSourceSheet(context, hasPhoto: _photoPath != null);
     switch (choice) {
-      case 'gallery':
-        await _pickPhoto(ImageSource.gallery);
-      case 'camera':
-        await _pickPhoto(ImageSource.camera);
-      case 'remove':
+      case PickPhoto(:final source):
+        await _pickPhoto(source);
+      case RemovePhoto():
         if (_photoPath != widget.pet?.photoPath) {
           await PhotoService.instance.delete(_photoPath);
         }
         setState(() => _photoPath = null);
+      case null:
+        break;
     }
   }
 
