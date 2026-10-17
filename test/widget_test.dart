@@ -93,6 +93,32 @@ void main() {
         'RRULE:FREQ=HOURLY;INTERVAL=8;UNTIL=20260110T203000Z');
   });
 
+  test('PetsState logs and removes given doses, keeping them sorted', () async {
+    final state = PetsState();
+    final med = Medication(
+      id: 'm',
+      name: 'X',
+      everyHours: 8,
+      startsAt: DateTime(2026, 1, 1),
+    );
+    await state.savePet(Pet(id: 'p', name: 'Luna', medications: [med]));
+
+    final late = DateTime(2026, 1, 2, 20);
+    final early = DateTime(2026, 1, 2, 8);
+    await state.logDose('p', 'm', late);
+    await state.logDose('p', 'm', early);
+    final saved = state.byId('p')!.medications.single;
+    expect(saved.givenDoses, [early, late]);
+    expect(saved.lastGiven, late);
+
+    await state.removeDose('p', 'm', late);
+    expect(state.byId('p')!.medications.single.givenDoses, [early]);
+
+    // Editing the medication keeps its history.
+    final again = Pet.fromJson(state.byId('p')!.toJson());
+    expect(again.medications.single.givenDoses, [early]);
+  });
+
   test('Pet.ageLabel', () {
     final pet = Pet(id: 'p', name: 'Luna', birthDate: DateTime(2023, 3, 10));
     expect(pet.ageLabel(DateTime(2026, 5, 10)), '3 años y 2 meses');

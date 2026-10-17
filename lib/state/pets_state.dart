@@ -94,6 +94,24 @@ class PetsState extends ChangeNotifier {
     await savePet(pet.copyWith(medications: meds));
   }
 
+  /// Records that a dose was given ([at] defaults to now).
+  Future<void> logDose(String petId, String medId, [DateTime? at]) =>
+      _changeDoses(petId, medId, (doses) => [...doses, at ?? DateTime.now()]);
+
+  Future<void> removeDose(String petId, String medId, DateTime at) =>
+      _changeDoses(petId, medId, (doses) => doses.where((d) => d != at).toList());
+
+  Future<void> _changeDoses(
+    String petId,
+    String medId,
+    List<DateTime> Function(List<DateTime>) change,
+  ) async {
+    final med = byId(petId)?.medications.where((m) => m.id == medId).firstOrNull;
+    if (med == null) return;
+    final doses = change(med.givenDoses)..sort();
+    await saveMedication(petId, med.copyWith(givenDoses: doses));
+  }
+
   Future<void> saveVisit(String petId, VetVisit visit) async {
     final pet = byId(petId);
     if (pet == null) return;

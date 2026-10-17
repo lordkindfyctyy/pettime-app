@@ -7,7 +7,8 @@ class Medication {
     required this.startsAt,
     this.endsAt,
     this.notes = '',
-  });
+    List<DateTime>? givenDoses,
+  }) : givenDoses = givenDoses ?? [];
 
   final String id;
   final String name;
@@ -16,6 +17,11 @@ class Medication {
   final DateTime startsAt;
   final DateTime? endsAt;
   final String notes;
+
+  /// When each dose was actually given, oldest first.
+  final List<DateTime> givenDoses;
+
+  DateTime? get lastGiven => givenDoses.isEmpty ? null : givenDoses.last;
 
   /// Next dose strictly after [from], or null when the treatment has ended.
   DateTime? nextDose([DateTime? from]) {
@@ -38,6 +44,7 @@ class Medication {
     DateTime? endsAt,
     bool clearEndsAt = false,
     String? notes,
+    List<DateTime>? givenDoses,
   }) {
     return Medication(
       id: id,
@@ -47,6 +54,7 @@ class Medication {
       startsAt: startsAt ?? this.startsAt,
       endsAt: clearEndsAt ? null : (endsAt ?? this.endsAt),
       notes: notes ?? this.notes,
+      givenDoses: givenDoses ?? this.givenDoses,
     );
   }
 
@@ -58,6 +66,7 @@ class Medication {
         'startsAt': startsAt.toIso8601String(),
         'endsAt': endsAt?.toIso8601String(),
         'notes': notes,
+        'givenDoses': givenDoses.map((d) => d.toIso8601String()).toList(),
       };
 
   factory Medication.fromJson(Map<String, dynamic> json) => Medication(
@@ -70,5 +79,8 @@ class Medication {
             ? null
             : DateTime.parse(json['endsAt'] as String),
         notes: json['notes'] as String? ?? '',
+        givenDoses: (json['givenDoses'] as List? ?? [])
+            .map((d) => DateTime.parse(d as String))
+            .toList(),
       );
 }

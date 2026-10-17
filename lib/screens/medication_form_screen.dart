@@ -63,6 +63,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       startsAt: _startsAt,
       endsAt: _endsAt,
       notes: _notes.text.trim(),
+      givenDoses: widget.medication?.givenDoses,
     );
     await NotificationService.instance.requestPermission();
     await state.saveMedication(widget.petId, med);
