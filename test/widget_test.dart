@@ -179,14 +179,41 @@ void main() {
     addTearDown(() => dir.deleteSync(recursive: true));
     final photo = File('${dir.path}/luna.jpg')..writeAsBytesSync([1, 2, 3]);
 
+    final medPhoto = File('${dir.path}/pill.jpg')..writeAsBytesSync([4, 5, 6]);
+    final med = Medication(
+      id: 'm',
+      name: 'X',
+      everyMinutes: 60,
+      startsAt: DateTime(2026, 1, 1),
+    );
+
     final withPhoto = Pet(id: 'p', name: 'Luna', photoPath: photo.path);
-    final icon = NotificationService.androidDetails(withPhoto).largeIcon;
+    final icon = NotificationService.androidDetails(withPhoto, med).largeIcon;
     expect(icon, isA<FilePathAndroidBitmap>());
     expect((icon as FilePathAndroidBitmap).data, photo.path);
+    // No medicine photo: plain text, no big picture.
+    expect(NotificationService.androidDetails(withPhoto, med).styleInformation,
+        isNull);
 
+    // With a medicine photo it is the big picture, keeping the text readable.
+    final style = NotificationService.androidDetails(
+      withPhoto,
+      med.copyWith(photoPath: medPhoto.path),
+    ).styleInformation as BigPictureStyleInformation;
+    expect((style.bigPicture as FilePathAndroidBitmap).data, medPhoto.path);
+    expect(style.summaryText, 'Es hora de darle X a Luna');
+
+    // Files that are gone are ignored.
     photo.deleteSync();
-    expect(NotificationService.androidDetails(withPhoto).largeIcon, isNull);
-    expect(NotificationService.androidDetails(Pet(id: 'q', name: 'X')).largeIcon,
+    medPhoto.deleteSync();
+    final gone = NotificationService.androidDetails(
+      withPhoto,
+      med.copyWith(photoPath: medPhoto.path),
+    );
+    expect(gone.largeIcon, isNull);
+    expect(gone.styleInformation, isNull);
+    expect(
+        NotificationService.androidDetails(Pet(id: 'q', name: 'X'), med).largeIcon,
         isNull);
   });
 

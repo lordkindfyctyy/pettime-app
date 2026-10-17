@@ -59,19 +59,30 @@ class NotificationService {
   static const dosesAhead = 40;
   static const _slots = 64;
 
-  /// Android details for one pet's alarm; the pet's photo, when it has one
-  /// and the file still exists, is shown as the large icon.
-  static AndroidNotificationDetails androidDetails(Pet pet) {
-    final photo = pet.photoPath;
+  static FilePathAndroidBitmap? _existingBitmap(String? path) =>
+      path != null && File(path).existsSync() ? FilePathAndroidBitmap(path) : null;
+
+  /// Android details for the alarm of [med]: the pet's photo, when it has one
+  /// and the file still exists, is the large icon, and the photo of the medicine
+  /// is shown as a big picture when the notification is expanded.
+  static AndroidNotificationDetails androidDetails(Pet pet, Medication med) {
+    final medicine = _existingBitmap(med.photoPath);
+    final petPhoto = _existingBitmap(pet.photoPath);
     return AndroidNotificationDetails(
       'medication',
       'Medicación',
       channelDescription: 'Avisos para dar la medicación a tus mascotas',
       importance: Importance.high,
       priority: Priority.high,
-      largeIcon: photo != null && File(photo).existsSync()
-          ? FilePathAndroidBitmap(photo)
-          : null,
+      largeIcon: petPhoto,
+      styleInformation: medicine == null
+          ? null
+          : BigPictureStyleInformation(
+              medicine,
+              largeIcon: petPhoto,
+              contentTitle: messageTitle(pet),
+              summaryText: messageBody(pet, med),
+            ),
       actions: const [
         AndroidNotificationAction(_doseGivenAction, 'Dada ✓'),
       ],
@@ -213,7 +224,7 @@ class NotificationService {
         : AndroidScheduleMode.inexactAllowWhileIdle;
 
     final details = NotificationDetails(
-      android: androidDetails(pet),
+      android: androidDetails(pet, med),
       iOS: const DarwinNotificationDetails(),
     );
     for (final (k, id) in plannedDoses(med, DateTime.now())) {
