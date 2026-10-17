@@ -285,6 +285,55 @@ void main() {
     );
   });
 
+  test('appointments link to Google Maps by address or by pasted link', () {
+    final date = DateTime(2026, 1, 1, 10);
+    final bySearch = VetVisit(
+      id: 'v',
+      clinic: 'Peluquería Can & Co',
+      date: date,
+      kind: AppointmentKind.grooming,
+      address: 'Av. Siempreviva 742',
+    );
+    final uri = bySearch.mapsUri!;
+    expect(uri.host, 'www.google.com');
+    expect(uri.path, '/maps/search/');
+    expect(uri.queryParameters['query'], 'Peluquería Can & Co, Av. Siempreviva 742');
+    expect(bySearch.locationText, 'Peluquería Can & Co, Av. Siempreviva 742');
+
+    final byLink = VetVisit(
+      id: 'v',
+      clinic: 'Vet Sur',
+      date: date,
+      address: 'https://maps.app.goo.gl/abc123',
+    );
+    expect(byLink.mapsUri.toString(), 'https://maps.app.goo.gl/abc123');
+
+    // Only the name: still searchable. Nothing at all: no link.
+    expect(VetVisit(id: 'v', clinic: 'Vet Sur', date: date).mapsUri, isNotNull);
+    expect(VetVisit(id: 'v', clinic: ' ', date: date).mapsUri, isNull);
+  });
+
+  test('appointments keep their kind and address; old data defaults to the vet', () {
+    final visit = VetVisit(
+      id: 'v',
+      clinic: 'Spa',
+      date: DateTime(2026, 1, 1),
+      kind: AppointmentKind.grooming,
+      address: 'Calle 1',
+    );
+    final back = VetVisit.fromJson(visit.toJson());
+    expect(back.kind, AppointmentKind.grooming);
+    expect(back.address, 'Calle 1');
+
+    final old = VetVisit.fromJson({
+      'id': 'v',
+      'clinic': 'Vet',
+      'date': DateTime(2026, 1, 1).toIso8601String(),
+    });
+    expect(old.kind, AppointmentKind.vet);
+    expect(old.address, '');
+  });
+
   test('Pet.ageLabel', () {
     final pet = Pet(id: 'p', name: 'Luna', birthDate: DateTime(2023, 3, 10));
     expect(pet.ageLabel(DateTime(2026, 5, 10)), '3 años y 2 meses');

@@ -85,7 +85,7 @@ class CalendarService extends ChangeNotifier {
       '${med.name} — ${pet.name}';
 
   static String visitTitle(Pet pet, VetVisit visit) =>
-      'Veterinaria: ${pet.name} en ${visit.clinic}';
+      '${visit.kind.placeLabel}: ${pet.name} en ${visit.clinic}';
 
   /// RRULE for a medication: every N hours, until the end of the treatment.
   static String recurrence(Medication med) {
@@ -127,6 +127,8 @@ class CalendarService extends ChangeNotifier {
     return gcal.Event()
       ..id = eventId('pv', visit.id)
       ..summary = visitTitle(pet, visit)
+      // Calendar turns the location into a Google Maps link.
+      ..location = visit.locationText
       ..description = [
         if (visit.reason.isNotEmpty) 'Motivo: ${visit.reason}',
         if (visit.notes.isNotEmpty) visit.notes,

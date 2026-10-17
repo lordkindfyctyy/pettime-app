@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../models/medication.dart';
 import '../models/vet_visit.dart';
+import '../services/maps_service.dart';
 import '../state/pets_state.dart';
 import '../widgets/dose_history_sheet.dart';
 import '../widgets/medication_photo.dart';
@@ -222,11 +223,11 @@ class PetDetailScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Veterinaria', style: theme.textTheme.titleMedium),
+                child: Text('Turnos', style: theme.textTheme.titleMedium),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Visita'),
+                label: const Text('Turno'),
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -239,7 +240,7 @@ class PetDetailScreen extends StatelessWidget {
           if (pet.visits.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('Sin visitas registradas'),
+              child: Text('Sin turnos registrados'),
             ),
           for (final (label, list) in [
             ('Próximas', upcoming),
@@ -253,10 +254,17 @@ class PetDetailScreen extends StatelessWidget {
               for (final VetVisit v in list)
                 Card(
                   child: ListTile(
-                    title: Text(v.clinic),
+                    leading: Icon(
+                      v.kind == AppointmentKind.vet
+                          ? Icons.local_hospital_outlined
+                          : Icons.content_cut,
+                    ),
+                    title: Text('${v.kind.placeLabel}: ${v.clinic}'),
                     subtitle: Text([
                       fmt.format(v.date),
                       if (v.reason.isNotEmpty) v.reason,
+                      if (v.address.isNotEmpty && !v.address.startsWith('http'))
+                        v.address,
                     ].join(' · ')),
                     onTap: () => Navigator.push(
                       context,
@@ -265,10 +273,20 @@ class PetDetailScreen extends StatelessWidget {
                             VisitFormScreen(petId: pet.id, visit: v),
                       ),
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: 'Eliminar visita',
-                      onPressed: () => state.deleteVisit(pet.id, v.id),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.map_outlined),
+                          tooltip: 'Ver en Google Maps',
+                          onPressed: () => openInMaps(context, v.mapsUri),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          tooltip: 'Eliminar turno',
+                          onPressed: () => state.deleteVisit(pet.id, v.id),
+                        ),
+                      ],
                     ),
                   ),
                 ),

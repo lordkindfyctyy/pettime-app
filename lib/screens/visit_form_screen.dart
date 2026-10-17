@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/vet_visit.dart';
+import '../services/maps_service.dart';
 import '../state/pets_state.dart';
 
 class VisitFormScreen extends StatefulWidget {
@@ -20,10 +21,22 @@ class _VisitFormScreenState extends State<VisitFormScreen> {
   late final _clinic = TextEditingController(text: widget.visit?.clinic);
   late final _reason = TextEditingController(text: widget.visit?.reason);
   late final _notes = TextEditingController(text: widget.visit?.notes);
+  late final _address = TextEditingController(text: widget.visit?.address);
   late DateTime _date = widget.visit?.date ?? DateTime.now();
+  late AppointmentKind _kind = widget.visit?.kind ?? AppointmentKind.vet;
+
+  /// The appointment as currently typed, to build the Maps link from.
+  VetVisit get _draft => VetVisit(
+        id: widget.visit?.id ?? '',
+        clinic: _clinic.text,
+        date: _date,
+        kind: _kind,
+        address: _address.text,
+      );
 
   @override
   void dispose() {
+    _address.dispose();
     _clinic.dispose();
     _reason.dispose();
     _notes.dispose();
@@ -57,6 +70,8 @@ class _VisitFormScreenState extends State<VisitFormScreen> {
         id: widget.visit?.id ?? state.newId(),
         clinic: _clinic.text.trim(),
         date: _date,
+        kind: _kind,
+        address: _address.text.trim(),
         reason: _reason.text.trim(),
         notes: _notes.text.trim(),
       ),
@@ -68,7 +83,7 @@ class _VisitFormScreenState extends State<VisitFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.visit == null ? 'Nueva visita' : 'Editar visita'),
+        title: Text(widget.visit == null ? 'Nuevo turno' : 'Editar turno'),
       ),
       body: Form(
         key: _formKey,
@@ -80,15 +95,42 @@ class _VisitFormScreenState extends State<VisitFormScreen> {
             16 + MediaQuery.viewPaddingOf(context).bottom,
           ),
           children: [
+            SegmentedButton<AppointmentKind>(
+              segments: [
+                for (final k in AppointmentKind.values)
+                  ButtonSegment(value: k, label: Text(k.label)),
+              ],
+              selected: {_kind},
+              onSelectionChanged: (s) => setState(() => _kind = s.first),
+            ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _clinic,
-              decoration: const InputDecoration(labelText: 'Veterinaria'),
+              decoration: InputDecoration(labelText: _kind.placeLabel),
               textCapitalization: TextCapitalization.words,
               validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Ingresá la veterinaria'
+                  ? 'Ingresá el nombre del lugar'
                   : null,
             ),
             const SizedBox(height: 12),
+            TextFormField(
+              controller: _address,
+              decoration: const InputDecoration(
+                labelText: 'Dirección o link de Google Maps',
+                hintText: 'Calle y número, o pegá el link del lugar',
+              ),
+              keyboardType: TextInputType.streetAddress,
+              textCapitalization: TextCapitalization.sentences,
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.map_outlined),
+                label: const Text('Ver en Google Maps'),
+                onPressed: () => openInMaps(context, _draft.mapsUri),
+              ),
+            ),
+            const SizedBox(height: 4),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Fecha y hora'),
@@ -100,7 +142,7 @@ class _VisitFormScreenState extends State<VisitFormScreen> {
               controller: _reason,
               decoration: const InputDecoration(
                 labelText: 'Motivo',
-                hintText: 'Control, vacuna, cirugía…',
+                hintText: 'Control, vacuna, baño y corte…',
               ),
               textCapitalization: TextCapitalization.sentences,
             ),
