@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../services/calendar_service.dart';
 import '../state/pets_state.dart';
+import '../widgets/pet_avatar.dart';
 import 'pet_detail_screen.dart';
 import 'pet_form_screen.dart';
 
@@ -74,9 +75,7 @@ class PetsScreen extends StatelessWidget {
                   if (pet.ageLabel() != null) pet.ageLabel()!,
                 ].join(' · ');
                 return ListTile(
-                  leading: CircleAvatar(
-                    child: Text(pet.name.characters.first.toUpperCase()),
-                  ),
+                  leading: PetAvatar(pet: pet),
                   title: Text(pet.name),
                   subtitle: details.isEmpty ? null : Text(details),
                   trailing: const Icon(Icons.chevron_right),

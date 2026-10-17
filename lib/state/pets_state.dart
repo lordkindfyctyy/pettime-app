@@ -10,6 +10,7 @@ import '../models/pet.dart';
 import '../models/vet_visit.dart';
 import '../services/calendar_service.dart';
 import '../services/notification_service.dart';
+import '../services/photo_service.dart';
 
 class PetsState extends ChangeNotifier {
   static const storageKey = 'pets_v1';
@@ -111,6 +112,7 @@ class PetsState extends ChangeNotifier {
     _pets.removeWhere((p) => p.id == id);
     await _save();
     _background(() async {
+      await PhotoService.instance.delete(pet?.photoPath);
       for (final med in pet?.medications ?? const <Medication>[]) {
         await NotificationService.instance.cancelMedication(med.id);
         await CalendarService.instance.deleteMedication(med.id);

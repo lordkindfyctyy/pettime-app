@@ -10,6 +10,7 @@ class Pet {
     this.birthDate,
     this.food = '',
     this.notes = '',
+    this.photoPath,
     List<Medication>? medications,
     List<VetVisit>? visits,
   })  : medications = medications ?? [],
@@ -22,6 +23,9 @@ class Pet {
   final DateTime? birthDate;
   final String food;
   final String notes;
+
+  /// Absolute path of the photo inside the app's own storage, if any.
+  final String? photoPath;
   final List<Medication> medications;
   final List<VetVisit> visits;
 
@@ -49,6 +53,8 @@ class Pet {
     bool clearBirthDate = false,
     String? food,
     String? notes,
+    String? photoPath,
+    bool clearPhoto = false,
     List<Medication>? medications,
     List<VetVisit>? visits,
   }) {
@@ -60,6 +66,7 @@ class Pet {
       birthDate: clearBirthDate ? null : (birthDate ?? this.birthDate),
       food: food ?? this.food,
       notes: notes ?? this.notes,
+      photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
       medications: medications ?? this.medications,
       visits: visits ?? this.visits,
     );
@@ -73,6 +80,7 @@ class Pet {
         'birthDate': birthDate?.toIso8601String(),
         'food': food,
         'notes': notes,
+        'photoPath': photoPath,
         'medications': medications.map((m) => m.toJson()).toList(),
         'visits': visits.map((v) => v.toJson()).toList(),
       };
@@ -87,6 +95,7 @@ class Pet {
             : DateTime.parse(json['birthDate'] as String),
         food: json['food'] as String? ?? '',
         notes: json['notes'] as String? ?? '',
+        photoPath: json['photoPath'] as String?,
         medications: (json['medications'] as List? ?? [])
             .map((m) => Medication.fromJson(m as Map<String, dynamic>))
             .toList(),

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -52,16 +53,25 @@ class NotificationService {
   static final instance = NotificationService._();
 
   static const dosesAhead = 48;
-  static const _channel = AndroidNotificationDetails(
-    'medication',
-    'Medicación',
-    channelDescription: 'Avisos para dar la medicación a tus mascotas',
-    importance: Importance.high,
-    priority: Priority.high,
-    actions: [
-      AndroidNotificationAction(_doseGivenAction, 'Dada ✓'),
-    ],
-  );
+
+  /// Android details for one pet's alarm; the pet's photo, when it has one
+  /// and the file still exists, is shown as the large icon.
+  static AndroidNotificationDetails androidDetails(Pet pet) {
+    final photo = pet.photoPath;
+    return AndroidNotificationDetails(
+      'medication',
+      'Medicación',
+      channelDescription: 'Avisos para dar la medicación a tus mascotas',
+      importance: Importance.high,
+      priority: Priority.high,
+      largeIcon: photo != null && File(photo).existsSync()
+          ? FilePathAndroidBitmap(photo)
+          : null,
+      actions: const [
+        AndroidNotificationAction(_doseGivenAction, 'Dada ✓'),
+      ],
+    );
+  }
 
   /// Called in the main isolate with a `petId|medId` payload when "Dada" is
   /// pressed on a notification.
@@ -160,6 +170,10 @@ class NotificationService {
         ? AndroidScheduleMode.exactAllowWhileIdle
         : AndroidScheduleMode.inexactAllowWhileIdle;
 
+    final details = NotificationDetails(
+      android: androidDetails(pet),
+      iOS: const DarwinNotificationDetails(),
+    );
     final base = baseId(med.id);
     var from = DateTime.now();
     for (var i = 0; i < dosesAhead; i++) {
@@ -171,10 +185,7 @@ class NotificationService {
         body: messageBody(pet, med),
         payload: payload(pet, med),
         scheduledDate: tz.TZDateTime.from(next, tz.local),
-        notificationDetails: const NotificationDetails(
-          android: _channel,
-          iOS: DarwinNotificationDetails(),
-        ),
+        notificationDetails: details,
         androidScheduleMode: mode,
       );
       from = next;

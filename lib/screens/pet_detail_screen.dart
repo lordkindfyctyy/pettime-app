@@ -6,6 +6,7 @@ import '../models/medication.dart';
 import '../models/vet_visit.dart';
 import '../state/pets_state.dart';
 import '../widgets/dose_history_sheet.dart';
+import '../widgets/pet_avatar.dart';
 import 'medication_form_screen.dart';
 import 'pet_form_screen.dart';
 import 'visit_form_screen.dart';
@@ -95,6 +96,8 @@ class PetDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          Center(child: PetAvatar(pet: pet, radius: 56)),
+          const SizedBox(height: 16),
           Text('Ficha', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           row('Especie', pet.species),

@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:pettime_app/main.dart';
@@ -170,6 +172,30 @@ void main() {
       'startsAt': DateTime(2026, 1, 1).toIso8601String(),
     });
     expect(med.everyMinutes, 480);
+  });
+
+  test('notification shows the pet photo only when the file exists', () {
+    final dir = Directory.systemTemp.createTempSync('pettime_photo');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final photo = File('${dir.path}/luna.jpg')..writeAsBytesSync([1, 2, 3]);
+
+    final withPhoto = Pet(id: 'p', name: 'Luna', photoPath: photo.path);
+    final icon = NotificationService.androidDetails(withPhoto).largeIcon;
+    expect(icon, isA<FilePathAndroidBitmap>());
+    expect((icon as FilePathAndroidBitmap).data, photo.path);
+
+    photo.deleteSync();
+    expect(NotificationService.androidDetails(withPhoto).largeIcon, isNull);
+    expect(NotificationService.androidDetails(Pet(id: 'q', name: 'X')).largeIcon,
+        isNull);
+  });
+
+  test('Pet keeps, replaces and clears its photo', () {
+    final pet = Pet(id: 'p', name: 'Luna', photoPath: '/a.jpg');
+    expect(Pet.fromJson(pet.toJson()).photoPath, '/a.jpg');
+    expect(pet.copyWith(name: 'Nina').photoPath, '/a.jpg');
+    expect(pet.copyWith(photoPath: '/b.jpg').photoPath, '/b.jpg');
+    expect(pet.copyWith(clearPhoto: true).photoPath, isNull);
   });
 
   test('Pet.ageLabel', () {
