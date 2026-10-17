@@ -52,7 +52,11 @@ class NotificationService {
   NotificationService._();
   static final instance = NotificationService._();
 
-  static const dosesAhead = 48;
+  /// Every alarm is a slow call into Android and the plugin rewrites its whole
+  /// list each time, so keep few: the next [dosesAhead] doses within [horizon].
+  static const dosesAhead = 24;
+  static const horizon = Duration(hours: 48);
+  static const _slots = 64;
 
   /// Android details for one pet's alarm; the pet's photo, when it has one
   /// and the file still exists, is shown as the large icon.
@@ -141,7 +145,9 @@ class NotificationService {
     for (final unit in medicationId.codeUnits) {
       h = ((h ^ unit) * 0x01000193) & 0xFFFFFF;
     }
-    return h << 6;
+    // The top bit marks the dose-number scheme; alarms left over from the
+    // earlier scheme (ids without it) are removed by [syncAll].
+    return (h << 6) | (1 << 30);
   }
 
   static String messageTitle(Pet pet) => 'Medicación de ${pet.name}';
@@ -151,18 +157,55 @@ class NotificationService {
     return 'Es hora de darle ${med.name}$dose a ${pet.name}';
   }
 
+  /// Ids of the alarms of one medication: [baseId] plus a slot below [_slots].
+  static bool _isSlotOf(int id, int base) => id >= base && id < base + _slots;
+
+  /// Which doses get an alarm: the next [dosesAhead] ones, but never further
+  /// than [horizon] from [now]. Each is (dose number, notification id).
+  static List<(int, int)> plannedDoses(Medication med, DateTime now) {
+    final base = baseId(med.id);
+    final planned = <(int, int)>[];
+    var k = med.nextDoseIndex(now);
+    while (planned.length < dosesAhead) {
+      final time = med.doseTimeIfActive(k);
+      if (time == null || time.isAfter(now.add(horizon))) break;
+      planned.add((k, base + k % _slots));
+      k++;
+    }
+    return planned;
+  }
+
+  Future<Set<int>> _pendingIds() async =>
+      {for (final p in await _plugin.pendingNotificationRequests()) p.id};
+
+  /// Removes every pending alarm of the medication.
   Future<void> cancelMedication(String medicationId) async {
     if (!_ready) return;
     final base = baseId(medicationId);
-    for (var i = 0; i < dosesAhead; i++) {
-      await _plugin.cancel(id: base + i);
+    for (final id in await _pendingIds()) {
+      if (_isSlotOf(id, base)) await _plugin.cancel(id: id);
     }
   }
 
+  /// Schedules the alarms of one medication from scratch (its settings or its
+  /// pet changed). Alarms already pending are replaced.
   Future<void> scheduleMedication(Pet pet, Medication med) async {
     if (!_ready) return;
-    await cancelMedication(med.id);
+    final planned = {for (final (_, id) in plannedDoses(med, DateTime.now())) id};
+    final base = baseId(med.id);
+    for (final id in await _pendingIds()) {
+      if (_isSlotOf(id, base) && !planned.contains(id)) {
+        await _plugin.cancel(id: id);
+      }
+    }
+    await _schedule(pet, med, alreadyPending: const {});
+  }
 
+  Future<void> _schedule(
+    Pet pet,
+    Medication med, {
+    required Set<int> alreadyPending,
+  }) async {
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     final exact = await android?.canScheduleExactNotifications() ?? true;
@@ -174,31 +217,38 @@ class NotificationService {
       android: androidDetails(pet),
       iOS: const DarwinNotificationDetails(),
     );
-    final base = baseId(med.id);
-    var from = DateTime.now();
-    for (var i = 0; i < dosesAhead; i++) {
-      final next = med.nextDose(from);
-      if (next == null) break;
+    for (final (k, id) in plannedDoses(med, DateTime.now())) {
+      if (alreadyPending.contains(id)) continue;
       await _plugin.zonedSchedule(
-        id: base + i,
+        id: id,
         title: messageTitle(pet),
         body: messageBody(pet, med),
         payload: payload(pet, med),
-        scheduledDate: tz.TZDateTime.from(next, tz.local),
+        scheduledDate: tz.TZDateTime.from(med.doseTime(k), tz.local),
         notificationDetails: details,
         androidScheduleMode: mode,
       );
-      from = next;
     }
   }
 
-  /// Reschedules everything from scratch; used when the app starts.
+  /// Brings the pending alarms in line with the data when the app starts:
+  /// removes the ones that no longer belong to any medication and adds only the
+  /// missing ones (each add or cancel is a slow call into Android).
   Future<void> syncAll(Iterable<Pet> pets) async {
     if (!_ready) return;
-    await _plugin.cancelAllPendingNotifications();
+    final now = DateTime.now();
+    final expected = {
+      for (final pet in pets)
+        for (final med in pet.medications)
+          for (final (_, id) in plannedDoses(med, now)) id,
+    };
+    final pending = await _pendingIds();
+    for (final id in pending) {
+      if (!expected.contains(id)) await _plugin.cancel(id: id);
+    }
     for (final pet in pets) {
       for (final med in pet.medications) {
-        await scheduleMedication(pet, med);
+        await _schedule(pet, med, alreadyPending: pending);
       }
     }
   }

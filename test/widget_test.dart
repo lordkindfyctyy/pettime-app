@@ -198,6 +198,35 @@ void main() {
     expect(pet.copyWith(clearPhoto: true).photoPath, isNull);
   });
 
+  test('alarms are planned by dose number, few and within the horizon', () {
+    final med = Medication(
+      id: 'm',
+      name: 'X',
+      everyMinutes: 480,
+      startsAt: DateTime(2026, 1, 1, 8),
+    );
+    final now = DateTime(2026, 1, 1, 9);
+    final plan = NotificationService.plannedDoses(med, now);
+    // Every 8 h over 48 h from 09:00: 16:00, 00:00, 08:00, ... (6 doses).
+    expect(plan.map((p) => p.$1), [1, 2, 3, 4, 5, 6]);
+    final base = NotificationService.baseId('m');
+    expect(plan.first.$2, base + 1);
+
+    // Later, the same dose keeps the same alarm id.
+    final later = NotificationService.plannedDoses(med, DateTime(2026, 1, 1, 20));
+    expect(later.first.$1, 2);
+    expect(later.map((p) => p.$2), contains(base + 2));
+
+    // Short intervals are capped.
+    final often = med.copyWith(everyMinutes: 2);
+    expect(NotificationService.plannedDoses(often, now).length,
+        NotificationService.dosesAhead);
+
+    // A finished treatment has no alarms.
+    final ended = med.copyWith(endsAt: DateTime(2026, 1, 1, 12));
+    expect(NotificationService.plannedDoses(ended, now), isEmpty);
+  });
+
   test('Pet.ageLabel', () {
     final pet = Pet(id: 'p', name: 'Luna', birthDate: DateTime(2023, 3, 10));
     expect(pet.ageLabel(DateTime(2026, 5, 10)), '3 años y 2 meses');

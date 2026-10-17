@@ -33,16 +33,24 @@ class Medication {
   DateTime? get lastGiven => givenDoses.isEmpty ? null : givenDoses.last;
 
   /// Next dose strictly after [from], or null when the treatment has ended.
-  DateTime? nextDose([DateTime? from]) {
-    final now = from ?? DateTime.now();
-    final step = Duration(minutes: everyMinutes);
-    var next = startsAt;
-    if (!now.isBefore(startsAt)) {
-      final elapsed = now.difference(startsAt);
-      next = startsAt.add(step * (elapsed.inMinutes ~/ step.inMinutes + 1));
-    }
-    if (endsAt != null && next.isAfter(endsAt!)) return null;
-    return next;
+  DateTime? nextDose([DateTime? from]) =>
+      doseTimeIfActive(nextDoseIndex(from ?? DateTime.now()));
+
+  /// Doses are numbered from 0 (the first dose at [startsAt]); the number of a
+  /// dose never changes, so it can identify its alarm.
+  DateTime doseTime(int index) =>
+      startsAt.add(Duration(minutes: everyMinutes * index));
+
+  /// [doseTime], or null when the treatment has already ended by then.
+  DateTime? doseTimeIfActive(int index) {
+    final time = doseTime(index);
+    return endsAt != null && time.isAfter(endsAt!) ? null : time;
+  }
+
+  /// Number of the first dose strictly after [from].
+  int nextDoseIndex(DateTime from) {
+    if (from.isBefore(startsAt)) return 0;
+    return from.difference(startsAt).inMinutes ~/ everyMinutes + 1;
   }
 
   Medication copyWith({
