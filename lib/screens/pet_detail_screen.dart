@@ -94,7 +94,12 @@ class PetDetailScreen extends StatelessWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + MediaQuery.viewPaddingOf(context).bottom,
+        ),
         children: [
           Center(child: PetAvatar(pet: pet, radius: 56)),
           const SizedBox(height: 16),
