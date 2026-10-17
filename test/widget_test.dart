@@ -20,7 +20,7 @@ void main() {
     final med = Medication(
       id: 'm',
       name: 'Amoxicilina',
-      everyHours: 8,
+      everyMinutes: 480,
       startsAt: DateTime(2026, 1, 1, 8),
     );
     expect(med.nextDose(DateTime(2026, 1, 1, 7)), DateTime(2026, 1, 1, 8));
@@ -32,7 +32,7 @@ void main() {
     final med = Medication(
       id: 'm',
       name: 'X',
-      everyHours: 12,
+      everyMinutes: 720,
       startsAt: DateTime(2026, 1, 1, 8),
       endsAt: DateTime(2026, 1, 2, 8),
     );
@@ -45,7 +45,7 @@ void main() {
       id: 'm',
       name: 'Amoxicilina',
       dose: '1 comprimido',
-      everyHours: 8,
+      everyMinutes: 480,
       startsAt: DateTime(2026, 1, 1),
     );
     expect(NotificationService.messageBody(pet, med),
@@ -86,7 +86,7 @@ void main() {
     final open = Medication(
       id: 'm',
       name: 'X',
-      everyHours: 8,
+      everyMinutes: 480,
       startsAt: DateTime.utc(2026, 1, 1, 8),
     );
     expect(CalendarService.recurrence(open), 'RRULE:FREQ=HOURLY;INTERVAL=8');
@@ -100,7 +100,7 @@ void main() {
     final med = Medication(
       id: 'm',
       name: 'X',
-      everyHours: 8,
+      everyMinutes: 480,
       startsAt: DateTime(2026, 1, 1),
     );
     await state.savePet(Pet(id: 'p', name: 'Luna', medications: [med]));
@@ -126,7 +126,7 @@ void main() {
       Medication(
         id: 'm',
         name: 'X',
-        everyHours: 8,
+        everyMinutes: 480,
         startsAt: DateTime(2026, 1, 1),
       ),
     ]);
@@ -144,8 +144,32 @@ void main() {
   test('notification payload carries the pet and medication ids', () {
     final pet = Pet(id: 'p1', name: 'Luna');
     final med = Medication(
-        id: 'm1', name: 'X', everyHours: 8, startsAt: DateTime(2026, 1, 1));
+        id: 'm1', name: 'X', everyMinutes: 480, startsAt: DateTime(2026, 1, 1));
     expect(NotificationService.payload(pet, med), 'p1|m1');
+  });
+
+  test('Medication supports intervals in minutes', () {
+    final med = Medication(
+      id: 'm',
+      name: 'X',
+      everyMinutes: 30,
+      startsAt: DateTime(2026, 1, 1, 8),
+    );
+    expect(med.nextDose(DateTime(2026, 1, 1, 8, 10)), DateTime(2026, 1, 1, 8, 30));
+    expect(med.intervalLabel, 'cada 30 min');
+    expect(med.copyWith(everyMinutes: 480).intervalLabel, 'cada 8 h');
+    expect(med.copyWith(everyMinutes: 90).intervalLabel, 'cada 1 h 30 min');
+    expect(CalendarService.recurrence(med), 'RRULE:FREQ=MINUTELY;INTERVAL=30');
+  });
+
+  test('Medication saved with whole hours still loads', () {
+    final med = Medication.fromJson({
+      'id': 'm',
+      'name': 'X',
+      'everyHours': 8,
+      'startsAt': DateTime(2026, 1, 1).toIso8601String(),
+    });
+    expect(med.everyMinutes, 480);
   });
 
   test('Pet.ageLabel', () {
@@ -163,14 +187,14 @@ void main() {
         Medication(
           id: 'm',
           name: 'X',
-          everyHours: 6,
+          everyMinutes: 360,
           startsAt: DateTime(2026, 1, 1),
         ),
       ],
     );
     final copy = Pet.fromJson(pet.toJson());
     expect(copy.name, 'Luna');
-    expect(copy.medications.single.everyHours, 6);
+    expect(copy.medications.single.everyMinutes, 360);
   });
 
   testWidgets('shows the empty state and adds a pet', (tester) async {

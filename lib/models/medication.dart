@@ -3,7 +3,7 @@ class Medication {
     required this.id,
     required this.name,
     this.dose = '',
-    required this.everyHours,
+    required this.everyMinutes,
     required this.startsAt,
     this.endsAt,
     this.notes = '',
@@ -13,7 +13,16 @@ class Medication {
   final String id;
   final String name;
   final String dose;
-  final int everyHours;
+  final int everyMinutes;
+
+  /// Interval as a short Spanish label: "cada 8 h", "cada 30 min", "cada 1 h 30 min".
+  String get intervalLabel {
+    final h = everyMinutes ~/ 60;
+    final m = everyMinutes % 60;
+    if (h == 0) return 'cada $m min';
+    if (m == 0) return 'cada $h h';
+    return 'cada $h h $m min';
+  }
   final DateTime startsAt;
   final DateTime? endsAt;
   final String notes;
@@ -26,7 +35,7 @@ class Medication {
   /// Next dose strictly after [from], or null when the treatment has ended.
   DateTime? nextDose([DateTime? from]) {
     final now = from ?? DateTime.now();
-    final step = Duration(hours: everyHours);
+    final step = Duration(minutes: everyMinutes);
     var next = startsAt;
     if (!now.isBefore(startsAt)) {
       final elapsed = now.difference(startsAt);
@@ -39,7 +48,7 @@ class Medication {
   Medication copyWith({
     String? name,
     String? dose,
-    int? everyHours,
+    int? everyMinutes,
     DateTime? startsAt,
     DateTime? endsAt,
     bool clearEndsAt = false,
@@ -50,7 +59,7 @@ class Medication {
       id: id,
       name: name ?? this.name,
       dose: dose ?? this.dose,
-      everyHours: everyHours ?? this.everyHours,
+      everyMinutes: everyMinutes ?? this.everyMinutes,
       startsAt: startsAt ?? this.startsAt,
       endsAt: clearEndsAt ? null : (endsAt ?? this.endsAt),
       notes: notes ?? this.notes,
@@ -62,7 +71,7 @@ class Medication {
         'id': id,
         'name': name,
         'dose': dose,
-        'everyHours': everyHours,
+        'everyMinutes': everyMinutes,
         'startsAt': startsAt.toIso8601String(),
         'endsAt': endsAt?.toIso8601String(),
         'notes': notes,
@@ -73,7 +82,9 @@ class Medication {
         id: json['id'] as String,
         name: json['name'] as String,
         dose: json['dose'] as String? ?? '',
-        everyHours: json['everyHours'] as int,
+        // Data saved before minutes were supported only has 'everyHours'.
+        everyMinutes: json['everyMinutes'] as int? ??
+            (json['everyHours'] as int) * 60,
         startsAt: DateTime.parse(json['startsAt'] as String),
         endsAt: json['endsAt'] == null
             ? null

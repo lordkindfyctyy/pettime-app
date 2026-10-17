@@ -93,7 +93,11 @@ class CalendarService extends ChangeNotifier {
     final until = end == null
         ? ''
         : ';UNTIL=${_utcStamp(end)}';
-    return 'RRULE:FREQ=HOURLY;INTERVAL=${med.everyHours}$until';
+    final minutes = med.everyMinutes;
+    final freq = minutes % 60 == 0
+        ? 'FREQ=HOURLY;INTERVAL=${minutes ~/ 60}'
+        : 'FREQ=MINUTELY;INTERVAL=$minutes';
+    return 'RRULE:$freq$until';
   }
 
   static String _utcStamp(DateTime d) {

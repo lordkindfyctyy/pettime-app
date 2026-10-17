@@ -20,8 +20,16 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.medication?.name);
   late final _dose = TextEditingController(text: widget.medication?.dose);
-  late final _hours = TextEditingController(
-    text: widget.medication?.everyHours.toString() ?? '',
+  // The interval is entered as an amount plus a unit, shown in hours when it
+  // is a whole number of hours and in minutes otherwise.
+  late bool _inHours = (widget.medication?.everyMinutes ?? 60) % 60 == 0;
+  late final _interval = TextEditingController(
+    text: widget.medication == null
+        ? ''
+        : (_inHours
+                ? widget.medication!.everyMinutes ~/ 60
+                : widget.medication!.everyMinutes)
+            .toString(),
   );
   late final _notes = TextEditingController(text: widget.medication?.notes);
   late DateTime _startsAt = widget.medication?.startsAt ?? DateTime.now();
@@ -31,7 +39,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   void dispose() {
     _name.dispose();
     _dose.dispose();
-    _hours.dispose();
+    _interval.dispose();
     _notes.dispose();
     super.dispose();
   }
@@ -59,7 +67,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       id: widget.medication?.id ?? state.newId(),
       name: _name.text.trim(),
       dose: _dose.text.trim(),
-      everyHours: int.parse(_hours.text.trim()),
+      everyMinutes: int.parse(_interval.text.trim()) * (_inHours ? 60 : 1),
       startsAt: _startsAt,
       endsAt: _endsAt,
       notes: _notes.text.trim(),
@@ -101,14 +109,30 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _hours,
-              decoration: const InputDecoration(labelText: 'Cada cuántas horas'),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                final n = int.tryParse(v?.trim() ?? '');
-                return (n == null || n < 1) ? 'Ingresá un número de horas' : null;
-              },
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _interval,
+                    decoration: const InputDecoration(labelText: 'Repetir cada'),
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      final n = int.tryParse(v?.trim() ?? '');
+                      return (n == null || n < 1) ? 'Ingresá un número' : null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment(value: false, label: Text('min')),
+                    ButtonSegment(value: true, label: Text('horas')),
+                  ],
+                  selected: {_inHours},
+                  onSelectionChanged: (s) => setState(() => _inHours = s.first),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             ListTile(

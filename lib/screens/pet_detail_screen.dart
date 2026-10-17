@@ -131,7 +131,7 @@ class PetDetailScreen extends StatelessWidget {
                 title: Text(m.name),
                 subtitle: Text([
                   if (m.dose.isNotEmpty) m.dose,
-                  'cada ${m.everyHours} h',
+                  m.intervalLabel,
                   m.nextDose() == null
                       ? 'tratamiento terminado'
                       : 'próxima: ${fmt.format(m.nextDose()!)}',
