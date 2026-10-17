@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -8,8 +6,7 @@ import '../models/medication.dart';
 import '../models/vet_visit.dart';
 import '../services/maps_service.dart';
 import '../state/pets_state.dart';
-import '../widgets/dose_history_sheet.dart';
-import '../widgets/medication_photo.dart';
+import '../widgets/medication_card.dart';
 import '../widgets/pet_avatar.dart';
 import 'medication_form_screen.dart';
 import 'pet_form_screen.dart';
@@ -19,36 +16,6 @@ class PetDetailScreen extends StatelessWidget {
   const PetDetailScreen({super.key, required this.petId});
 
   final String petId;
-
-  void _showPhoto(BuildContext context, String title, String path) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => Dialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(title, style: Theme.of(ctx).textTheme.titleMedium),
-            ),
-            Flexible(child: Image.file(File(path))),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cerrar'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showHistory(BuildContext context, String petId, String medId) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => DoseHistorySheet(petId: petId, medId: medId),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,65 +127,7 @@ class PetDetailScreen extends StatelessWidget {
               child: Text('Sin medicación cargada'),
             ),
           for (final Medication m in pet.medications)
-            Card(
-              child: ListTile(
-                leading: GestureDetector(
-                  onTap: m.photoPath == null
-                      ? null
-                      : () => _showPhoto(context, m.name, m.photoPath!),
-                  child: MedicationPhoto(path: m.photoPath),
-                ),
-                title: Text(m.name),
-                subtitle: Text([
-                  if (m.dose.isNotEmpty) m.dose,
-                  m.intervalLabel,
-                  m.nextDose() == null
-                      ? 'tratamiento terminado'
-                      : 'próxima: ${fmt.format(m.nextDose()!)}',
-                  if (m.lastGiven != null) 'última dada: ${fmt.format(m.lastGiven!)}',
-                ].join(' · ')),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        MedicationFormScreen(petId: pet.id, medication: m),
-                  ),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.check_circle),
-                      tooltip: 'Registrar toma dada ahora',
-                      onPressed: () async {
-                        await state.logDose(pet.id, m.id);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Toma de ${m.name} registrada'),
-                              action: SnackBarAction(
-                                label: 'Historial',
-                                onPressed: () => _showHistory(context, pet.id, m.id),
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.history),
-                      tooltip: 'Historial de tomas',
-                      onPressed: () => _showHistory(context, pet.id, m.id),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: 'Eliminar medicación',
-                      onPressed: () => state.deleteMedication(pet.id, m.id),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            MedicationCard(petId: pet.id, medication: m),
           const Divider(height: 32),
           Row(
             children: [

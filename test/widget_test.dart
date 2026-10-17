@@ -12,6 +12,7 @@ import 'package:pettime_app/models/vet_visit.dart';
 import 'package:pettime_app/services/calendar_service.dart';
 import 'package:pettime_app/services/notification_service.dart';
 import 'package:pettime_app/state/pets_state.dart';
+import 'package:pettime_app/widgets/medication_card.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -332,6 +333,51 @@ void main() {
     });
     expect(old.kind, AppointmentKind.vet);
     expect(old.address, '');
+  });
+
+  testWidgets('medication card shows the photo above the description', (tester) async {
+    await initializeDateFormatting('es');
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final dir = Directory.systemTemp.createTempSync('pettime_card');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final photo = File('${dir.path}/pill.png')
+      ..writeAsBytesSync(base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='));
+    final med = Medication(
+      id: 'm',
+      name: 'Amoxicilina',
+      dose: '1 comprimido',
+      everyMinutes: 480,
+      startsAt: DateTime.now().add(const Duration(hours: 1)),
+      photoPath: photo.path,
+    );
+    final state = PetsState();
+    await state.savePet(Pet(id: 'p', name: 'Luna', medications: [med]));
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: state,
+        child: MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: MedicationCard(petId: 'p', medication: med),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final image = tester.getTopLeft(find.byType(Image));
+    final name = tester.getTopLeft(find.text('Amoxicilina'));
+    final dose = tester.getTopLeft(find.text('1 comprimido'));
+    final actions = tester.getTopLeft(find.text('Dada ahora'));
+    expect(image.dy, lessThan(name.dy));
+    expect(name.dy, lessThan(dose.dy));
+    expect(dose.dy, lessThan(actions.dy));
+    expect(find.text('cada 8 h'), findsOneWidget);
   });
 
   test('Pet.ageLabel', () {
