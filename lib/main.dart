@@ -1,6 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(const PetTimeApp());
+import 'screens/pets_screen.dart';
+import 'state/pets_state.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('es');
+  final pets = PetsState();
+  await pets.load();
+  runApp(
+    ChangeNotifierProvider.value(value: pets, child: const PetTimeApp()),
+  );
+}
 
 class PetTimeApp extends StatelessWidget {
   const PetTimeApp({super.key});
@@ -13,9 +27,14 @@ class PetTimeApp extends StatelessWidget {
         colorSchemeSeed: Colors.teal,
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: Center(child: Text('PetTime')),
-      ),
+      locale: const Locale('es'),
+      supportedLocales: const [Locale('es')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: const PetsScreen(),
     );
   }
 }
