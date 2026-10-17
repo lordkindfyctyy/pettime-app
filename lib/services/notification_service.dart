@@ -1,11 +1,47 @@
+import 'dart:isolate';
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../models/medication.dart';
 import '../models/pet.dart';
+import '../state/pets_state.dart';
+
+const _doseGivenAction = 'dose_given';
+const _doseGivenPort = 'pettime_dose_given';
+
+/// Runs when the "Dada" button is pressed, possibly in a background isolate.
+///
+/// If the app is alive its main isolate owns the in-memory state, so the
+/// press is forwarded there; otherwise the stored data is updated directly.
+@pragma('vm:entry-point')
+Future<void> notificationBackgroundHandler(NotificationResponse response) async {
+  if (response.actionId != _doseGivenAction) return;
+  final payload = response.payload;
+  if (payload == null) return;
+
+  final port = IsolateNameServer.lookupPortByName(_doseGivenPort);
+  if (port != null) {
+    port.send(payload);
+    return;
+  }
+
+  DartPluginRegistrant.ensureInitialized();
+  final parts = payload.split('|');
+  if (parts.length != 2) return;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.reload();
+  final raw = prefs.getString(PetsState.storageKey);
+  if (raw == null) return;
+  final updated =
+      PetsState.addDoseToJson(raw, parts[0], parts[1], DateTime.now());
+  if (updated != null) await prefs.setString(PetsState.storageKey, updated);
+}
 
 /// Schedules one local notification per upcoming dose of every medication.
 ///
@@ -22,7 +58,15 @@ class NotificationService {
     channelDescription: 'Avisos para dar la medicación a tus mascotas',
     importance: Importance.high,
     priority: Priority.high,
+    actions: [
+      AndroidNotificationAction(_doseGivenAction, 'Dada ✓'),
+    ],
   );
+
+  /// Called in the main isolate with a `petId|medId` payload when "Dada" is
+  /// pressed on a notification.
+  void Function(String petId, String medId)? onDoseGiven;
+  final _port = ReceivePort();
 
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _ready = false;
@@ -43,9 +87,25 @@ class NotificationService {
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         iOS: DarwinInitializationSettings(),
       ),
+      onDidReceiveNotificationResponse: (response) {
+        if (response.actionId == _doseGivenAction && response.payload != null) {
+          _dispatch(response.payload!);
+        }
+      },
+      onDidReceiveBackgroundNotificationResponse: notificationBackgroundHandler,
     );
+    IsolateNameServer.removePortNameMapping(_doseGivenPort);
+    IsolateNameServer.registerPortWithName(_port.sendPort, _doseGivenPort);
+    _port.listen((message) => _dispatch(message as String));
     _ready = true;
   }
+
+  void _dispatch(String payload) {
+    final parts = payload.split('|');
+    if (parts.length == 2) onDoseGiven?.call(parts[0], parts[1]);
+  }
+
+  static String payload(Pet pet, Medication med) => '${pet.id}|${med.id}';
 
   /// Asks for the notification permission; returns whether it was granted.
   Future<bool> requestPermission() async {
@@ -109,6 +169,7 @@ class NotificationService {
         id: base + i,
         title: messageTitle(pet),
         body: messageBody(pet, med),
+        payload: payload(pet, med),
         scheduledDate: tz.TZDateTime.from(next, tz.local),
         notificationDetails: const NotificationDetails(
           android: _channel,

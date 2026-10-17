@@ -13,6 +13,8 @@ Future<void> main() async {
   await initializeDateFormatting('es');
   final pets = PetsState();
   await pets.load();
+  NotificationService.instance.onDoseGiven =
+      (petId, medId) => pets.logDose(petId, medId);
   await NotificationService.instance.init();
   await NotificationService.instance.syncAll(pets.pets);
   await CalendarService.instance.load();

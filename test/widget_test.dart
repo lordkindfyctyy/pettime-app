@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -117,6 +119,33 @@ void main() {
     // Editing the medication keeps its history.
     final again = Pet.fromJson(state.byId('p')!.toJson());
     expect(again.medications.single.givenDoses, [early]);
+  });
+
+  test('addDoseToJson records a dose without a PetsState', () {
+    final pet = Pet(id: 'p', name: 'Luna', medications: [
+      Medication(
+        id: 'm',
+        name: 'X',
+        everyHours: 8,
+        startsAt: DateTime(2026, 1, 1),
+      ),
+    ]);
+    final raw = jsonEncode([pet.toJson()]);
+    final at = DateTime(2026, 1, 2, 9);
+
+    final updated = PetsState.addDoseToJson(raw, 'p', 'm', at)!;
+    final back = Pet.fromJson((jsonDecode(updated) as List).single);
+    expect(back.medications.single.givenDoses, [at]);
+
+    expect(PetsState.addDoseToJson(raw, 'p', 'gone', at), isNull);
+    expect(PetsState.addDoseToJson(raw, 'gone', 'm', at), isNull);
+  });
+
+  test('notification payload carries the pet and medication ids', () {
+    final pet = Pet(id: 'p1', name: 'Luna');
+    final med = Medication(
+        id: 'm1', name: 'X', everyHours: 8, startsAt: DateTime(2026, 1, 1));
+    expect(NotificationService.payload(pet, med), 'p1|m1');
   });
 
   test('Pet.ageLabel', () {

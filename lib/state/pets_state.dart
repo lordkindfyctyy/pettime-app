@@ -11,8 +11,34 @@ import '../services/calendar_service.dart';
 import '../services/notification_service.dart';
 
 class PetsState extends ChangeNotifier {
-  static const _key = 'pets_v1';
+  static const storageKey = 'pets_v1';
+  static const _key = storageKey;
   static const _uuid = Uuid();
+
+  /// Adds a given dose to the stored pets JSON [raw] without a [PetsState]
+  /// (used when a notification action runs while the app is closed).
+  /// Returns the updated JSON, or null when the pet or medication is gone.
+  static String? addDoseToJson(
+    String raw,
+    String petId,
+    String medId,
+    DateTime at,
+  ) {
+    final pets = (jsonDecode(raw) as List)
+        .map((p) => Pet.fromJson(p as Map<String, dynamic>))
+        .toList();
+    final i = pets.indexWhere((p) => p.id == petId);
+    if (i == -1 || !pets[i].medications.any((m) => m.id == medId)) return null;
+    pets[i] = pets[i].copyWith(
+      medications: [
+        for (final m in pets[i].medications)
+          m.id == medId
+              ? m.copyWith(givenDoses: [...m.givenDoses, at]..sort())
+              : m,
+      ],
+    );
+    return jsonEncode(pets.map((p) => p.toJson()).toList());
+  }
 
   List<Pet> _pets = [];
   List<Pet> get pets => List.unmodifiable(_pets);
