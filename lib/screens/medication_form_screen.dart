@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/medication.dart';
+import '../services/notification_service.dart';
 import '../state/pets_state.dart';
 
 class MedicationFormScreen extends StatefulWidget {
@@ -63,6 +64,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       endsAt: _endsAt,
       notes: _notes.text.trim(),
     );
+    await NotificationService.instance.requestPermission();
     await state.saveMedication(widget.petId, med);
     if (mounted) Navigator.pop(context);
   }

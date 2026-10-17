@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/medication.dart';
 import '../models/pet.dart';
+import '../services/notification_service.dart';
 
 class PetsState extends ChangeNotifier {
   static const _key = 'pets_v1';
@@ -49,11 +50,18 @@ class PetsState extends ChangeNotifier {
       _pets[i] = pet;
     }
     await _save();
+    for (final med in pet.medications) {
+      await NotificationService.instance.scheduleMedication(pet, med);
+    }
   }
 
   Future<void> deletePet(String id) async {
+    final pet = byId(id);
     _pets.removeWhere((p) => p.id == id);
     await _save();
+    for (final med in pet?.medications ?? const <Medication>[]) {
+      await NotificationService.instance.cancelMedication(med.id);
+    }
   }
 
   Future<void> saveMedication(String petId, Medication med) async {
@@ -72,6 +80,7 @@ class PetsState extends ChangeNotifier {
   Future<void> deleteMedication(String petId, String medId) async {
     final pet = byId(petId);
     if (pet == null) return;
+    await NotificationService.instance.cancelMedication(medId);
     await savePet(pet.copyWith(
       medications: pet.medications.where((m) => m.id != medId).toList(),
     ));
