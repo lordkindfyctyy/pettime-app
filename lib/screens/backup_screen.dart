@@ -45,22 +45,17 @@ class _BackupScreenState extends State<BackupScreen> {
   void _toast(String text) => ScaffoldMessenger.of(context)
       .showSnackBar(SnackBar(content: Text(text)));
 
-  Future<void> _save() async {
+  /// Builds the backup and hands it to [deliver] (share it, or save it to a
+  /// folder). [deliver] returns whether it was actually saved or sent.
+  Future<void> _backup(
+    Future<bool> Function(Uint8List bytes, String name) deliver,
+  ) async {
     setState(() => _busy = true);
     try {
       final pets = context.read<PetsState>().pets;
       final now = DateTime.now();
       final bytes = BackupService.buildZip(pets, now: now);
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/${BackupService.fileName(now)}');
-      await file.writeAsBytes(bytes);
-      final result = await SharePlus.instance.share(ShareParams(
-        files: [XFile(file.path, mimeType: 'application/zip')],
-        subject: 'Copia de seguridad de PetTime',
-        text: 'Copia de seguridad de PetTime. Para restaurarla: PetTime → '
-            'Mascotas → ⋮ → Copia de seguridad → Restaurar.',
-      ));
-      if (result.status != ShareResultStatus.dismissed) {
+      if (await deliver(bytes, BackupService.fileName(now))) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(lastBackupKey, now.toIso8601String());
         if (mounted) setState(() => _lastBackup = now);
@@ -70,6 +65,33 @@ class _BackupScreenState extends State<BackupScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<bool> _share(Uint8List bytes, String name) async {
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/$name');
+    await file.writeAsBytes(bytes);
+    final result = await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path, mimeType: 'application/zip')],
+      subject: 'Copia de seguridad de PetTime',
+      text: 'Copia de seguridad de PetTime. Para restaurarla: PetTime → '
+          'Mascotas → ⋮ → Copia de seguridad → Restaurar.',
+    ));
+    return result.status != ShareResultStatus.dismissed;
+  }
+
+  /// Opens Android's "save as" screen: Descargas, any folder, or Google
+  /// Drive, which shows up there as one more place.
+  Future<bool> _saveToFolder(Uint8List bytes, String name) async {
+    final uri = await FilePicker.saveFile(
+      dialogTitle: 'Guardar la copia de PetTime',
+      fileName: name,
+      bytes: bytes,
+      mimeType: 'application/zip',
+    );
+    if (uri == null) return false;
+    if (mounted) _toast('Copia guardada');
+    return true;
   }
 
   static Future<Uint8List?> _pickFromDevice() async {
@@ -167,11 +189,17 @@ class _BackupScreenState extends State<BackupScreen> {
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed: _busy ? null : _save,
-            icon: const Icon(Icons.cloud_upload_outlined),
-            label: const Text('Guardar copia'),
+            onPressed: _busy ? null : () => _backup(_saveToFolder),
+            icon: const Icon(Icons.save_alt),
+            label: const Text('Guardar en el celular o en Drive'),
           ),
           const SizedBox(height: 12),
+          FilledButton.tonalIcon(
+            onPressed: _busy ? null : () => _backup(_share),
+            icon: const Icon(Icons.share_outlined),
+            label: const Text('Compartir copia (WhatsApp, mail…)'),
+          ),
+          const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: _busy ? null : _restore,
             icon: const Icon(Icons.restore),
