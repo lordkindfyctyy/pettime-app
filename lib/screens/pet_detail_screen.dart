@@ -1,10 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/medication.dart';
+import '../models/pet.dart';
 import '../models/vet_visit.dart';
 import '../services/maps_service.dart';
+import '../services/shop_settings.dart';
+import '../services/vet_report.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
 import '../widgets/health_booklet.dart';
@@ -15,6 +22,36 @@ import '../widgets/weight_section.dart';
 import 'medication_form_screen.dart';
 import 'pet_form_screen.dart';
 import 'visit_form_screen.dart';
+
+/// Builds the PDF for the vet and opens Android's share sheet (WhatsApp,
+/// mail, Drive…).
+Future<void> shareVetReport(BuildContext context, Pet pet) async {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.showSnackBar(const SnackBar(content: Text('Armando la ficha…')));
+  try {
+    final now = DateTime.now();
+    final bytes = await VetReport.build(
+      pet,
+      assets: await VetReportAssets.load(),
+      now: now,
+      shopName: ShopSettings.instance.name,
+    );
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/${VetReport.fileName(pet, now)}');
+    await file.writeAsBytes(bytes);
+    messenger.hideCurrentSnackBar();
+    await SharePlus.instance.share(ShareParams(
+      files: [XFile(file.path, mimeType: 'application/pdf')],
+      subject: 'Ficha de ${pet.name}',
+      text: 'Ficha de ${pet.name} para el veterinario, hecha con PetTime.',
+    ));
+  } catch (e) {
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(content: Text('No se pudo armar la ficha: $e')),
+    );
+  }
+}
 
 class PetDetailScreen extends StatelessWidget {
   const PetDetailScreen({super.key, required this.petId});
@@ -53,6 +90,11 @@ class PetDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(pet.name),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            tooltip: 'Ficha para el veterinario',
+            onPressed: () => shareVetReport(context, pet),
+          ),
           IconButton(
             icon: const Icon(Icons.edit),
             tooltip: 'Editar ficha',
