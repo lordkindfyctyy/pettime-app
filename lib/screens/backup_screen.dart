@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/pet.dart';
 import '../services/backup_service.dart';
+import '../services/drive_backup_service.dart';
 import '../state/pets_state.dart';
 
 /// Saves everything to a .zip (shared to Google Drive, WhatsApp, mail…) and
@@ -104,7 +105,6 @@ class _BackupScreenState extends State<BackupScreen> {
   }
 
   Future<void> _restore() async {
-    final state = context.read<PetsState>();
     Uint8List? bytes;
     try {
       bytes = await (widget.pickBackup ?? _pickFromDevice)();
@@ -113,7 +113,51 @@ class _BackupScreenState extends State<BackupScreen> {
       return;
     }
     if (bytes == null || !mounted) return;
+    await _restoreBytes(bytes);
+  }
 
+  Future<void> _restoreFromDrive() async {
+    setState(() => _busy = true);
+    try {
+      final found = await DriveBackupService.instance.download();
+      if (!mounted) return;
+      if (found == null) {
+        _toast('No hay ninguna copia de PetTime en tu Google Drive.');
+        return;
+      }
+      final (date, bytes) = found;
+      await _restoreBytes(
+        bytes,
+        from: date == null
+            ? null
+            : 'Copia de Drive del ${DateFormat.yMMMd('es').add_Hm().format(date)}.',
+      );
+    } catch (e) {
+      if (mounted) _toast('No se pudo bajar la copia de Drive: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _toggleDrive(bool on) async {
+    final drive = DriveBackupService.instance;
+    setState(() => _busy = true);
+    try {
+      if (on) {
+        await drive.enable(context.read<PetsState>().pets);
+        if (mounted) _toast('Copia automática activada y guardada en Drive');
+      } else {
+        await drive.disable();
+      }
+    } catch (e) {
+      if (mounted) _toast('No se pudo conectar con Google Drive: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _restoreBytes(Uint8List bytes, {String? from}) async {
+    final state = context.read<PetsState>();
     final List<Pet> pets;
     try {
       final docs = await getApplicationDocumentsDirectory();
@@ -130,6 +174,7 @@ class _BackupScreenState extends State<BackupScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('¿Restaurar la copia?'),
         content: Text(
+          '${from == null ? '' : '$from\n\n'}'
           'La copia tiene ${_count(pets.length)}: '
           '${pets.map((p) => p.name).join(', ')}.\n\n'
           '${current == 0 ? 'Se cargan en este celular.' : 'Reemplaza lo que hay ahora en este celular (${_count(current)}).'}',
@@ -180,11 +225,47 @@ class _BackupScreenState extends State<BackupScreen> {
             'los turnos y la libreta de vacunas.',
             style: theme.textTheme.bodyMedium,
           ),
+          if (DriveBackupService.instance.supported) ...[
+            const SizedBox(height: 16),
+            Card(
+              child: ListenableBuilder(
+                listenable: DriveBackupService.instance,
+                builder: (context, _) {
+                  final drive = DriveBackupService.instance;
+                  final lastDrive = drive.lastBackup;
+                  return Column(
+                    children: [
+                      SwitchListTile(
+                        secondary: const Icon(Icons.add_to_drive),
+                        title: const Text('Copia automática en Google Drive'),
+                        subtitle: Text(
+                          drive.enabled
+                              ? lastDrive == null
+                                  ? 'Activada'
+                                  : 'Última: ${DateFormat.yMMMd('es').add_Hm().format(lastDrive)}'
+                              : 'Se guarda sola una vez por día, cuando abrís la app',
+                        ),
+                        value: drive.enabled,
+                        onChanged: _busy ? null : _toggleDrive,
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.cloud_download_outlined),
+                        title: const Text('Restaurar desde Google Drive'),
+                        subtitle: const Text('Por ejemplo, en un celular nuevo'),
+                        enabled: !_busy,
+                        onTap: _restoreFromDrive,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Text(
             last == null
-                ? 'Todavía no hiciste ninguna copia.'
-                : 'Última copia: ${DateFormat.yMMMd('es').add_Hm().format(last)}',
+                ? 'Todavía no hiciste ninguna copia manual.'
+                : 'Última copia manual: ${DateFormat.yMMMd('es').add_Hm().format(last)}',
             style: theme.textTheme.titleSmall,
           ),
           const SizedBox(height: 24),

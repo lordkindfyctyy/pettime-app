@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'screens/home_screen.dart';
 import 'services/calendar_service.dart';
+import 'services/drive_backup_service.dart';
 import 'services/notification_service.dart';
 import 'state/pets_state.dart';
 
@@ -16,6 +17,7 @@ Future<void> main() async {
   final pets = PetsState();
   await pets.load();
   await CalendarService.instance.load();
+  await DriveBackupService.instance.load();
   NotificationService.instance.onDoseGiven =
       (petId, medId) => pets.logDose(petId, medId);
   runApp(
@@ -24,6 +26,8 @@ Future<void> main() async {
   // Scheduling the alarms takes hundreds of platform calls; do it after the
   // first frame so the app opens right away.
   unawaited(_startAlarms(pets));
+  // The daily copy to Google Drive, if it's on (uploads in the background).
+  unawaited(DriveBackupService.instance.backupIfDue(pets.pets));
 }
 
 Future<void> _startAlarms(PetsState pets) async {

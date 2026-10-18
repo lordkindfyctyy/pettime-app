@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:googleapis/calendar/v3.dart' as gcal;
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-import '../config.dart';
 import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
 import '../models/vet_visit.dart';
+import 'drive_backup_service.dart';
+import 'google_account.dart';
 
 /// Mirrors medications (recurring events) and vet visits (single events) into
 /// the user's primary Google Calendar.
@@ -25,7 +25,6 @@ class CalendarService extends ChangeNotifier {
   static const _visitDuration = Duration(hours: 1);
   static const _doseDuration = Duration(minutes: 15);
 
-  bool _initialized = false;
   bool _enabled = false;
   bool get enabled => _enabled;
 
@@ -42,22 +41,18 @@ class CalendarService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _ensureInitialized() async {
-    if (_initialized) return;
-    await GoogleSignIn.instance.initialize(serverClientId: googleServerClientId);
-    _initialized = true;
-  }
-
   /// Signs in, asks for the Calendar permission and turns syncing on.
   Future<void> enable() async {
-    await _ensureInitialized();
-    final account = await GoogleSignIn.instance.authenticate();
-    await account.authorizationClient.authorizeScopes(_scopes);
+    await GoogleAccount.instance.connect(_scopes);
     await _setEnabled(true);
   }
 
+  /// Turns syncing off; signs out unless the Drive backup still uses the
+  /// account.
   Future<void> disable() async {
-    if (_initialized) await GoogleSignIn.instance.signOut();
+    if (!DriveBackupService.instance.enabled) {
+      await GoogleAccount.instance.signOut();
+    }
     await _setEnabled(false);
   }
 
@@ -70,10 +65,7 @@ class CalendarService extends ChangeNotifier {
 
   Future<gcal.CalendarApi?> _api() async {
     if (!_enabled) return null;
-    await _ensureInitialized();
-    final account = await GoogleSignIn.instance.attemptLightweightAuthentication();
-    if (account == null) return null;
-    final auth = await account.authorizationClient.authorizationForScopes(_scopes);
+    final auth = await GoogleAccount.instance.authorization(_scopes);
     if (auth == null) return null;
     return gcal.CalendarApi(auth.authClient(scopes: _scopes));
   }

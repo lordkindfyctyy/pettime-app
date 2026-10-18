@@ -9,6 +9,7 @@ import 'package:pettime_app/models/medication.dart';
 import 'package:pettime_app/models/pet.dart';
 import 'package:pettime_app/models/vet_visit.dart';
 import 'package:pettime_app/services/backup_service.dart';
+import 'package:pettime_app/services/drive_backup_service.dart';
 import 'package:pettime_app/state/pets_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -98,6 +99,13 @@ void main() {
     final otherZip = ZipEncoder().encodeBytes(
         Archive()..addFile(ArchiveFile.bytes('hola.txt', utf8.encode('hola'))));
     expect(() => BackupService.readZip(otherZip, dir), throwsFormatException);
+  });
+
+  test('la copia en Drive se renueva una vez por día', () {
+    final now = DateTime(2026, 10, 18, 9);
+    expect(DriveBackupService.isDue(null, now), isTrue);
+    expect(DriveBackupService.isDue(DateTime(2026, 10, 17, 22), now), isFalse);
+    expect(DriveBackupService.isDue(DateTime(2026, 10, 17, 9), now), isTrue);
   });
 
   test('nombre del archivo con la fecha', () {
