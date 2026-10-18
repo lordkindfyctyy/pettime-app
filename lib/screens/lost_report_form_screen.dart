@@ -156,13 +156,20 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
           children: [
             SegmentedButton<ReportKind>(
               segments: const [
+                // Short labels that shrink instead of wrapping with a big font.
                 ButtonSegment(
                   value: ReportKind.lost,
-                  label: Text('Se perdió mi mascota'),
+                  label: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Se perdió', maxLines: 1, softWrap: false),
+                  ),
                 ),
                 ButtonSegment(
                   value: ReportKind.found,
-                  label: Text('Encontré una mascota'),
+                  label: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('La encontré', maxLines: 1, softWrap: false),
+                  ),
                 ),
               ],
               selected: {_kind},

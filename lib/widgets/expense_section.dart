@@ -291,24 +291,35 @@ class ExpenseSection extends StatelessWidget {
             for (final (category, total) in categories)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
+                // Name and amount on one line and the bar under them, so
+                // "Peluquería" fits whole even with a big font.
+                child: Column(
                   children: [
-                    Icon(expenseIcon(category), size: 18, color: Brand.teal),
-                    const SizedBox(width: 8),
-                    SizedBox(width: 92, child: Text(category.label)),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: total / top,
-                          minHeight: 8,
-                          color: Brand.teal,
-                          backgroundColor: Brand.teal.withValues(alpha: 0.12),
+                    Row(
+                      children: [
+                        Icon(expenseIcon(category), size: 18, color: Brand.teal),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            category.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
+                        const SizedBox(width: 8),
+                        Text(formatMoney(total)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: total / top,
+                        minHeight: 8,
+                        color: Brand.teal,
+                        backgroundColor: Brand.teal.withValues(alpha: 0.12),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(formatMoney(total)),
                   ],
                 ),
               ),

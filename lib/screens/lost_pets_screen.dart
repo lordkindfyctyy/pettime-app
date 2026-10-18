@@ -64,11 +64,11 @@ class _LostPetsScreenState extends State<LostPetsScreen> {
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
             child: SegmentedButton<ReportKind?>(
               segments: const [
-                ButtonSegment(value: null, label: Text('Todas')),
-                ButtonSegment(value: ReportKind.lost, label: Text('Perdidas')),
+                ButtonSegment(value: null, label: _OneLine('Todas')),
+                ButtonSegment(value: ReportKind.lost, label: _OneLine('Perdidas')),
                 ButtonSegment(
                   value: ReportKind.found,
-                  label: Text('Encontradas'),
+                  label: _OneLine('Encontradas'),
                 ),
               ],
               selected: {_kind},
@@ -129,6 +129,20 @@ class _LostPetsScreenState extends State<LostPetsScreen> {
       ),
     );
   }
+}
+
+/// A segment label that never wraps: with a big font it shrinks a little
+/// instead of breaking a word ("Encontra-das").
+class _OneLine extends StatelessWidget {
+  const _OneLine(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(text, maxLines: 1, softWrap: false),
+      );
 }
 
 class _Message extends StatelessWidget {
