@@ -11,6 +11,7 @@ import '../state/pets_state.dart';
 import '../theme.dart';
 import '../widgets/health_booklet.dart';
 import '../widgets/pet_avatar.dart';
+import '../widgets/supply_section.dart';
 import 'pet_detail_screen.dart';
 
 /// Everything for today, of every pet: the doses (with a button to mark them
@@ -61,6 +62,7 @@ class _TodayScreenState extends State<TodayScreen> {
     final doses = dosesOfDay(pets, now);
     final visits = visitsOfDay(pets, now);
     final due = recordsDueSoon(pets, now);
+    final restock = suppliesToRestock(pets, now);
     final theme = Theme.of(context);
     final hm = DateFormat.Hm('es');
     final dayMonth = DateFormat.yMMMd('es');
@@ -131,6 +133,20 @@ class _TodayScreenState extends State<TodayScreen> {
             if (v.reason.isNotEmpty) v.reason,
           ].join(' · ')),
           onTap: () => _openPet(pet.id),
+        ));
+      }
+    }
+
+    if (restock.isNotEmpty) {
+      children.add(header(
+        'Por reponer',
+        Icons.shopping_basket_outlined,
+        Brand.orange,
+      ));
+      for (final (pet, s) in restock) {
+        children.add(Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: SupplyCard(pet: pet, supply: s, now: now),
         ));
       }
     }

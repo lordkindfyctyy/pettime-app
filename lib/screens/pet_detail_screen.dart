@@ -10,6 +10,7 @@ import '../theme.dart';
 import '../widgets/health_booklet.dart';
 import '../widgets/medication_card.dart';
 import '../widgets/pet_avatar.dart';
+import '../widgets/supply_section.dart';
 import '../widgets/weight_section.dart';
 import 'medication_form_screen.dart';
 import 'pet_form_screen.dart';
@@ -124,6 +125,31 @@ class PetDetailScreen extends StatelessWidget {
             ],
           ),
           WeightSection(pet: pet),
+          const Divider(height: 32),
+          Row(
+            children: [
+              const Expanded(
+                child: SectionTitle(
+                  text: 'Reposición',
+                  icon: Icons.shopping_basket_outlined,
+                  color: Brand.orange,
+                ),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Agregar'),
+                onPressed: () => openSupplyForm(context, pet.id),
+              ),
+            ],
+          ),
+          if (pet.supplies.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Cargá el alimento o los remedios y te avisamos antes de que se terminen',
+              ),
+            ),
+          for (final s in pet.supplies) SupplyCard(pet: pet, supply: s),
           const Divider(height: 32),
           Row(
             children: [

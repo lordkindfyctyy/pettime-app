@@ -9,6 +9,7 @@ import 'screens/home_screen.dart';
 import 'services/calendar_service.dart';
 import 'services/drive_backup_service.dart';
 import 'services/notification_service.dart';
+import 'services/shop_settings.dart';
 import 'state/pets_state.dart';
 import 'theme.dart';
 
@@ -19,6 +20,7 @@ Future<void> main() async {
   await pets.load();
   await CalendarService.instance.load();
   await DriveBackupService.instance.load();
+  await ShopSettings.instance.load();
   NotificationService.instance.onDoseGiven =
       (petId, medId) => pets.logDose(petId, medId);
   runApp(

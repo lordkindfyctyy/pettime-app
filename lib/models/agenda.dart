@@ -1,6 +1,7 @@
 import 'health_record.dart';
 import 'medication.dart';
 import 'pet.dart';
+import 'supply.dart';
 import 'vet_visit.dart';
 
 /// One scheduled dose of a medication on the "Hoy" screen.
@@ -93,5 +94,16 @@ List<(Pet, HealthRecord)> recordsDueSoon(
       for (final r in pendingRecords(pet.records))
         if (daysUntil(r.nextDue!, now) <= withinDays) (pet, r),
   ]..sort((a, b) => a.$2.nextDue!.compareTo(b.$2.nextDue!));
+  return list;
+}
+
+/// Food and medicines that are running out (within their warning days) or
+/// already ran out, soonest first.
+List<(Pet, Supply)> suppliesToRestock(Iterable<Pet> pets, DateTime now) {
+  final list = [
+    for (final pet in pets)
+      for (final s in pet.supplies)
+        if (s.needsRestock(now)) (pet, s),
+  ]..sort((a, b) => a.$2.runsOutOn.compareTo(b.$2.runsOutOn));
   return list;
 }

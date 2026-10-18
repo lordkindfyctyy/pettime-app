@@ -5,6 +5,7 @@ import '../models/weight_entry.dart';
 import '../services/calendar_service.dart';
 import '../state/pets_state.dart';
 import '../widgets/pet_avatar.dart';
+import '../widgets/supply_section.dart';
 import 'backup_screen.dart';
 import 'pet_detail_screen.dart';
 import 'pet_form_screen.dart';
@@ -78,6 +79,14 @@ class PetsScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (_) => const BackupScreen()),
                 ),
+              ),
+              PopupMenuItem(
+                child: const ListTile(
+                  leading: Icon(Icons.storefront_outlined),
+                  title: Text('Pet shop para pedidos'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onTap: () => showShopSettingsDialog(context),
               ),
             ],
           ),

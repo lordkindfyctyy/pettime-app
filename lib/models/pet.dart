@@ -1,5 +1,6 @@
 import 'health_record.dart';
 import 'medication.dart';
+import 'supply.dart';
 import 'vet_visit.dart';
 import 'weight_entry.dart';
 
@@ -17,10 +18,12 @@ class Pet {
     List<VetVisit>? visits,
     List<HealthRecord>? records,
     List<WeightEntry>? weights,
+    List<Supply>? supplies,
   })  : medications = medications ?? [],
         visits = visits ?? [],
         records = records ?? [],
-        weights = weights ?? [];
+        weights = weights ?? [],
+        supplies = supplies ?? [];
 
   final String id;
   final String name;
@@ -43,6 +46,9 @@ class Pet {
 
   /// The latest weighing, or null when it was never weighed.
   WeightEntry? get currentWeight => weights.isEmpty ? null : weights.last;
+
+  /// Food, medicines… that run out and have to be bought again.
+  final List<Supply> supplies;
 
   /// Age as a short Spanish label, or null when the birth date is unknown.
   String? ageLabel([DateTime? now]) {
@@ -74,6 +80,7 @@ class Pet {
     List<VetVisit>? visits,
     List<HealthRecord>? records,
     List<WeightEntry>? weights,
+    List<Supply>? supplies,
   }) {
     return Pet(
       id: id,
@@ -88,6 +95,7 @@ class Pet {
       visits: visits ?? this.visits,
       records: records ?? this.records,
       weights: weights ?? this.weights,
+      supplies: supplies ?? this.supplies,
     );
   }
 
@@ -104,6 +112,7 @@ class Pet {
         'visits': visits.map((v) => v.toJson()).toList(),
         'records': records.map((r) => r.toJson()).toList(),
         'weights': weights.map((w) => w.toJson()).toList(),
+        'supplies': supplies.map((s) => s.toJson()).toList(),
       };
 
   factory Pet.fromJson(Map<String, dynamic> json) => Pet(
@@ -130,5 +139,8 @@ class Pet {
             .map((w) => WeightEntry.fromJson(w as Map<String, dynamic>))
             .toList()
           ..sort((a, b) => a.date.compareTo(b.date)),
+        supplies: (json['supplies'] as List? ?? [])
+            .map((s) => Supply.fromJson(s as Map<String, dynamic>))
+            .toList(),
       );
 }

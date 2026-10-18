@@ -13,6 +13,7 @@ import 'package:timezone/timezone.dart' as tz;
 import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
+import '../models/supply.dart';
 import '../state/pets_state.dart';
 
 const _doseGivenAction = 'dose_given';
@@ -449,6 +450,87 @@ class NotificationService {
     }
   }
 
+  // ---- Restocking (food, medicines that run out) ----
+
+  /// Reminders still ahead for the pet's supplies: (supply, runs out today,
+  /// time, notification id). One on the warning day and one on the day it
+  /// runs out, at [reminderHour].
+  static List<(Supply, bool, DateTime, int)> plannedSupplyReminders(
+    Pet pet,
+    DateTime now,
+  ) {
+    final planned = <(Supply, bool, DateTime, int)>[];
+    for (final s in pet.supplies) {
+      final base = baseId('sup:${s.id}');
+      for (final (slot, day) in [s.warnOn, s.runsOutOn].indexed) {
+        final at = DateTime(day.year, day.month, day.day, reminderHour);
+        if (at.isAfter(now)) planned.add((s, slot == 1, at, base + slot));
+      }
+    }
+    return planned;
+  }
+
+  static String supplyTitle(Pet pet, Supply s) =>
+      'Reponer ${s.kind.label.toLowerCase()} de ${pet.name}';
+
+  static String supplyBody(Pet pet, Supply s, bool runsOutToday) =>
+      runsOutToday
+          ? 'Hoy se termina ${s.name}. Pedilo desde PetTime.'
+          : 'Quedan unos ${s.warnDaysBefore} días de ${s.name}. Pedilo desde PetTime.';
+
+  /// Reschedules the restocking reminders of the pet and removes the ones of
+  /// supplies that were edited, restocked or deleted.
+  Future<void> scheduleSupplies(Pet pet, {Iterable<String> removedIds = const []}) async {
+    if (!_ready) return;
+    final keep = {for (final p in plannedSupplyReminders(pet, DateTime.now())) p.$4};
+    final bases = [
+      for (final s in pet.supplies) baseId('sup:${s.id}'),
+      for (final id in removedIds) baseId('sup:$id'),
+    ];
+    for (final id in await _pendingIds()) {
+      if (bases.any((b) => _isSlotOf(id, b)) && !keep.contains(id)) {
+        await _plugin.cancel(id: id);
+      }
+    }
+    await _scheduleSupplies(pet, alreadyPending: const {});
+  }
+
+  Future<void> _scheduleSupplies(
+    Pet pet, {
+    required Set<int> alreadyPending,
+  }) async {
+    final planned = plannedSupplyReminders(pet, DateTime.now());
+    if (planned.every((p) => alreadyPending.contains(p.$4))) return;
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    final exact = await android?.canScheduleExactNotifications() ?? true;
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'restock',
+        'Reposición',
+        channelDescription: 'Avisos de alimento y remedios por terminarse',
+        color: const Color(0xFFE53935),
+        importance: Importance.high,
+        priority: Priority.high,
+        largeIcon: _existingBitmap(pet.photoPath),
+      ),
+      iOS: const DarwinNotificationDetails(),
+    );
+    for (final (s, today, at, id) in planned) {
+      if (alreadyPending.contains(id)) continue;
+      await _plugin.zonedSchedule(
+        id: id,
+        title: supplyTitle(pet, s),
+        body: supplyBody(pet, s, today),
+        scheduledDate: tz.TZDateTime.from(at, tz.local),
+        notificationDetails: details,
+        androidScheduleMode: exact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    }
+  }
+
   /// Brings the pending alarms in line with the data when the app starts:
   /// removes the ones that no longer belong to any medication or health record
   /// and adds only the missing ones (each add or cancel is a slow call into
@@ -463,6 +545,7 @@ class NotificationService {
         for (final med in pet.medications)
           for (final (_, id, _) in plannedFollowUps(med, now)) id,
         for (final p in plannedRecordReminders(pet, now)) p.$4,
+        for (final p in plannedSupplyReminders(pet, now)) p.$4,
       ],
     };
     final pending = await _pendingIds();
@@ -475,6 +558,7 @@ class NotificationService {
         await _scheduleFollowUps(pet, med, alreadyPending: pending);
       }
       await _scheduleRecords(pet, alreadyPending: pending);
+      await _scheduleSupplies(pet, alreadyPending: pending);
     }
   }
 }

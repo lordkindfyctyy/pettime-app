@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
+import '../models/supply.dart';
 import '../models/vet_visit.dart';
 import '../models/weight_entry.dart';
 import '../services/calendar_service.dart';
@@ -106,6 +107,7 @@ class PetsState extends ChangeNotifier {
         await NotificationService.instance.scheduleMedication(pet, med);
       }
       await NotificationService.instance.scheduleRecords(pet);
+      await NotificationService.instance.scheduleSupplies(pet);
       await CalendarService.instance.syncPet(pet);
     });
   }
@@ -123,6 +125,12 @@ class PetsState extends ChangeNotifier {
       }
       for (final visit in pet?.visits ?? const <VetVisit>[]) {
         await CalendarService.instance.deleteVisit(visit.id);
+      }
+      if (pet != null && pet.supplies.isNotEmpty) {
+        await NotificationService.instance.scheduleSupplies(
+          pet.copyWith(supplies: []),
+          removedIds: [for (final s in pet.supplies) s.id],
+        );
       }
       if (pet != null && pet.records.isNotEmpty) {
         final ids = [for (final r in pet.records) r.id];
@@ -203,6 +211,44 @@ class PetsState extends ChangeNotifier {
       visits: pet.visits.where((v) => v.id != visitId).toList(),
     ));
     _background(() => CalendarService.instance.deleteVisit(visitId));
+  }
+
+  /// Adds or edits a supply (food, medicine…) and its restocking reminders.
+  Future<void> saveSupply(String petId, Supply supply) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final supplies = [...pet.supplies];
+    final i = supplies.indexWhere((s) => s.id == supply.id);
+    if (i == -1) {
+      supplies.add(supply);
+    } else {
+      supplies[i] = supply;
+    }
+    final updated = pet.copyWith(supplies: supplies);
+    await _store(updated);
+    _background(() => NotificationService.instance.scheduleSupplies(updated));
+  }
+
+  /// A new package was opened today.
+  Future<void> restock(String petId, String supplyId, [DateTime? on]) async {
+    final s = byId(petId)?.supplies.where((s) => s.id == supplyId).firstOrNull;
+    if (s == null) return;
+    final day = on ?? DateTime.now();
+    await saveSupply(
+      petId,
+      s.copyWith(openedOn: DateTime(day.year, day.month, day.day)),
+    );
+  }
+
+  Future<void> deleteSupply(String petId, String supplyId) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final updated = pet.copyWith(
+      supplies: pet.supplies.where((s) => s.id != supplyId).toList(),
+    );
+    await _store(updated);
+    _background(() => NotificationService.instance
+        .scheduleSupplies(updated, removedIds: [supplyId]));
   }
 
   /// Adds a weighing, keeping them by date. Weights don't touch alarms or
