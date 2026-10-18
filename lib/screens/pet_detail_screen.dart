@@ -14,6 +14,7 @@ import '../services/shop_settings.dart';
 import '../services/vet_report.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
+import '../widgets/expense_section.dart';
 import '../widgets/health_booklet.dart';
 import '../widgets/medication_card.dart';
 import '../widgets/pet_avatar.dart';
@@ -192,6 +193,24 @@ class PetDetailScreen extends StatelessWidget {
               ),
             ),
           for (final s in pet.supplies) SupplyCard(pet: pet, supply: s),
+          const Divider(height: 32),
+          Row(
+            children: [
+              const Expanded(
+                child: SectionTitle(
+                  text: 'Gastos',
+                  icon: Icons.payments_outlined,
+                  color: Brand.orange,
+                ),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Gasto'),
+                onPressed: () => showExpenseDialog(context, pet),
+              ),
+            ],
+          ),
+          ExpenseSection(pet: pet),
           const Divider(height: 32),
           Row(
             children: [

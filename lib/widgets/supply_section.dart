@@ -3,12 +3,14 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/expense.dart';
 import '../models/pet.dart';
 import '../models/supply.dart';
 import '../screens/supply_form_screen.dart';
 import '../services/shop_settings.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
+import 'expense_section.dart';
 
 void openSupplyForm(BuildContext context, String petId, {Supply? supply}) {
   Navigator.push(
@@ -111,6 +113,27 @@ class SupplyCard extends StatelessWidget {
   final Supply supply;
   final DateTime? now;
 
+  /// Starts a new package and offers to note what it cost.
+  Future<void> _restock(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    await context.read<PetsState>().restock(pet.id, supply.id);
+    messenger.showSnackBar(SnackBar(
+      content: Text('Paquete nuevo de ${supply.name}'),
+      action: SnackBarAction(
+        label: 'Anotar gasto',
+        onPressed: () {
+          if (!context.mounted) return;
+          showExpenseDialog(
+            context,
+            pet,
+            category: ExpenseCategory.ofSupply(supply.kind),
+            note: supply.name,
+          );
+        },
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final at = now ?? DateTime.now();
@@ -164,8 +187,7 @@ class SupplyCard extends StatelessWidget {
                   TextButton.icon(
                     icon: const Icon(Icons.autorenew),
                     label: const Text('Repuse'),
-                    onPressed: () =>
-                        context.read<PetsState>().restock(pet.id, supply.id),
+                    onPressed: () => _restock(context),
                   ),
                   TextButton.icon(
                     icon: const Icon(Icons.chat_outlined),

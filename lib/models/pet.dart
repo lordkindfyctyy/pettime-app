@@ -1,3 +1,4 @@
+import 'expense.dart';
 import 'health_record.dart';
 import 'medication.dart';
 import 'supply.dart';
@@ -19,11 +20,13 @@ class Pet {
     List<HealthRecord>? records,
     List<WeightEntry>? weights,
     List<Supply>? supplies,
+    List<Expense>? expenses,
   })  : medications = medications ?? [],
         visits = visits ?? [],
         records = records ?? [],
         weights = weights ?? [],
-        supplies = supplies ?? [];
+        supplies = supplies ?? [],
+        expenses = expenses ?? [];
 
   final String id;
   final String name;
@@ -49,6 +52,9 @@ class Pet {
 
   /// Food, medicines… that run out and have to be bought again.
   final List<Supply> supplies;
+
+  /// Money spent on it, newest first.
+  final List<Expense> expenses;
 
   /// Age as a short Spanish label, or null when the birth date is unknown.
   String? ageLabel([DateTime? now]) {
@@ -81,6 +87,7 @@ class Pet {
     List<HealthRecord>? records,
     List<WeightEntry>? weights,
     List<Supply>? supplies,
+    List<Expense>? expenses,
   }) {
     return Pet(
       id: id,
@@ -96,6 +103,7 @@ class Pet {
       records: records ?? this.records,
       weights: weights ?? this.weights,
       supplies: supplies ?? this.supplies,
+      expenses: expenses ?? this.expenses,
     );
   }
 
@@ -113,6 +121,7 @@ class Pet {
         'records': records.map((r) => r.toJson()).toList(),
         'weights': weights.map((w) => w.toJson()).toList(),
         'supplies': supplies.map((s) => s.toJson()).toList(),
+        'expenses': expenses.map((e) => e.toJson()).toList(),
       };
 
   factory Pet.fromJson(Map<String, dynamic> json) => Pet(
@@ -142,5 +151,9 @@ class Pet {
         supplies: (json['supplies'] as List? ?? [])
             .map((s) => Supply.fromJson(s as Map<String, dynamic>))
             .toList(),
+        expenses: (json['expenses'] as List? ?? [])
+            .map((e) => Expense.fromJson(e as Map<String, dynamic>))
+            .toList()
+          ..sort((a, b) => b.date.compareTo(a.date)),
       );
 }

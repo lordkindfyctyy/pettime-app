@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../models/expense.dart';
 import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
@@ -268,6 +269,25 @@ class PetsState extends ChangeNotifier {
     if (pet == null) return;
     await _store(pet.copyWith(
       weights: pet.weights.where((w) => w.id != entryId).toList(),
+    ));
+  }
+
+  /// Adds an expense, or replaces the one with the same id; newest first.
+  Future<void> saveExpense(String petId, Expense expense) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final expenses = [
+      ...pet.expenses.where((e) => e.id != expense.id),
+      expense,
+    ]..sort((a, b) => b.date.compareTo(a.date));
+    await _store(pet.copyWith(expenses: expenses));
+  }
+
+  Future<void> deleteExpense(String petId, String expenseId) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    await _store(pet.copyWith(
+      expenses: pet.expenses.where((e) => e.id != expenseId).toList(),
     ));
   }
 
