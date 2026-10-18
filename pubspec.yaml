@@ -102,3 +102,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# shared_preferences_android 2.5.0 (Pigeon JNI) no arranca en Android: la app
+# queda en la pantalla de inicio con NoSuchMethodError
+# SharedPreferencesApiRegistrar.getAll. Fijamos la última versión anterior
+# hasta que salga un arreglo.
+dependency_overrides:
+  shared_preferences_android: 2.4.28
