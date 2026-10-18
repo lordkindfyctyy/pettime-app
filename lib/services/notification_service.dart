@@ -73,6 +73,7 @@ class NotificationService {
       'medication',
       'Medicación',
       channelDescription: 'Avisos para dar la medicación a tus mascotas',
+      color: const Color(0xFFE53935),
       importance: Importance.high,
       priority: Priority.high,
       largeIcon: petPhoto,
@@ -111,7 +112,7 @@ class NotificationService {
     tz.setLocalLocation(tz.getLocation(zone.identifier));
     await _plugin.initialize(
       settings: const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        android: AndroidInitializationSettings('@drawable/ic_stat_pettime'),
         iOS: DarwinInitializationSettings(),
       ),
       onDidReceiveNotificationResponse: (response) {
@@ -307,6 +308,7 @@ class NotificationService {
         'health',
         'Vacunas y antiparasitarios',
         channelDescription: 'Avisos de vacunas y antiparasitarios por vencer',
+        color: const Color(0xFFE53935),
         importance: Importance.high,
         priority: Priority.high,
         largeIcon: _existingBitmap(pet.photoPath),

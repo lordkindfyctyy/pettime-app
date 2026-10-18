@@ -1,0 +1,26 @@
+  <!-- Cruz roja -->
+  <path d="M402 92 H622 A60 60 0 0 1 682 152 V342 H872 A60 60 0 0 1 932 402 V622 A60 60 0 0 1 872 682 H682 V872 A60 60 0 0 1 622 932 H402 A60 60 0 0 1 342 872 V682 H152 A60 60 0 0 1 92 622 V402 A60 60 0 0 1 152 342 H342 V152 A60 60 0 0 1 402 92 Z" fill="#E53935"/>
+  <g transform="translate(520 540) scale(1.22) translate(-520 -540)" stroke="#3E2723" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Gato -->
+    <path d="M336 520 L350 392 L420 452 Z" fill="#FFB74D"/>
+    <path d="M500 520 L486 392 L416 452 Z" fill="#FFB74D"/>
+    <circle cx="418" cy="560" r="100" fill="#FFB74D"/>
+    <path d="M366 420 L372 470 L400 452 Z" fill="#FFE0B2" stroke="none"/>
+    <path d="M470 420 L464 470 L436 452 Z" fill="#FFE0B2" stroke="none"/>
+    <ellipse cx="386" cy="548" rx="11" ry="18" fill="#3E2723" stroke="none"/>
+    <ellipse cx="450" cy="548" rx="11" ry="18" fill="#3E2723" stroke="none"/>
+    <path d="M406 584 H430 L418 598 Z" fill="#F06292" stroke-width="6"/>
+    <path d="M418 598 Q418 614 402 616 M418 598 Q418 614 434 616" fill="none" stroke-width="7"/>
+    <path d="M330 584 L380 590 M332 610 L380 602 M506 584 L456 590 M504 610 L456 602" fill="none" stroke-width="6"/>
+    <!-- Perro -->
+    <circle cx="622" cy="566" r="104" fill="#FFF3E0"/>
+    <ellipse cx="530" cy="548" rx="36" ry="78" fill="#8D6E63" transform="rotate(18 530 548)"/>
+    <ellipse cx="714" cy="548" rx="36" ry="78" fill="#8D6E63" transform="rotate(-18 714 548)"/>
+    <ellipse cx="652" cy="528" rx="30" ry="26" fill="#BCAAA4" stroke="none"/>
+    <circle cx="590" cy="552" r="13" fill="#3E2723" stroke="none"/>
+    <circle cx="654" cy="552" r="13" fill="#3E2723" stroke="none"/>
+    <ellipse cx="622" cy="612" rx="46" ry="34" fill="#FFFFFF"/>
+    <ellipse cx="622" cy="594" rx="20" ry="14" fill="#3E2723" stroke="none"/>
+    <path d="M622 608 V626 M622 626 Q608 640 596 630 M622 626 Q636 640 648 630" fill="none" stroke-width="7"/>
+    <path d="M610 640 Q622 668 634 640 Z" fill="#F06292" stroke-width="6"/>
+  </g>

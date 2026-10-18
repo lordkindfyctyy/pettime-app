@@ -6,6 +6,7 @@ import '../models/medication.dart';
 import '../models/vet_visit.dart';
 import '../services/maps_service.dart';
 import '../state/pets_state.dart';
+import '../theme.dart';
 import '../widgets/health_booklet.dart';
 import '../widgets/medication_card.dart';
 import '../widgets/pet_avatar.dart';
@@ -97,7 +98,7 @@ class PetDetailScreen extends StatelessWidget {
         children: [
           Center(child: PetAvatar(pet: pet, radius: 56)),
           const SizedBox(height: 16),
-          Text('Ficha', style: theme.textTheme.titleMedium),
+          const SectionTitle(text: 'Ficha', icon: Icons.pets, color: Brand.teal),
           const SizedBox(height: 8),
           row('Especie', pet.species),
           row('Raza', pet.breed),
@@ -108,7 +109,11 @@ class PetDetailScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Medicación', style: theme.textTheme.titleMedium),
+                child: SectionTitle(
+                  text: 'Medicación',
+                  icon: Icons.medication_outlined,
+                  color: Brand.red,
+                ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),
@@ -133,9 +138,10 @@ class PetDetailScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  'Vacunas y antiparasitarios',
-                  style: theme.textTheme.titleMedium,
+                child: SectionTitle(
+                  text: 'Vacunas y antiparasitarios',
+                  icon: Icons.vaccines_outlined,
+                  color: Brand.orange,
                 ),
               ),
               TextButton.icon(
@@ -150,7 +156,11 @@ class PetDetailScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Turnos', style: theme.textTheme.titleMedium),
+                child: SectionTitle(
+                  text: 'Turnos',
+                  icon: Icons.event_outlined,
+                  color: Brand.teal,
+                ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),

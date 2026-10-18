@@ -8,6 +8,7 @@ import '../models/agenda.dart';
 import '../models/health_record.dart';
 import '../models/vet_visit.dart';
 import '../state/pets_state.dart';
+import '../theme.dart';
 import '../widgets/health_booklet.dart';
 import '../widgets/pet_avatar.dart';
 import 'pet_detail_screen.dart';
@@ -64,9 +65,9 @@ class _TodayScreenState extends State<TodayScreen> {
     final hm = DateFormat.Hm('es');
     final dayMonth = DateFormat.yMMMd('es');
 
-    Widget header(String text) => Padding(
+    Widget header(String text, IconData icon, Color color) => Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-          child: Text(text, style: theme.textTheme.titleMedium),
+          child: SectionTitle(text: text, icon: icon, color: color),
         );
 
     final children = <Widget>[];
@@ -74,6 +75,8 @@ class _TodayScreenState extends State<TodayScreen> {
       final left = doses.where((d) => !d.given).length;
       children.add(header(
         left == 0 ? 'Medicación · todo dado ✓' : 'Medicación · faltan $left',
+        Icons.medication_outlined,
+        Brand.red,
       ));
       for (final d in doses) {
         final missed = d.missed(now);
@@ -114,7 +117,7 @@ class _TodayScreenState extends State<TodayScreen> {
     }
 
     if (visits.isNotEmpty) {
-      children.add(header('Turnos de hoy'));
+      children.add(header('Turnos de hoy', Icons.event_outlined, Brand.teal));
       for (final (pet, v) in visits) {
         children.add(ListTile(
           leading: Icon(
@@ -133,7 +136,11 @@ class _TodayScreenState extends State<TodayScreen> {
     }
 
     if (due.isNotEmpty) {
-      children.add(header('Vacunas y antiparasitarios'));
+      children.add(header(
+        'Vacunas y antiparasitarios',
+        Icons.vaccines_outlined,
+        Brand.orange,
+      ));
       for (final (pet, r) in due) {
         children.add(ListTile(
           leading: Icon(healthIcon(r.kind)),
@@ -167,7 +174,9 @@ class _TodayScreenState extends State<TodayScreen> {
               alignment: Alignment.centerLeft,
               child: Text(
                 title[0].toUpperCase() + title.substring(1),
-                style: theme.textTheme.bodyMedium,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
               ),
             ),
           ),

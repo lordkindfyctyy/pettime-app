@@ -10,6 +10,7 @@ import 'services/calendar_service.dart';
 import 'services/drive_backup_service.dart';
 import 'services/notification_service.dart';
 import 'state/pets_state.dart';
+import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,10 +47,7 @@ class PetTimeApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PetTime',
-      theme: ThemeData(
-        colorSchemeSeed: Colors.teal,
-        useMaterial3: true,
-      ),
+      theme: petTimeTheme(),
       locale: const Locale('es'),
       supportedLocales: const [Locale('es')],
       localizationsDelegates: const [

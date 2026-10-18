@@ -63,6 +63,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -112,3 +113,14 @@ flutter:
 # hasta que salga un arreglo.
 dependency_overrides:
   shared_preferences_android: 2.4.28
+
+# Ícono de la app (cruz roja con un perro y un gato). Se regenera con:
+#   dart run flutter_launcher_icons
+# assets/icon/icon.svg es el original.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icon/icon.png
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/icon/icon_foreground.png
+  remove_alpha_ios: true
