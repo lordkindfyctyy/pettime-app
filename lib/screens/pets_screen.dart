@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../services/calendar_service.dart';
 import '../state/pets_state.dart';
 import '../widgets/pet_avatar.dart';
+import 'backup_screen.dart';
 import 'pet_detail_screen.dart';
 import 'pet_form_screen.dart';
 
@@ -62,7 +63,24 @@ class PetsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis mascotas'),
-        actions: const [_CalendarButton()],
+        actions: [
+          const _CalendarButton(),
+          PopupMenuButton<void>(
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                child: const ListTile(
+                  leading: Icon(Icons.backup_outlined),
+                  title: Text('Copia de seguridad'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const BackupScreen()),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: pets.isEmpty
           ? const Center(child: Text('Todavía no agregaste ninguna mascota'))

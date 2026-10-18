@@ -198,6 +198,47 @@ class PetsState extends ChangeNotifier {
     _background(() => CalendarService.instance.deleteVisit(visitId));
   }
 
+  /// Replaces every pet with the ones of a backup. Alarms are rebuilt, and
+  /// the photos and Calendar events of what is no longer there are removed.
+  Future<void> replaceAll(List<Pet> pets) async {
+    final old = _pets;
+    _pets = [...pets];
+    await _save();
+    final newPhotos = {
+      for (final p in pets) ...[
+        p.photoPath,
+        for (final m in p.medications) m.photoPath,
+      ],
+    };
+    _background(() async {
+      for (final p in old) {
+        for (final path in [p.photoPath, for (final m in p.medications) m.photoPath]) {
+          if (!newPhotos.contains(path)) await PhotoService.instance.delete(path);
+        }
+      }
+      await NotificationService.instance.syncAll(_pets);
+      final calendar = CalendarService.instance;
+      final medIds = {for (final p in pets) for (final m in p.medications) m.id};
+      final visitIds = {for (final p in pets) for (final v in p.visits) v.id};
+      for (final p in old) {
+        for (final m in p.medications) {
+          if (!medIds.contains(m.id)) await calendar.deleteMedication(m.id);
+        }
+        for (final v in p.visits) {
+          if (!visitIds.contains(v.id)) await calendar.deleteVisit(v.id);
+        }
+        final gone = [
+          for (final r in p.records)
+            if (!pets.any((n) => n.records.any((x) => x.id == r.id))) r.id,
+        ];
+        if (gone.isNotEmpty) {
+          await calendar.syncRecords(p.copyWith(records: []), removedIds: gone);
+        }
+      }
+      await calendar.syncAll(_pets);
+    });
+  }
+
   /// Adds or edits an entry of the health booklet. A newer application of
   /// the same vaccine replaces the reminder of the older one, so all the
   /// pet's reminders are rebuilt.
