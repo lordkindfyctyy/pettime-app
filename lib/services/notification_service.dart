@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
@@ -40,9 +41,28 @@ Future<void> notificationBackgroundHandler(NotificationResponse response) async 
   await prefs.reload();
   final raw = prefs.getString(PetsState.storageKey);
   if (raw == null) return;
-  final updated =
-      PetsState.addDoseToJson(raw, parts[0], parts[1], DateTime.now());
-  if (updated != null) await prefs.setString(PetsState.storageKey, updated);
+  final now = DateTime.now();
+  final updated = PetsState.addDoseToJson(raw, parts[0], parts[1], now);
+  if (updated == null) return;
+  await prefs.setString(PetsState.storageKey, updated);
+
+  // The dose is given: the reminder for it must not go off.
+  final med = (jsonDecode(raw) as List)
+      .map((p) => Pet.fromJson(p as Map<String, dynamic>))
+      .where((p) => p.id == parts[0])
+      .expand((p) => p.medications)
+      .where((m) => m.id == parts[1])
+      .firstOrNull;
+  if (med == null) return;
+  final k = NotificationService.nearestDoseIndex(med, now);
+  try {
+    await FlutterLocalNotificationsPlugin().cancel(
+      id: NotificationService.followUpBaseId(med.id) +
+          k % NotificationService.slots,
+    );
+  } catch (e) {
+    debugPrint('Could not cancel the reminder: $e');
+  }
 }
 
 /// Schedules one local notification per upcoming dose of every medication.
@@ -58,7 +78,7 @@ class NotificationService {
   /// medication (10 days at every 6 h). The rest are added whenever the app
   /// is opened.
   static const dosesAhead = 40;
-  static const _slots = 64;
+  static const slots = 64;
 
   static FilePathAndroidBitmap? _existingBitmap(String? path) =>
       path != null && File(path).existsSync() ? FilePathAndroidBitmap(path) : null;
@@ -171,8 +191,8 @@ class NotificationService {
     return 'Es hora de darle ${med.name}$dose a ${pet.name}';
   }
 
-  /// Ids of the alarms of one medication: [baseId] plus a slot below [_slots].
-  static bool _isSlotOf(int id, int base) => id >= base && id < base + _slots;
+  /// Ids of the alarms of one medication: [baseId] plus a slot below [slots].
+  static bool _isSlotOf(int id, int base) => id >= base && id < base + slots;
 
   /// Which doses get an alarm: the next [dosesAhead] ones, up to the end of the
   /// treatment. Each is (dose number, notification id).
@@ -181,10 +201,107 @@ class NotificationService {
     final planned = <(int, int)>[];
     var k = med.nextDoseIndex(now);
     while (planned.length < dosesAhead && med.doseTimeIfActive(k) != null) {
-      planned.add((k, base + k % _slots));
+      planned.add((k, base + k % slots));
       k++;
     }
     return planned;
+  }
+
+  // ---- Reminder of a forgotten dose ----
+
+  /// If a dose is still not marked as given this long after its time, the
+  /// app reminds again.
+  static const followUpDelay = Duration(minutes: 30);
+
+  /// Each reminder is one more alarm, and Android allows few per app: only
+  /// the next ones get one (the rest are added when the app is opened).
+  static const followUpsAhead = 12;
+
+  static int followUpBaseId(String medicationId) => baseId('late:$medicationId');
+
+  /// Only for medications every hour or more, so the reminder comes before
+  /// the next dose.
+  static bool hasFollowUps(Medication med) =>
+      med.everyMinutes >= 2 * followUpDelay.inMinutes;
+
+  /// A dose given up to half an interval away from [time] counts for it.
+  static bool givenNear(Medication med, DateTime time) {
+    final half = Duration(minutes: med.everyMinutes ~/ 2);
+    return med.givenDoses.any((g) => g.difference(time).abs() <= half);
+  }
+
+  /// Number of the dose closest to [at] (the one a dose given then is for).
+  static int nearestDoseIndex(Medication med, DateTime at) {
+    final k = (at.difference(med.startsAt).inMinutes / med.everyMinutes).round();
+    return k < 0 ? 0 : k;
+  }
+
+  /// Reminders still to come for doses not given yet: (dose number, id, time).
+  static List<(int, int, DateTime)> plannedFollowUps(Medication med, DateTime now) {
+    if (!hasFollowUps(med)) return const [];
+    final base = followUpBaseId(med.id);
+    final planned = <(int, int, DateTime)>[];
+    var k = med.nextDoseIndex(now.subtract(followUpDelay));
+    for (var n = 0; n < followUpsAhead; n++, k++) {
+      final time = med.doseTimeIfActive(k);
+      if (time == null) break;
+      final at = time.add(followUpDelay);
+      if (at.isAfter(now) && !givenNear(med, time)) {
+        planned.add((k, base + k % slots, at));
+      }
+    }
+    return planned;
+  }
+
+  static String followUpBody(Pet pet, Medication med, DateTime doseTime) {
+    final dose = med.dose.isEmpty ? '' : ' (${med.dose})';
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '¿Ya le diste ${med.name}$dose a ${pet.name}? '
+        'Era a las ${two(doseTime.hour)}:${two(doseTime.minute)}';
+  }
+
+  /// Brings the reminders of one medication in line with its doses: removes
+  /// the ones of doses already given and adds the missing ones.
+  Future<void> syncFollowUps(Pet pet, Medication med) async {
+    if (!_ready) return;
+    final planned = plannedFollowUps(med, DateTime.now());
+    final keep = {for (final p in planned) p.$2};
+    final base = followUpBaseId(med.id);
+    final pending = await _pendingIds();
+    for (final id in pending) {
+      if (_isSlotOf(id, base) && !keep.contains(id)) await _plugin.cancel(id: id);
+    }
+    await _scheduleFollowUps(pet, med, alreadyPending: pending);
+  }
+
+  Future<void> _scheduleFollowUps(
+    Pet pet,
+    Medication med, {
+    required Set<int> alreadyPending,
+  }) async {
+    final planned = plannedFollowUps(med, DateTime.now());
+    if (planned.every((p) => alreadyPending.contains(p.$2))) return;
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    final exact = await android?.canScheduleExactNotifications() ?? true;
+    final details = NotificationDetails(
+      android: androidDetails(pet, med),
+      iOS: const DarwinNotificationDetails(),
+    );
+    for (final (k, id, at) in planned) {
+      if (alreadyPending.contains(id)) continue;
+      await _plugin.zonedSchedule(
+        id: id,
+        title: messageTitle(pet),
+        body: followUpBody(pet, med, med.doseTime(k)),
+        payload: payload(pet, med),
+        scheduledDate: tz.TZDateTime.from(at, tz.local),
+        notificationDetails: details,
+        androidScheduleMode: exact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    }
   }
 
   Future<Set<int>> _pendingIds() async =>
@@ -194,8 +311,9 @@ class NotificationService {
   Future<void> cancelMedication(String medicationId) async {
     if (!_ready) return;
     final base = baseId(medicationId);
+    final late = followUpBaseId(medicationId);
     for (final id in await _pendingIds()) {
-      if (_isSlotOf(id, base)) await _plugin.cancel(id: id);
+      if (_isSlotOf(id, base) || _isSlotOf(id, late)) await _plugin.cancel(id: id);
     }
   }
 
@@ -211,6 +329,7 @@ class NotificationService {
       }
     }
     await _schedule(pet, med, alreadyPending: const {});
+    await syncFollowUps(pet, med);
   }
 
   Future<void> _schedule(
@@ -341,6 +460,8 @@ class NotificationService {
       for (final pet in pets) ...[
         for (final med in pet.medications)
           for (final (_, id) in plannedDoses(med, now)) id,
+        for (final med in pet.medications)
+          for (final (_, id, _) in plannedFollowUps(med, now)) id,
         for (final p in plannedRecordReminders(pet, now)) p.$4,
       ],
     };
@@ -351,6 +472,7 @@ class NotificationService {
     for (final pet in pets) {
       for (final med in pet.medications) {
         await _schedule(pet, med, alreadyPending: pending);
+        await _scheduleFollowUps(pet, med, alreadyPending: pending);
       }
       await _scheduleRecords(pet, alreadyPending: pending);
     }

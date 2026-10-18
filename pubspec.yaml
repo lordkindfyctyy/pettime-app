@@ -114,7 +114,7 @@ flutter:
 dependency_overrides:
   shared_preferences_android: 2.4.28
 
-# Ícono de la app (cruz roja con un perro y un gato). Se regenera con:
+# Ícono de la app (cruz roja con una huella). Se regenera con:
 #   dart run flutter_launcher_icons
 # assets/icon/icon.svg es el original.
 flutter_launcher_icons:

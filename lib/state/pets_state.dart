@@ -165,13 +165,19 @@ class PetsState extends ChangeNotifier {
     final med = byId(petId)?.medications.where((m) => m.id == medId).firstOrNull;
     if (med == null) return;
     final doses = change(med.givenDoses)..sort();
-    // Doses given are not part of the alarm or the Calendar event.
-    await _store(byId(petId)!.copyWith(
+    // Doses given are not part of the alarm or the Calendar event, but they
+    // decide which "¿ya le diste…?" reminders are still needed.
+    final updatedMed = med.copyWith(givenDoses: doses);
+    final pet = byId(petId)!.copyWith(
       medications: [
         for (final m in byId(petId)!.medications)
-          m.id == medId ? med.copyWith(givenDoses: doses) : m,
+          m.id == medId ? updatedMed : m,
       ],
-    ));
+    );
+    await _store(pet);
+    _background(
+      () => NotificationService.instance.syncFollowUps(pet, updatedMed),
+    );
   }
 
   Future<void> saveVisit(String petId, VetVisit visit) async {
