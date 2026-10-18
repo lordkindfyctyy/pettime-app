@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -81,9 +81,21 @@ class _BackupScreenState extends State<BackupScreen> {
     return result.status != ShareResultStatus.dismissed;
   }
 
-  /// Opens Android's "save as" screen: Descargas, any folder, or Google
-  /// Drive, which shows up there as one more place.
+  static const _downloads = MethodChannel('pettime/downloads');
+
+  /// Saves the copy straight into Descargas (MainActivity.kt). Only on
+  /// phones older than Android 10 it opens the "save as" screen, which on
+  /// phones with little memory could leave an empty file.
   Future<bool> _saveToFolder(Uint8List bytes, String name) async {
+    final saved = await _downloads.invokeMethod<String>('save', {
+      'name': name,
+      'bytes': bytes,
+      'mime': 'application/zip',
+    });
+    if (saved != null) {
+      if (mounted) _toast('Copia guardada en Descargas: $saved');
+      return true;
+    }
     final uri = await FilePicker.saveFile(
       dialogTitle: 'Guardar la copia de PetTime',
       fileName: name,
@@ -272,7 +284,7 @@ class _BackupScreenState extends State<BackupScreen> {
           FilledButton.icon(
             onPressed: _busy ? null : () => _backup(_saveToFolder),
             icon: const Icon(Icons.save_alt),
-            label: const Text('Guardar en el celular o en Drive'),
+            label: const Text('Guardar en Descargas'),
           ),
           const SizedBox(height: 12),
           FilledButton.tonalIcon(
