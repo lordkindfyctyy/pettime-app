@@ -1,0 +1,197 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../models/agenda.dart';
+import '../models/health_record.dart';
+import '../models/vet_visit.dart';
+import '../state/pets_state.dart';
+import '../widgets/health_booklet.dart';
+import '../widgets/pet_avatar.dart';
+import 'pet_detail_screen.dart';
+
+/// Everything for today, of every pet: the doses (with a button to mark them
+/// as given), today's appointments and the vaccines or antiparasitics that
+/// are overdue or due within a week.
+class TodayScreen extends StatefulWidget {
+  const TodayScreen({super.key, this.clock});
+
+  /// Current time; tests pass a fixed one.
+  final DateTime Function()? clock;
+
+  @override
+  State<TodayScreen> createState() => _TodayScreenState();
+}
+
+class _TodayScreenState extends State<TodayScreen> {
+  Timer? _timer;
+
+  DateTime get _now => widget.clock?.call() ?? DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    // Doses go from "pending" to "late" as time passes.
+    if (widget.clock == null) {
+      _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _openPet(String petId) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PetDetailScreen(petId: petId)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<PetsState>();
+    final pets = state.pets;
+    final now = _now;
+    final doses = dosesOfDay(pets, now);
+    final visits = visitsOfDay(pets, now);
+    final due = recordsDueSoon(pets, now);
+    final theme = Theme.of(context);
+    final hm = DateFormat.Hm('es');
+    final dayMonth = DateFormat.yMMMd('es');
+
+    Widget header(String text) => Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+          child: Text(text, style: theme.textTheme.titleMedium),
+        );
+
+    final children = <Widget>[];
+    if (doses.isNotEmpty) {
+      final left = doses.where((d) => !d.given).length;
+      children.add(header(
+        left == 0 ? 'Medicación · todo dado ✓' : 'Medicación · faltan $left',
+      ));
+      for (final d in doses) {
+        final missed = d.missed(now);
+        final status = d.given
+            ? 'Dada a las ${hm.format(d.givenAt!)}'
+            : missed
+                ? 'Sin registrar'
+                : now.isAfter(d.time)
+                    ? 'Atrasada'
+                    : 'Pendiente';
+        final statusColor = d.given
+            ? Colors.green.shade700
+            : (missed || now.isAfter(d.time))
+                ? theme.colorScheme.error
+                : theme.colorScheme.onSurfaceVariant;
+        final dose = d.med.dose.isEmpty ? '' : ' (${d.med.dose})';
+        children.add(ListTile(
+          leading: PetAvatar(pet: d.pet),
+          title: Text('${hm.format(d.time)} · ${d.med.name}$dose'),
+          subtitle: Text.rich(TextSpan(children: [
+            TextSpan(text: '${d.pet.name} · '),
+            TextSpan(
+              text: status,
+              style: TextStyle(color: statusColor, fontWeight: FontWeight.w600),
+            ),
+          ])),
+          onTap: () => _openPet(d.pet.id),
+          trailing: d.given
+              ? Icon(Icons.check_circle, color: Colors.green.shade700)
+              : d.canGive(now)
+                  ? FilledButton.tonal(
+                      onPressed: () => state.logDose(d.pet.id, d.med.id, now),
+                      child: const Text('Dar'),
+                    )
+                  : null,
+        ));
+      }
+    }
+
+    if (visits.isNotEmpty) {
+      children.add(header('Turnos de hoy'));
+      for (final (pet, v) in visits) {
+        children.add(ListTile(
+          leading: Icon(
+            v.kind == AppointmentKind.vet
+                ? Icons.local_hospital_outlined
+                : Icons.content_cut,
+          ),
+          title: Text('${hm.format(v.date)} · ${v.kind.placeLabel}: ${v.clinic}'),
+          subtitle: Text([
+            pet.name,
+            if (v.reason.isNotEmpty) v.reason,
+          ].join(' · ')),
+          onTap: () => _openPet(pet.id),
+        ));
+      }
+    }
+
+    if (due.isNotEmpty) {
+      children.add(header('Vacunas y antiparasitarios'));
+      for (final (pet, r) in due) {
+        children.add(ListTile(
+          leading: Icon(healthIcon(r.kind)),
+          title: Text('${r.name} · ${pet.name}'),
+          subtitle: Text(
+            '${dayMonth.format(r.nextDue!)} · ${dueLabel(r.nextDue!, now)}',
+            style: TextStyle(
+              color: dueColor(context, r.nextDue!),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          onTap: () => _openPet(pet.id),
+          trailing: IconButton(
+            icon: const Icon(Icons.check_circle_outline),
+            tooltip: 'Registrar que se aplicó',
+            onPressed: () => openRecordForm(context, pet.id, repeatOf: r),
+          ),
+        ));
+      }
+    }
+
+    final title = DateFormat("EEEE d 'de' MMMM", 'es').format(now);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Hoy'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(24),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title[0].toUpperCase() + title.substring(1),
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+          ),
+        ),
+      ),
+      body: children.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  pets.isEmpty
+                      ? 'Agregá tu primera mascota en la pestaña Mascotas'
+                      : 'No hay nada para hoy 🎉',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
+            )
+          : ListView(
+              padding: EdgeInsets.only(
+                bottom: 16 + MediaQuery.viewPaddingOf(context).bottom,
+              ),
+              children: children,
+            ),
+    );
+  }
+}

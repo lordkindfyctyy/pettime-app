@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../config.dart';
+import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
 import '../models/vet_visit.dart';
@@ -138,6 +139,23 @@ class CalendarService extends ChangeNotifier {
       ..reminders = _popup(minutes: 60);
   }
 
+  static String recordTitle(Pet pet, HealthRecord r) =>
+      '${r.kind.label}: ${r.name} — ${pet.name}';
+
+  /// The due date of a vaccine or antiparasitic, at the hour of the app's own
+  /// reminder (which already alerts, so Calendar doesn't).
+  gcal.Event _recordEvent(Pet pet, HealthRecord r) {
+    final due = r.nextDue!;
+    final start = DateTime(due.year, due.month, due.day, 10);
+    return gcal.Event()
+      ..id = eventId('pr', r.id)
+      ..summary = recordTitle(pet, r)
+      ..description = r.notes
+      ..start = _time(start)
+      ..end = _time(start.add(_doseDuration))
+      ..reminders = _noReminders();
+  }
+
   gcal.EventDateTime _time(DateTime t) => gcal.EventDateTime()
     ..dateTime = t.toUtc()
     ..timeZone = tz.local.name;
@@ -182,6 +200,7 @@ class CalendarService extends ChangeNotifier {
     for (final visit in pet.visits) {
       await _upsert(api, _visitEvent(pet, visit));
     }
+    await _syncRecords(api, pet);
   }
 
   Future<void> syncMedication(Pet pet, Medication med) async {
@@ -192,6 +211,31 @@ class CalendarService extends ChangeNotifier {
   Future<void> syncVisit(Pet pet, VetVisit visit) async {
     final api = await _api();
     if (api != null) await _upsert(api, _visitEvent(pet, visit));
+  }
+
+  /// Only the pending records (the latest of each, with a due date) have an
+  /// event; the rest are removed.
+  Future<void> _syncRecords(
+    gcal.CalendarApi api,
+    Pet pet, [
+    Iterable<String> removedIds = const [],
+  ]) async {
+    final pending = pendingRecords(pet.records);
+    for (final r in pet.records) {
+      if (pending.contains(r)) {
+        await _upsert(api, _recordEvent(pet, r));
+      } else {
+        await _delete(api, eventId('pr', r.id));
+      }
+    }
+    for (final id in removedIds) {
+      await _delete(api, eventId('pr', id));
+    }
+  }
+
+  Future<void> syncRecords(Pet pet, {Iterable<String> removedIds = const []}) async {
+    final api = await _api();
+    if (api != null) await _syncRecords(api, pet, removedIds);
   }
 
   Future<void> syncAll(Iterable<Pet> pets) async {

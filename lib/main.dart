@@ -5,7 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
-import 'screens/pets_screen.dart';
+import 'screens/home_screen.dart';
 import 'services/calendar_service.dart';
 import 'services/notification_service.dart';
 import 'state/pets_state.dart';
@@ -53,7 +53,7 @@ class PetTimeApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const PetsScreen(),
+      home: const HomeScreen(),
     );
   }
 }

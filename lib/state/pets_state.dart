@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
 import '../models/vet_visit.dart';
@@ -103,6 +104,7 @@ class PetsState extends ChangeNotifier {
       for (final med in pet.medications) {
         await NotificationService.instance.scheduleMedication(pet, med);
       }
+      await NotificationService.instance.scheduleRecords(pet);
       await CalendarService.instance.syncPet(pet);
     });
   }
@@ -120,6 +122,12 @@ class PetsState extends ChangeNotifier {
       }
       for (final visit in pet?.visits ?? const <VetVisit>[]) {
         await CalendarService.instance.deleteVisit(visit.id);
+      }
+      if (pet != null && pet.records.isNotEmpty) {
+        final ids = [for (final r in pet.records) r.id];
+        final empty = pet.copyWith(records: []);
+        await NotificationService.instance.scheduleRecords(empty, removedIds: ids);
+        await CalendarService.instance.syncRecords(empty, removedIds: ids);
       }
     });
   }
@@ -188,6 +196,42 @@ class PetsState extends ChangeNotifier {
       visits: pet.visits.where((v) => v.id != visitId).toList(),
     ));
     _background(() => CalendarService.instance.deleteVisit(visitId));
+  }
+
+  /// Adds or edits an entry of the health booklet. A newer application of
+  /// the same vaccine replaces the reminder of the older one, so all the
+  /// pet's reminders are rebuilt.
+  Future<void> saveRecord(String petId, HealthRecord record) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final records = [...pet.records];
+    final i = records.indexWhere((r) => r.id == record.id);
+    if (i == -1) {
+      records.add(record);
+    } else {
+      records[i] = record;
+    }
+    final updated = pet.copyWith(records: records);
+    await _store(updated);
+    _background(() async {
+      await NotificationService.instance.scheduleRecords(updated);
+      await CalendarService.instance.syncRecords(updated);
+    });
+  }
+
+  Future<void> deleteRecord(String petId, String recordId) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final updated = pet.copyWith(
+      records: pet.records.where((r) => r.id != recordId).toList(),
+    );
+    await _store(updated);
+    _background(() async {
+      await NotificationService.instance
+          .scheduleRecords(updated, removedIds: [recordId]);
+      await CalendarService.instance
+          .syncRecords(updated, removedIds: [recordId]);
+    });
   }
 
   Future<void> deleteMedication(String petId, String medId) async {

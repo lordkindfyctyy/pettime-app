@@ -6,6 +6,7 @@ import '../models/medication.dart';
 import '../models/vet_visit.dart';
 import '../services/maps_service.dart';
 import '../state/pets_state.dart';
+import '../widgets/health_booklet.dart';
 import '../widgets/medication_card.dart';
 import '../widgets/pet_avatar.dart';
 import 'medication_form_screen.dart';
@@ -128,6 +129,23 @@ class PetDetailScreen extends StatelessWidget {
             ),
           for (final Medication m in pet.medications)
             MedicationCard(petId: pet.id, medication: m),
+          const Divider(height: 32),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Vacunas y antiparasitarios',
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Agregar'),
+                onPressed: () => openRecordForm(context, pet.id),
+              ),
+            ],
+          ),
+          HealthBooklet(pet: pet),
           const Divider(height: 32),
           Row(
             children: [

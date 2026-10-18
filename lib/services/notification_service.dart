@@ -9,6 +9,7 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
 import '../state/pets_state.dart';
@@ -241,16 +242,105 @@ class NotificationService {
     }
   }
 
+  // ---- Health booklet (vaccines and antiparasitics) ----
+
+  /// The reminder of a due vaccine or antiparasitic goes off at this hour, a
+  /// few days before and on the day itself.
+  static const reminderHour = 10;
+  static const reminderDaysBefore = [3, 0];
+
+  /// Reminders of the pet's pending records that are still ahead: (record,
+  /// days before the due date, time, notification id).
+  static List<(HealthRecord, int, DateTime, int)> plannedRecordReminders(
+    Pet pet,
+    DateTime now,
+  ) {
+    final planned = <(HealthRecord, int, DateTime, int)>[];
+    for (final r in pendingRecords(pet.records)) {
+      final due = r.nextDue!;
+      final base = baseId('rec:${r.id}');
+      for (final (slot, days) in reminderDaysBefore.indexed) {
+        final day = DateTime(due.year, due.month, due.day - days, reminderHour);
+        if (day.isAfter(now)) planned.add((r, days, day, base + slot));
+      }
+    }
+    return planned;
+  }
+
+  static String recordTitle(Pet pet, HealthRecord r) =>
+      '${r.kind.label} de ${pet.name}';
+
+  static String recordBody(Pet pet, HealthRecord r, int daysBefore) {
+    final when = daysBefore == 0 ? 'Hoy' : 'En $daysBefore días';
+    return '$when le toca ${r.name} a ${pet.name}';
+  }
+
+  /// Schedules the reminders of the pet's health booklet from scratch and
+  /// removes the ones of records that were replaced, edited or deleted.
+  Future<void> scheduleRecords(Pet pet, {Iterable<String> removedIds = const []}) async {
+    if (!_ready) return;
+    final planned = plannedRecordReminders(pet, DateTime.now());
+    final keep = {for (final p in planned) p.$4};
+    final bases = [
+      for (final r in pet.records) baseId('rec:${r.id}'),
+      for (final id in removedIds) baseId('rec:$id'),
+    ];
+    for (final id in await _pendingIds()) {
+      if (bases.any((b) => _isSlotOf(id, b)) && !keep.contains(id)) {
+        await _plugin.cancel(id: id);
+      }
+    }
+    await _scheduleRecords(pet, alreadyPending: const {});
+  }
+
+  Future<void> _scheduleRecords(
+    Pet pet, {
+    required Set<int> alreadyPending,
+  }) async {
+    final planned = plannedRecordReminders(pet, DateTime.now());
+    if (planned.every((p) => alreadyPending.contains(p.$4))) return;
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    final exact = await android?.canScheduleExactNotifications() ?? true;
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'health',
+        'Vacunas y antiparasitarios',
+        channelDescription: 'Avisos de vacunas y antiparasitarios por vencer',
+        importance: Importance.high,
+        priority: Priority.high,
+        largeIcon: _existingBitmap(pet.photoPath),
+      ),
+      iOS: const DarwinNotificationDetails(),
+    );
+    for (final (r, days, at, id) in planned) {
+      if (alreadyPending.contains(id)) continue;
+      await _plugin.zonedSchedule(
+        id: id,
+        title: recordTitle(pet, r),
+        body: recordBody(pet, r, days),
+        scheduledDate: tz.TZDateTime.from(at, tz.local),
+        notificationDetails: details,
+        androidScheduleMode: exact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    }
+  }
+
   /// Brings the pending alarms in line with the data when the app starts:
-  /// removes the ones that no longer belong to any medication and adds only the
-  /// missing ones (each add or cancel is a slow call into Android).
+  /// removes the ones that no longer belong to any medication or health record
+  /// and adds only the missing ones (each add or cancel is a slow call into
+  /// Android).
   Future<void> syncAll(Iterable<Pet> pets) async {
     if (!_ready) return;
     final now = DateTime.now();
     final expected = {
-      for (final pet in pets)
+      for (final pet in pets) ...[
         for (final med in pet.medications)
           for (final (_, id) in plannedDoses(med, now)) id,
+        for (final p in plannedRecordReminders(pet, now)) p.$4,
+      ],
     };
     final pending = await _pendingIds();
     for (final id in pending) {
@@ -260,6 +350,7 @@ class NotificationService {
       for (final med in pet.medications) {
         await _schedule(pet, med, alreadyPending: pending);
       }
+      await _scheduleRecords(pet, alreadyPending: pending);
     }
   }
 }

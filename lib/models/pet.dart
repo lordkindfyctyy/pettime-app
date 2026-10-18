@@ -1,3 +1,4 @@
+import 'health_record.dart';
 import 'medication.dart';
 import 'vet_visit.dart';
 
@@ -13,8 +14,10 @@ class Pet {
     this.photoPath,
     List<Medication>? medications,
     List<VetVisit>? visits,
+    List<HealthRecord>? records,
   })  : medications = medications ?? [],
-        visits = visits ?? [];
+        visits = visits ?? [],
+        records = records ?? [];
 
   final String id;
   final String name;
@@ -28,6 +31,9 @@ class Pet {
   final String? photoPath;
   final List<Medication> medications;
   final List<VetVisit> visits;
+
+  /// Health booklet: vaccines and antiparasitics applied.
+  final List<HealthRecord> records;
 
   /// Age as a short Spanish label, or null when the birth date is unknown.
   String? ageLabel([DateTime? now]) {
@@ -57,6 +63,7 @@ class Pet {
     bool clearPhoto = false,
     List<Medication>? medications,
     List<VetVisit>? visits,
+    List<HealthRecord>? records,
   }) {
     return Pet(
       id: id,
@@ -69,6 +76,7 @@ class Pet {
       photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
       medications: medications ?? this.medications,
       visits: visits ?? this.visits,
+      records: records ?? this.records,
     );
   }
 
@@ -83,6 +91,7 @@ class Pet {
         'photoPath': photoPath,
         'medications': medications.map((m) => m.toJson()).toList(),
         'visits': visits.map((v) => v.toJson()).toList(),
+        'records': records.map((r) => r.toJson()).toList(),
       };
 
   factory Pet.fromJson(Map<String, dynamic> json) => Pet(
@@ -101,6 +110,9 @@ class Pet {
             .toList(),
         visits: (json['visits'] as List? ?? [])
             .map((v) => VetVisit.fromJson(v as Map<String, dynamic>))
+            .toList(),
+        records: (json['records'] as List? ?? [])
+            .map((r) => HealthRecord.fromJson(r as Map<String, dynamic>))
             .toList(),
       );
 }

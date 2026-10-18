@@ -414,6 +414,11 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider.value(value: state, child: const PetTimeApp()),
     );
+    // Opens on "Hoy"; the list of pets is in its own tab.
+    expect(find.text('Agregá tu primera mascota en la pestaña Mascotas'),
+        findsOneWidget);
+    await tester.tap(find.text('Mascotas'));
+    await tester.pumpAndSettle();
     expect(find.text('Todavía no agregaste ninguna mascota'), findsOneWidget);
 
     await tester.tap(find.text('Mascota'));
