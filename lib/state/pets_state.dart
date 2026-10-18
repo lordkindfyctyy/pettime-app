@@ -12,6 +12,7 @@ import '../models/supply.dart';
 import '../models/vet_visit.dart';
 import '../models/weight_entry.dart';
 import '../services/calendar_service.dart';
+import '../services/home_widget_service.dart';
 import '../services/notification_service.dart';
 import '../services/photo_service.dart';
 
@@ -70,6 +71,7 @@ class PetsState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, jsonEncode(_pets.map((p) => p.toJson()).toList()));
     notifyListeners();
+    _background(() => HomeWidgetService.refresh(_pets));
   }
 
   String newId() => _uuid.v4();

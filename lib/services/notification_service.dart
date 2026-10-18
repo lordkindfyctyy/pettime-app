@@ -15,6 +15,7 @@ import '../models/medication.dart';
 import '../models/pet.dart';
 import '../models/supply.dart';
 import '../state/pets_state.dart';
+import 'home_widget_service.dart';
 
 const _doseGivenAction = 'dose_given';
 const _doseGivenPort = 'pettime_dose_given';
@@ -46,6 +47,12 @@ Future<void> notificationBackgroundHandler(NotificationResponse response) async 
   final updated = PetsState.addDoseToJson(raw, parts[0], parts[1], now);
   if (updated == null) return;
   await prefs.setString(PetsState.storageKey, updated);
+  // The given dose leaves the home screen widget.
+  await HomeWidgetService.refresh(
+    (jsonDecode(updated) as List)
+        .map((p) => Pet.fromJson(p as Map<String, dynamic>)),
+    now,
+  );
 
   // The dose is given: the reminder for it must not go off.
   final med = (jsonDecode(raw) as List)
