@@ -10,6 +10,7 @@ import '../theme.dart';
 import '../widgets/health_booklet.dart';
 import '../widgets/medication_card.dart';
 import '../widgets/pet_avatar.dart';
+import '../widgets/weight_section.dart';
 import 'medication_form_screen.dart';
 import 'pet_form_screen.dart';
 import 'visit_form_screen.dart';
@@ -105,6 +106,24 @@ class PetDetailScreen extends StatelessWidget {
           row('Edad', pet.ageLabel() ?? ''),
           row('Alimento', pet.food),
           row('Notas', pet.notes),
+          const Divider(height: 32),
+          Row(
+            children: [
+              const Expanded(
+                child: SectionTitle(
+                  text: 'Peso',
+                  icon: Icons.monitor_weight_outlined,
+                  color: Brand.teal,
+                ),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Anotar peso'),
+                onPressed: () => showAddWeightDialog(context, pet),
+              ),
+            ],
+          ),
+          WeightSection(pet: pet),
           const Divider(height: 32),
           Row(
             children: [

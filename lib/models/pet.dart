@@ -1,6 +1,7 @@
 import 'health_record.dart';
 import 'medication.dart';
 import 'vet_visit.dart';
+import 'weight_entry.dart';
 
 class Pet {
   Pet({
@@ -15,9 +16,11 @@ class Pet {
     List<Medication>? medications,
     List<VetVisit>? visits,
     List<HealthRecord>? records,
+    List<WeightEntry>? weights,
   })  : medications = medications ?? [],
         visits = visits ?? [],
-        records = records ?? [];
+        records = records ?? [],
+        weights = weights ?? [];
 
   final String id;
   final String name;
@@ -34,6 +37,12 @@ class Pet {
 
   /// Health booklet: vaccines and antiparasitics applied.
   final List<HealthRecord> records;
+
+  /// Weighings, oldest first.
+  final List<WeightEntry> weights;
+
+  /// The latest weighing, or null when it was never weighed.
+  WeightEntry? get currentWeight => weights.isEmpty ? null : weights.last;
 
   /// Age as a short Spanish label, or null when the birth date is unknown.
   String? ageLabel([DateTime? now]) {
@@ -64,6 +73,7 @@ class Pet {
     List<Medication>? medications,
     List<VetVisit>? visits,
     List<HealthRecord>? records,
+    List<WeightEntry>? weights,
   }) {
     return Pet(
       id: id,
@@ -77,6 +87,7 @@ class Pet {
       medications: medications ?? this.medications,
       visits: visits ?? this.visits,
       records: records ?? this.records,
+      weights: weights ?? this.weights,
     );
   }
 
@@ -92,6 +103,7 @@ class Pet {
         'medications': medications.map((m) => m.toJson()).toList(),
         'visits': visits.map((v) => v.toJson()).toList(),
         'records': records.map((r) => r.toJson()).toList(),
+        'weights': weights.map((w) => w.toJson()).toList(),
       };
 
   factory Pet.fromJson(Map<String, dynamic> json) => Pet(
@@ -114,5 +126,9 @@ class Pet {
         records: (json['records'] as List? ?? [])
             .map((r) => HealthRecord.fromJson(r as Map<String, dynamic>))
             .toList(),
+        weights: (json['weights'] as List? ?? [])
+            .map((w) => WeightEntry.fromJson(w as Map<String, dynamic>))
+            .toList()
+          ..sort((a, b) => a.date.compareTo(b.date)),
       );
 }

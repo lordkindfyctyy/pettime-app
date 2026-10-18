@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/weight_entry.dart';
 import '../services/calendar_service.dart';
 import '../state/pets_state.dart';
 import '../widgets/pet_avatar.dart';
@@ -91,6 +92,7 @@ class PetsScreen extends StatelessWidget {
                 final details = [
                   if (pet.species.isNotEmpty) pet.species,
                   if (pet.ageLabel() != null) pet.ageLabel()!,
+                  if (pet.currentWeight != null) formatKg(pet.currentWeight!.kg),
                 ].join(' · ');
                 return ListTile(
                   leading: PetAvatar(pet: pet),

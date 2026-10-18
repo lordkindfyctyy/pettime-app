@@ -9,6 +9,7 @@ import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
 import '../models/vet_visit.dart';
+import '../models/weight_entry.dart';
 import '../services/calendar_service.dart';
 import '../services/notification_service.dart';
 import '../services/photo_service.dart';
@@ -202,6 +203,24 @@ class PetsState extends ChangeNotifier {
       visits: pet.visits.where((v) => v.id != visitId).toList(),
     ));
     _background(() => CalendarService.instance.deleteVisit(visitId));
+  }
+
+  /// Adds a weighing, keeping them by date. Weights don't touch alarms or
+  /// Calendar.
+  Future<void> addWeight(String petId, WeightEntry entry) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final weights = [...pet.weights, entry]
+      ..sort((a, b) => a.date.compareTo(b.date));
+    await _store(pet.copyWith(weights: weights));
+  }
+
+  Future<void> deleteWeight(String petId, String entryId) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    await _store(pet.copyWith(
+      weights: pet.weights.where((w) => w.id != entryId).toList(),
+    ));
   }
 
   /// Replaces every pet with the ones of a backup. Alarms are rebuilt, and
