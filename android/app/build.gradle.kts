@@ -1,8 +1,25 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Clave de firma compartida (pettime-upload.keystore). Todas las PCs firman la
+// versión final con ella, así cualquiera puede actualizar la app en los
+// celulares sin desinstalarla. Los datos van en android/key.properties, que
+// NO se sube a GitHub (ver android/.gitignore):
+//   storeFile=C:/ruta/a/pettime-upload.keystore
+//   storePassword=...
+//   keyAlias=pettime
+//   keyPassword=...
+val keyProperties = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) FileInputStream(file).use { load(it) }
+}
+val hasUploadKey = keyProperties.getProperty("storeFile") != null
 
 android {
     namespace = "com.mascotas.pettime_app"
@@ -30,11 +47,29 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasUploadKey) {
+            create("upload") {
+                storeFile = file(keyProperties.getProperty("storeFile"))
+                storePassword = keyProperties.getProperty("storePassword")
+                keyAlias = keyProperties.getProperty("keyAlias")
+                keyPassword = keyProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Sin key.properties no se arma la versión final: firmada con otra
+            // clave no podría actualizar la que ya está instalada en los celulares.
+            if (hasUploadKey) {
+                signingConfig = signingConfigs.getByName("upload")
+            } else if (gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }) {
+                throw GradleException(
+                    "Falta android/key.properties con la clave compartida (pettime-upload.keystore). " +
+                        "Copiala del pen drive: ver android/app/build.gradle.kts.",
+                )
+            }
         }
     }
 }
