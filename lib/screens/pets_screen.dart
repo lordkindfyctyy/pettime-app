@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../models/weight_entry.dart';
 import '../services/calendar_service.dart';
 import '../state/pets_state.dart';
+import '../theme.dart';
+import '../widgets/family_share.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/supply_section.dart';
 import 'backup_screen.dart';
@@ -88,6 +90,14 @@ class PetsScreen extends StatelessWidget {
                 ),
                 onTap: () => showShopSettingsDialog(context),
               ),
+              PopupMenuItem(
+                child: const ListTile(
+                  leading: Icon(Icons.group_add_outlined),
+                  title: Text('Unirme con un código'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onTap: () => showJoinFamilyDialog(context),
+              ),
             ],
           ),
         ],
@@ -107,7 +117,18 @@ class PetsScreen extends StatelessWidget {
                   leading: PetAvatar(pet: pet),
                   title: Text(pet.name),
                   subtitle: details.isEmpty ? null : Text(details),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (pet.share != null)
+                        const Icon(
+                          Icons.family_restroom,
+                          color: Brand.teal,
+                          semanticLabel: 'Compartida con la familia',
+                        ),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(

@@ -1,6 +1,7 @@
 import 'expense.dart';
 import 'health_record.dart';
 import 'medication.dart';
+import 'pet_share.dart';
 import 'supply.dart';
 import 'vet_visit.dart';
 import 'weight_entry.dart';
@@ -21,6 +22,7 @@ class Pet {
     List<WeightEntry>? weights,
     List<Supply>? supplies,
     List<Expense>? expenses,
+    this.share,
   })  : medications = medications ?? [],
         visits = visits ?? [],
         records = records ?? [],
@@ -56,6 +58,9 @@ class Pet {
   /// Money spent on it, newest first.
   final List<Expense> expenses;
 
+  /// Set when it is shared with the family (see FamilySync).
+  final PetShare? share;
+
   /// Age as a short Spanish label, or null when the birth date is unknown.
   String? ageLabel([DateTime? now]) {
     final b = birthDate;
@@ -88,6 +93,8 @@ class Pet {
     List<WeightEntry>? weights,
     List<Supply>? supplies,
     List<Expense>? expenses,
+    PetShare? share,
+    bool clearShare = false,
   }) {
     return Pet(
       id: id,
@@ -104,6 +111,7 @@ class Pet {
       weights: weights ?? this.weights,
       supplies: supplies ?? this.supplies,
       expenses: expenses ?? this.expenses,
+      share: clearShare ? null : (share ?? this.share),
     );
   }
 
@@ -122,6 +130,7 @@ class Pet {
         'weights': weights.map((w) => w.toJson()).toList(),
         'supplies': supplies.map((s) => s.toJson()).toList(),
         'expenses': expenses.map((e) => e.toJson()).toList(),
+        if (share != null) 'share': share!.toJson(),
       };
 
   factory Pet.fromJson(Map<String, dynamic> json) => Pet(
@@ -155,5 +164,8 @@ class Pet {
             .map((e) => Expense.fromJson(e as Map<String, dynamic>))
             .toList()
           ..sort((a, b) => b.date.compareTo(a.date)),
+        share: json['share'] == null
+            ? null
+            : PetShare.fromJson(json['share'] as Map<String, dynamic>),
       );
 }

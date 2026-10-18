@@ -9,10 +9,12 @@ import '../models/expense.dart';
 import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
+import '../models/pet_share.dart';
 import '../models/supply.dart';
 import '../models/vet_visit.dart';
 import '../models/weight_entry.dart';
 import '../services/calendar_service.dart';
+import '../services/family_sync.dart';
 import '../services/home_widget_service.dart';
 import '../services/notification_service.dart';
 import '../services/photo_service.dart';
@@ -43,6 +45,8 @@ class PetsState extends ChangeNotifier {
               ? m.copyWith(givenDoses: [...m.givenDoses, at]..sort())
               : m,
       ],
+      // A shared pet sends the dose to the family the next time the app opens.
+      share: pets[i].share?.copyWith(dirty: true),
     );
     return jsonEncode(pets.map((p) => p.toJson()).toList());
   }
@@ -79,7 +83,14 @@ class PetsState extends ChangeNotifier {
 
   /// Stores the pet (adds it, or replaces the one with the same id) and
   /// updates the screen. Alarms and Calendar are not touched here.
-  Future<void> _store(Pet pet) async {
+  ///
+  /// A change to a pet shared with the family is marked to be sent, unless
+  /// it is what came from the server ([fromSync]).
+  Future<void> _store(Pet pet, {bool fromSync = false}) async {
+    final share = pet.share;
+    if (!fromSync && share != null && !share.dirty) {
+      pet = pet.copyWith(share: share.copyWith(dirty: true));
+    }
     final i = _pets.indexWhere((p) => p.id == pet.id);
     if (i == -1) {
       _pets.add(pet);
@@ -87,6 +98,63 @@ class PetsState extends ChangeNotifier {
       _pets[i] = pet;
     }
     await _save();
+    if (!fromSync && share != null) FamilySync.instance.schedule(pet.id);
+  }
+
+  /// Saves what came from the family's server: [pet] replaces this phone's
+  /// copy, and its alarms and Calendar events follow the changes (what the
+  /// others deleted is cancelled here too).
+  Future<void> applySharedPet(Pet pet) async {
+    final old = byId(pet.id);
+    await _store(pet, fromSync: true);
+    _background(() async {
+      final removedMeds = [
+        for (final m in old?.medications ?? const <Medication>[])
+          if (!pet.medications.any((n) => n.id == m.id)) m,
+      ];
+      for (final med in removedMeds) {
+        await NotificationService.instance.cancelMedication(med.id);
+        await CalendarService.instance.deleteMedication(med.id);
+      }
+      for (final visit in old?.visits ?? const <VetVisit>[]) {
+        if (!pet.visits.any((v) => v.id == visit.id)) {
+          await CalendarService.instance.deleteVisit(visit.id);
+        }
+      }
+      for (final med in pet.medications) {
+        await NotificationService.instance.scheduleMedication(pet, med);
+      }
+      final removedRecords = [
+        for (final r in old?.records ?? const <HealthRecord>[])
+          if (!pet.records.any((n) => n.id == r.id)) r.id,
+      ];
+      final removedSupplies = [
+        for (final s in old?.supplies ?? const <Supply>[])
+          if (!pet.supplies.any((n) => n.id == s.id)) s.id,
+      ];
+      await NotificationService.instance
+          .scheduleRecords(pet, removedIds: removedRecords);
+      await NotificationService.instance
+          .scheduleSupplies(pet, removedIds: removedSupplies);
+      if (removedRecords.isEmpty) {
+        await CalendarService.instance.syncPet(pet);
+      } else {
+        await CalendarService.instance
+            .syncRecords(pet, removedIds: removedRecords);
+        await CalendarService.instance.syncPet(pet);
+      }
+    });
+  }
+
+  /// Sets how the pet is shared (null: no longer shared) without marking it
+  /// as changed.
+  Future<void> setShare(String petId, PetShare? share) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    await _store(
+      pet.copyWith(share: share, clearShare: share == null),
+      fromSync: true,
+    );
   }
 
   /// Alarms and Google Calendar are slow (hundreds of platform calls, network)

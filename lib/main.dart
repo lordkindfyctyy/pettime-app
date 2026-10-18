@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
 import 'services/calendar_service.dart';
 import 'services/drive_backup_service.dart';
+import 'services/family_sync.dart';
+import 'services/lost_pets_service.dart';
 import 'services/home_widget_service.dart';
 import 'services/notification_service.dart';
 import 'services/shop_settings.dart';
@@ -22,8 +24,20 @@ Future<void> main() async {
   await CalendarService.instance.load();
   await DriveBackupService.instance.load();
   await ShopSettings.instance.load();
+  await LostPetsService.instance.load();
   NotificationService.instance.onDoseGiven =
       (petId, medId) => pets.logDose(petId, medId);
+  // Pets shared with the family: sync now, every minute while the app is
+  // open, and when it comes back (a dose may have been marked from a
+  // notification while it was closed).
+  FamilySync.instance.attach(pets);
+  AppLifecycleListener(
+    onResume: () async {
+      await pets.load();
+      FamilySync.instance.resume();
+    },
+    onPause: FamilySync.instance.pause,
+  );
   runApp(
     ChangeNotifierProvider.value(value: pets, child: const PetTimeApp()),
   );

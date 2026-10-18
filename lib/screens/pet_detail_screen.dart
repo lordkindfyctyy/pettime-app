@@ -9,17 +9,20 @@ import 'package:share_plus/share_plus.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
 import '../models/vet_visit.dart';
+import '../services/family_sync.dart';
 import '../services/maps_service.dart';
 import '../services/shop_settings.dart';
 import '../services/vet_report.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
 import '../widgets/expense_section.dart';
+import '../widgets/family_share.dart';
 import '../widgets/health_booklet.dart';
 import '../widgets/medication_card.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/supply_section.dart';
 import '../widgets/weight_section.dart';
+import 'lost_report_form_screen.dart';
 import 'medication_form_screen.dart';
 import 'pet_form_screen.dart';
 import 'visit_form_screen.dart';
@@ -104,15 +107,29 @@ class PetDetailScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => PetFormScreen(pet: pet)),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            tooltip: 'Eliminar',
-            onPressed: () async {
+          PopupMenuButton<String>(
+            onSelected: (action) async {
+              if (action == 'family') {
+                await showFamilyShareSheet(context, pet.id);
+                return;
+              }
+              if (action == 'lost') {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => LostReportFormScreen(pet: pet)),
+                );
+                return;
+              }
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   title: Text('¿Eliminar a ${pet.name}?'),
-                  content: const Text('Se borra la ficha y su medicación.'),
+                  content: Text(pet.share == null
+                      ? 'Se borra la ficha y su medicación.'
+                      : pet.share!.isOwner
+                          ? 'Se borra la ficha y su medicación, y se deja de '
+                              'compartir: la familia se queda con su copia.'
+                          : 'Se borra de este celular. La familia la sigue teniendo.'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, false),
@@ -126,10 +143,47 @@ class PetDetailScreen extends StatelessWidget {
                 ),
               );
               if (ok == true && context.mounted) {
+                if (pet.share?.isOwner ?? false) {
+                  try {
+                    await FamilySync.instance.stop(pet);
+                  } catch (e) {
+                    // Offline: the code stays on the server; the pet is
+                    // deleted here anyway.
+                    debugPrint('Could not stop sharing: $e');
+                  }
+                }
                 await state.deletePet(pet.id);
                 if (context.mounted) Navigator.pop(context);
               }
             },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'family',
+                child: ListTile(
+                  leading: const Icon(Icons.family_restroom),
+                  title: Text(pet.share == null
+                      ? 'Compartir con la familia'
+                      : 'Compartida con la familia'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'lost',
+                child: ListTile(
+                  leading: Icon(Icons.campaign_outlined),
+                  title: Text('Publicar aviso: se perdió'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: ListTile(
+                  leading: Icon(Icons.delete_outline),
+                  title: Text('Eliminar'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Everything goes over https, except a local test server reached through
+     adb reverse tcp:8000 tcp:8000 (a build with the dart define
+     PETTIME_API=http://localhost:8000/pettime/api). -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>
