@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/lost_report.dart';
 import '../services/lost_pets_service.dart';
+import '../services/pettime_api.dart';
 import '../theme.dart';
 import 'lost_report_form_screen.dart';
 
@@ -164,6 +168,29 @@ class _Message extends StatelessWidget {
   }
 }
 
+/// Shares [report] with the pet's first photo and its text, so WhatsApp shows
+/// the pet and not just a link. Without internet for the photo, the text.
+Future<void> shareReport(LostReport report) async {
+  final files = <XFile>[];
+  if (report.photos.isNotEmpty) {
+    try {
+      final dir = await getTemporaryDirectory();
+      final ext = report.photos.first.split('.').last.toLowerCase();
+      final file = await PetTimeApi.instance.download(
+        report.photos.first,
+        File('${dir.path}/aviso-${report.id}.$ext'),
+      );
+      files.add(XFile(file.path, mimeType: ext == 'png' ? 'image/png' : 'image/jpeg'));
+    } catch (e) {
+      debugPrint('Could not download the notice photo: $e');
+    }
+  }
+  await SharePlus.instance.share(ShareParams(
+    text: report.shareText(),
+    files: files.isEmpty ? null : files,
+  ));
+}
+
 /// One notice: its photos, what and where, and the button to write to
 /// whoever published it.
 class ReportCard extends StatelessWidget {
@@ -259,7 +286,7 @@ class ReportCard extends StatelessWidget {
                     const Spacer(),
                     PopupMenuButton<String>(
                       onSelected: (a) => a == 'share'
-                          ? SharePlus.instance.share(ShareParams(text: report.shareText()))
+                          ? shareReport(report)
                           : _act(context, a),
                       itemBuilder: (_) => [
                         const PopupMenuItem(value: 'share', child: Text('Compartir')),
