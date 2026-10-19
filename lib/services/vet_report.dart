@@ -6,9 +6,11 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../models/diary_entry.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
 import '../models/vet_visit.dart';
+import '../models/walk.dart';
 import '../models/weight_entry.dart';
 import 'shop_settings.dart';
 
@@ -34,8 +36,8 @@ class VetReportAssets {
 }
 
 /// A PDF with everything the vet wants to know about a pet: its data, the
-/// medication it takes and took, the health booklet, the weight and the past
-/// visits.
+/// medication it takes and took, the health booklet, the weight, the past
+/// visits, the health diary and how much it walks.
 class VetReport {
   VetReport._();
 
@@ -72,6 +74,33 @@ class VetReport {
     return diff > 0 ? '+$text' : '−$text';
   }
 
+  /// The diary covers this many days before the report, up to [diaryMax]
+  /// entries, with up to [diaryPhotos] photos each.
+  static const diaryDays = 60;
+  static const diaryMax = 20;
+  static const diaryPhotos = 3;
+
+  /// Diary entries that go in the report, newest first.
+  static List<DiaryEntry> diaryForReport(Pet pet, DateTime now) {
+    final from = DateTime(now.year, now.month, now.day - diaryDays);
+    return pet.diary.where((d) => !d.date.isBefore(from)).take(diaryMax).toList();
+  }
+
+  /// "12 paseos en los últimos 30 días · 35 min por día en promedio", or
+  /// null when it has no walks in that time.
+  static String? walkSummary(Pet pet, DateTime now) {
+    final from = DateTime(now.year, now.month, now.day - 29);
+    final walks = pet.walks.where((w) => !w.date.isBefore(from)).toList();
+    if (walks.isEmpty) return null;
+    final minutes = walks.fold(0, (sum, w) => sum + w.minutes);
+    final km = walks.fold(0.0, (sum, w) => sum + (w.km ?? 0));
+    return [
+      '${walks.length} ${walks.length == 1 ? 'paseo' : 'paseos'} en los últimos 30 días',
+      '${formatMinutes((minutes / 30).round())} por día en promedio',
+      if (km > 0) '${formatKm(km)} en total',
+    ].join(' · ');
+  }
+
   static Future<Uint8List> build(
     Pet pet, {
     required VetReportAssets assets,
@@ -83,6 +112,14 @@ class VetReport {
     final records = [...pet.records]
       ..sort((a, b) => b.appliedOn.compareTo(a.appliedOn));
     final weights = pet.weights.reversed.take(12).toList();
+    final diary = diaryForReport(pet, now);
+    final diaryImages = {
+      for (final d in diary)
+        d.id: [
+          for (final path in d.photos.take(diaryPhotos)) ?await _photo(path),
+        ],
+    };
+    final walks = walkSummary(pet, now);
     final vetVisits = pet.visits
         .where((v) => v.kind == AppointmentKind.vet)
         .toList()
@@ -211,6 +248,14 @@ class VetReport {
             ],
           ),
         ],
+        if (walks != null) ...[
+          _section('Paseos'),
+          pw.Text(walks),
+        ],
+        if (diary.isNotEmpty) ...[
+          _section('Diario de salud (últimos $diaryDays días)'),
+          for (final d in diary) _diaryEntry(d, diaryImages[d.id]!),
+        ],
       ],
     ));
     return doc.save();
@@ -317,6 +362,48 @@ class VetReport {
       ],
     );
   }
+
+  static pw.Widget _diaryEntry(DiaryEntry d, List<pw.MemoryImage> photos) =>
+      pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 8),
+        padding: const pw.EdgeInsets.all(8),
+        decoration: const pw.BoxDecoration(
+          color: _light,
+          borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              _dayTime.format(d.date),
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
+            ),
+            if (d.symptoms.isNotEmpty)
+              pw.Text(
+                d.symptomsLabel,
+                style: const pw.TextStyle(color: _red, fontSize: 10),
+              ),
+            if (d.text.trim().isNotEmpty)
+              pw.Text(d.text.trim(), style: const pw.TextStyle(fontSize: 10)),
+            if (photos.isNotEmpty) ...[
+              pw.SizedBox(height: 6),
+              pw.Row(
+                children: [
+                  for (final img in photos)
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.only(right: 6),
+                      child: pw.ClipRRect(
+                        horizontalRadius: 4,
+                        verticalRadius: 4,
+                        child: pw.Image(img, width: 110, height: 110, fit: pw.BoxFit.cover),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
 
   static pw.Widget _section(String title) => pw.Container(
         margin: const pw.EdgeInsets.only(top: 18, bottom: 6),

@@ -12,11 +12,12 @@ import '../theme.dart';
 import '../widgets/health_booklet.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/supply_section.dart';
+import '../widgets/walk_section.dart';
 import 'pet_detail_screen.dart';
 
 /// Everything for today, of every pet: the doses (with a button to mark them
-/// as given), today's appointments and the vaccines or antiparasitics that
-/// are overdue or due within a week.
+/// as given), today's appointments, the pets still to walk and the vaccines
+/// or antiparasitics that are overdue or due within a week.
 class TodayScreen extends StatefulWidget {
   const TodayScreen({super.key, this.clock});
 
@@ -63,6 +64,7 @@ class _TodayScreenState extends State<TodayScreen> {
     final visits = visitsOfDay(pets, now);
     final due = recordsDueSoon(pets, now);
     final restock = suppliesToRestock(pets, now);
+    final toWalk = petsToWalk(pets, now);
     final theme = Theme.of(context);
     final hm = DateFormat.Hm('es');
     final dayMonth = DateFormat.yMMMd('es');
@@ -134,6 +136,24 @@ class _TodayScreenState extends State<TodayScreen> {
           ].join(' · ')),
           onTap: () => _openPet(pet.id),
         ));
+      }
+    }
+
+    if (toWalk.isNotEmpty) {
+      children.add(header('Paseos', Icons.directions_walk, Brand.teal));
+      for (final pet in toWalk) {
+        children.add(
+          ListTile(
+            leading: PetAvatar(pet: pet),
+            title: Text(pet.name),
+            subtitle: const Text('Todavía no salió hoy'),
+            onTap: () => _openPet(pet.id),
+            trailing: FilledButton.tonal(
+              onPressed: () => showWalkDialog(context, pet),
+              child: const Text('Anotar'),
+            ),
+          ),
+        );
       }
     }
 

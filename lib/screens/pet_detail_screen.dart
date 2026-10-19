@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../models/caregiver.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
 import '../models/vet_visit.dart';
@@ -15,12 +16,15 @@ import '../services/shop_settings.dart';
 import '../services/vet_report.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
+import '../widgets/caregiver_sheet.dart';
+import '../widgets/diary_section.dart';
 import '../widgets/expense_section.dart';
 import '../widgets/family_share.dart';
 import '../widgets/health_booklet.dart';
 import '../widgets/medication_card.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/supply_section.dart';
+import '../widgets/walk_section.dart';
 import '../widgets/weight_section.dart';
 import 'lost_report_form_screen.dart';
 import 'medication_form_screen.dart';
@@ -70,6 +74,9 @@ class PetDetailScreen extends StatelessWidget {
 
     final theme = Theme.of(context);
     final fmt = DateFormat.yMMMd('es').add_Hm();
+    final now = DateTime.now();
+    final caring = pet.share?.isCaregiver ?? false;
+    final caregivers = caring ? const <Caregiver>[] : pet.activeCaregivers(now);
     // Upcoming soonest first; past most recent first.
     final upcoming = pet.visits.where((v) => !v.isDone).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
@@ -111,6 +118,10 @@ class PetDetailScreen extends StatelessWidget {
             onSelected: (action) async {
               if (action == 'family') {
                 await showFamilyShareSheet(context, pet.id);
+                return;
+              }
+              if (action == 'caregiver') {
+                await showCaregiverSheet(context, pet.id);
                 return;
               }
               if (action == 'lost') {
@@ -161,12 +172,25 @@ class PetDetailScreen extends StatelessWidget {
                 value: 'family',
                 child: ListTile(
                   leading: const Icon(Icons.family_restroom),
-                  title: Text(pet.share == null
-                      ? 'Compartir con la familia'
-                      : 'Compartida con la familia'),
+                  title: Text(
+                    caring
+                        ? 'Mi cuidado'
+                        : pet.share == null
+                        ? 'Compartir con la familia'
+                        : 'Compartida con la familia',
+                  ),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
+              if (!caring)
+                const PopupMenuItem(
+                  value: 'caregiver',
+                  child: ListTile(
+                    leading: Icon(Icons.volunteer_activism_outlined),
+                    title: Text('Dejar con un cuidador'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
               const PopupMenuItem(
                 value: 'lost',
                 child: ListTile(
@@ -195,6 +219,30 @@ class PetDetailScreen extends StatelessWidget {
           16 + MediaQuery.viewPaddingOf(context).bottom,
         ),
         children: [
+          if (caring)
+            Card(
+              color: Brand.teal.withValues(alpha: 0.12),
+              child: ListTile(
+                leading: const Icon(Icons.volunteer_activism_outlined),
+                title: Text('Cuidás a ${pet.name}'),
+                subtitle: Text(
+                  pet.careFinished(now)
+                      ? 'El cuidado terminó'
+                      : careUntilLabel(pet.careEndsAt!),
+                ),
+                onTap: () => showFamilyShareSheet(context, pet.id),
+              ),
+            ),
+          for (final c in caregivers)
+            Card(
+              color: Brand.teal.withValues(alpha: 0.12),
+              child: ListTile(
+                leading: const Icon(Icons.volunteer_activism_outlined),
+                title: Text('La cuida ${c.name}'),
+                subtitle: Text(careUntilLabel(c.until)),
+                onTap: () => showCaregiverSheet(context, pet.id),
+              ),
+            ),
           Center(child: PetAvatar(pet: pet, radius: 56)),
           const SizedBox(height: 16),
           const SectionTitle(text: 'Ficha', icon: Icons.pets, color: Brand.teal),
@@ -222,6 +270,42 @@ class PetDetailScreen extends StatelessWidget {
             ],
           ),
           WeightSection(pet: pet),
+          const Divider(height: 32),
+          Row(
+            children: [
+              const Expanded(
+                child: SectionTitle(
+                  text: 'Paseos',
+                  icon: Icons.directions_walk,
+                  color: Brand.teal,
+                ),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Paseo'),
+                onPressed: () => showWalkDialog(context, pet),
+              ),
+            ],
+          ),
+          WalkSection(pet: pet),
+          const Divider(height: 32),
+          Row(
+            children: [
+              const Expanded(
+                child: SectionTitle(
+                  text: 'Diario de salud',
+                  icon: Icons.menu_book_outlined,
+                  color: Brand.red,
+                ),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Anotar'),
+                onPressed: () => openDiaryForm(context, pet.id),
+              ),
+            ],
+          ),
+          DiarySection(pet: pet),
           const Divider(height: 32),
           Row(
             children: [

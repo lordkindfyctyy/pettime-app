@@ -8,6 +8,7 @@ import '../screens/pet_detail_screen.dart';
 import '../services/family_sync.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
+import 'caregiver_sheet.dart';
 
 /// What is sent to the family so they can join.
 String familyInviteText(Pet pet) =>
@@ -100,7 +101,52 @@ class _FamilySheetState extends State<_FamilySheet> {
               ],
             ),
             const SizedBox(height: 12),
-            if (share == null) ...[
+            if (share != null && share.isCaregiver) ...[
+              Text(
+                pet.careFinished(DateTime.now())
+                    ? 'Terminó tu cuidado de ${pet.name}. Sale de este celular '
+                          'cuando se envíen tus últimos cambios.'
+                    : 'Cuidás a ${pet.name} ${careUntilLabel(pet.careEndsAt!)}. '
+                          'Lo que marques le llega a su familia.',
+              ),
+              const SizedBox(height: 4),
+              Text(
+                share.dirty
+                    ? 'Hay cambios por enviar (se envían al tener internet)'
+                    : 'Al día con la familia',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                icon: const Icon(Icons.sync),
+                label: const Text('Sincronizar ahora'),
+                onPressed: _busy
+                    ? null
+                    : () => _run(sync.syncAll, done: 'Listo'),
+              ),
+              const Divider(height: 24),
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.error,
+                ),
+                onPressed: _busy
+                    ? null
+                    : () async {
+                        final navigator = Navigator.of(context);
+                        if (await _confirm(
+                          '¿Terminar el cuidado ahora?',
+                          '${pet.name} sale de este celular. Lo que anotaste ya '
+                              'le llegó a su familia.',
+                          'Terminar',
+                        )) {
+                          await _run(() => sync.leave(pet));
+                          navigator.popUntil((r) => r.isFirst);
+                        }
+                      },
+                child: const Text('Terminar el cuidado ahora'),
+              ),
+            ] else if (share == null) ...[
               const Text(
                 'Los que se sumen con el código ven a la mascota en su PetTime y '
                 'pueden marcar las tomas, cargar vacunas, turnos y gastos. Los '
@@ -241,8 +287,10 @@ class _JoinDialogState extends State<_JoinDialog> {
 
   Future<void> _join() async {
     final code = _code.text.replaceAll(RegExp(r'[\s-]'), '').toUpperCase();
-    if (code.length != 8) {
-      setState(() => _error = 'El código tiene 8 letras y números');
+    if (code.length != 8 && code.length != 12) {
+      setState(
+        () => _error = 'El código de la familia tiene 8 letras y números, el de un cuidador 12',
+      );
       return;
     }
     setState(() {
@@ -269,7 +317,10 @@ class _JoinDialogState extends State<_JoinDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Escribí el código que te pasaron para sumarte a su mascota.'),
+          const Text(
+            'Escribí el código que te pasaron para sumarte a su mascota: el '
+            'de la familia o el de cuidador.',
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _code,

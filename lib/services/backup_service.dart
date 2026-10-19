@@ -7,9 +7,9 @@ import 'package:archive/archive.dart';
 import '../models/pet.dart';
 
 /// Backup of everything in a single .zip: `pettime.json` with the pets
-/// (medications, doses given, appointments, health booklet) and the photos
-/// under `fotos/`. Photo paths inside the JSON are stored relative to the zip,
-/// since the app's folder is different on another phone.
+/// (medications, doses given, appointments, health booklet, diary) and the
+/// photos under `fotos/`. Photo paths inside the JSON are stored relative to
+/// the zip, since the app's folder is different on another phone.
 class BackupService {
   BackupService._();
 
@@ -46,6 +46,15 @@ class BackupService {
               m.copyWith(
                 photoPath: pack(m.photoPath),
                 clearPhoto: pack(m.photoPath) == null,
+              ),
+          ],
+          diary: [
+            for (final d in pet.diary)
+              d.copyWith(
+                photos: [
+                  for (final p in d.photos)
+                    if (pack(p) != null) pack(p)!,
+                ],
               ),
           ],
         ),
@@ -105,6 +114,15 @@ class BackupService {
                   final p = unpack(m.photoPath);
                   return m.copyWith(photoPath: p, clearPhoto: p == null);
                 }(),
+            ],
+            diary: [
+              for (final d in pet.diary)
+                d.copyWith(
+                  photos: [
+                    for (final p in d.photos)
+                      if (unpack(p) != null) unpack(p)!,
+                  ],
+                ),
             ],
           );
         }(),

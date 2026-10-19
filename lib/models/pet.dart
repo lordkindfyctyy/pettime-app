@@ -1,9 +1,12 @@
+import 'caregiver.dart';
+import 'diary_entry.dart';
 import 'expense.dart';
 import 'health_record.dart';
 import 'medication.dart';
 import 'pet_share.dart';
 import 'supply.dart';
 import 'vet_visit.dart';
+import 'walk.dart';
 import 'weight_entry.dart';
 
 class Pet {
@@ -22,13 +25,20 @@ class Pet {
     List<WeightEntry>? weights,
     List<Supply>? supplies,
     List<Expense>? expenses,
+    List<Walk>? walks,
+    this.walkReminder,
+    List<DiaryEntry>? diary,
+    List<Caregiver>? caregivers,
     this.share,
   })  : medications = medications ?? [],
         visits = visits ?? [],
         records = records ?? [],
         weights = weights ?? [],
         supplies = supplies ?? [],
-        expenses = expenses ?? [];
+        expenses = expenses ?? [],
+        walks = walks ?? [],
+        diary = diary ?? [],
+        caregivers = caregivers ?? [];
 
   final String id;
   final String name;
@@ -58,8 +68,39 @@ class Pet {
   /// Money spent on it, newest first.
   final List<Expense> expenses;
 
+  /// Walks, newest first.
+  final List<Walk> walks;
+
+  /// The daily reminder when it wasn't walked, or null when off.
+  final WalkReminder? walkReminder;
+
+  /// Health diary (symptoms, notes, photos), newest first.
+  final List<DiaryEntry> diary;
+
+  /// People who look after it for a few days (see Caregiver).
+  final List<Caregiver> caregivers;
+
   /// Set when it is shared with the family (see FamilySync).
   final PetShare? share;
+
+  /// On a caregiver's phone: when the care ends (or ended). Null on the
+  /// family's phones. A care that is no longer listed ended already.
+  DateTime? get careEndsAt {
+    final id = share?.caregiverId;
+    if (id == null) return null;
+    final c = caregivers.where((c) => c.id == id).firstOrNull;
+    return c?.endsAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  /// This phone looked after it and that time is over.
+  bool careFinished(DateTime now) {
+    final end = careEndsAt;
+    return end != null && !now.isBefore(end);
+  }
+
+  /// Caregivers still looking after it.
+  List<Caregiver> activeCaregivers(DateTime now) =>
+      caregivers.where((c) => c.isActive(now)).toList();
 
   /// Age as a short Spanish label, or null when the birth date is unknown.
   String? ageLabel([DateTime? now]) {
@@ -93,6 +134,11 @@ class Pet {
     List<WeightEntry>? weights,
     List<Supply>? supplies,
     List<Expense>? expenses,
+    List<Walk>? walks,
+    WalkReminder? walkReminder,
+    bool clearWalkReminder = false,
+    List<DiaryEntry>? diary,
+    List<Caregiver>? caregivers,
     PetShare? share,
     bool clearShare = false,
   }) {
@@ -111,6 +157,11 @@ class Pet {
       weights: weights ?? this.weights,
       supplies: supplies ?? this.supplies,
       expenses: expenses ?? this.expenses,
+      walks: walks ?? this.walks,
+      walkReminder:
+          clearWalkReminder ? null : (walkReminder ?? this.walkReminder),
+      diary: diary ?? this.diary,
+      caregivers: caregivers ?? this.caregivers,
       share: clearShare ? null : (share ?? this.share),
     );
   }
@@ -130,6 +181,10 @@ class Pet {
         'weights': weights.map((w) => w.toJson()).toList(),
         'supplies': supplies.map((s) => s.toJson()).toList(),
         'expenses': expenses.map((e) => e.toJson()).toList(),
+        'walks': walks.map((w) => w.toJson()).toList(),
+        if (walkReminder != null) 'walkReminder': walkReminder!.toJson(),
+        'diary': diary.map((d) => d.toJson()).toList(),
+        'caregivers': caregivers.map((c) => c.toJson()).toList(),
         if (share != null) 'share': share!.toJson(),
       };
 
@@ -164,6 +219,20 @@ class Pet {
             .map((e) => Expense.fromJson(e as Map<String, dynamic>))
             .toList()
           ..sort((a, b) => b.date.compareTo(a.date)),
+        walks: (json['walks'] as List? ?? [])
+            .map((w) => Walk.fromJson(w as Map<String, dynamic>))
+            .toList()
+          ..sort((a, b) => b.date.compareTo(a.date)),
+        walkReminder: json['walkReminder'] == null
+            ? null
+            : WalkReminder.fromJson(json['walkReminder'] as Map<String, dynamic>),
+        diary: (json['diary'] as List? ?? [])
+            .map((d) => DiaryEntry.fromJson(d as Map<String, dynamic>))
+            .toList()
+          ..sort((a, b) => b.date.compareTo(a.date)),
+        caregivers: (json['caregivers'] as List? ?? [])
+            .map((c) => Caregiver.fromJson(c as Map<String, dynamic>))
+            .toList(),
         share: json['share'] == null
             ? null
             : PetShare.fromJson(json['share'] as Map<String, dynamic>),

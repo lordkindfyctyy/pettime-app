@@ -14,6 +14,7 @@ import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
 import '../models/supply.dart';
+import '../models/walk.dart';
 import '../state/pets_state.dart';
 import 'home_widget_service.dart';
 
@@ -203,12 +204,19 @@ class NotificationService {
   static bool _isSlotOf(int id, int base) => id >= base && id < base + slots;
 
   /// Which doses get an alarm: the next [dosesAhead] ones, up to the end of the
-  /// treatment. Each is (dose number, notification id).
-  static List<(int, int)> plannedDoses(Medication med, DateTime now) {
+  /// treatment and before [until] (on a caregiver's phone, the end of the
+  /// care). Each is (dose number, notification id).
+  static List<(int, int)> plannedDoses(
+    Medication med,
+    DateTime now, {
+    DateTime? until,
+  }) {
     final base = baseId(med.id);
     final planned = <(int, int)>[];
     var k = med.nextDoseIndex(now);
-    while (planned.length < dosesAhead && med.doseTimeIfActive(k) != null) {
+    while (planned.length < dosesAhead) {
+      final time = med.doseTimeIfActive(k);
+      if (time == null || (until != null && !time.isBefore(until))) break;
       planned.add((k, base + k % slots));
       k++;
     }
@@ -244,8 +252,13 @@ class NotificationService {
     return k < 0 ? 0 : k;
   }
 
-  /// Reminders still to come for doses not given yet: (dose number, id, time).
-  static List<(int, int, DateTime)> plannedFollowUps(Medication med, DateTime now) {
+  /// Reminders still to come for doses not given yet, before [until]:
+  /// (dose number, id, time).
+  static List<(int, int, DateTime)> plannedFollowUps(
+    Medication med,
+    DateTime now, {
+    DateTime? until,
+  }) {
     if (!hasFollowUps(med)) return const [];
     final base = followUpBaseId(med.id);
     final planned = <(int, int, DateTime)>[];
@@ -254,6 +267,7 @@ class NotificationService {
       final time = med.doseTimeIfActive(k);
       if (time == null) break;
       final at = time.add(followUpDelay);
+      if (until != null && !at.isBefore(until)) break;
       if (at.isAfter(now) && !givenNear(med, time)) {
         planned.add((k, base + k % slots, at));
       }
@@ -272,7 +286,8 @@ class NotificationService {
   /// the ones of doses already given and adds the missing ones.
   Future<void> syncFollowUps(Pet pet, Medication med) async {
     if (!_ready) return;
-    final planned = plannedFollowUps(med, DateTime.now());
+    final planned =
+        plannedFollowUps(med, DateTime.now(), until: pet.careEndsAt);
     final keep = {for (final p in planned) p.$2};
     final base = followUpBaseId(med.id);
     final pending = await _pendingIds();
@@ -287,7 +302,8 @@ class NotificationService {
     Medication med, {
     required Set<int> alreadyPending,
   }) async {
-    final planned = plannedFollowUps(med, DateTime.now());
+    final planned =
+        plannedFollowUps(med, DateTime.now(), until: pet.careEndsAt);
     if (planned.every((p) => alreadyPending.contains(p.$2))) return;
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
@@ -329,7 +345,11 @@ class NotificationService {
   /// pet changed). Alarms already pending are replaced.
   Future<void> scheduleMedication(Pet pet, Medication med) async {
     if (!_ready) return;
-    final planned = {for (final (_, id) in plannedDoses(med, DateTime.now())) id};
+    final planned = {
+      for (final (_, id)
+          in plannedDoses(med, DateTime.now(), until: pet.careEndsAt))
+        id,
+    };
     final base = baseId(med.id);
     for (final id in await _pendingIds()) {
       if (_isSlotOf(id, base) && !planned.contains(id)) {
@@ -356,7 +376,8 @@ class NotificationService {
       android: androidDetails(pet, med),
       iOS: const DarwinNotificationDetails(),
     );
-    for (final (k, id) in plannedDoses(med, DateTime.now())) {
+    for (final (k, id)
+        in plannedDoses(med, DateTime.now(), until: pet.careEndsAt)) {
       if (alreadyPending.contains(id)) continue;
       await _plugin.zonedSchedule(
         id: id,
@@ -384,11 +405,13 @@ class NotificationService {
     DateTime now,
   ) {
     final planned = <(HealthRecord, int, DateTime, int)>[];
+    final until = pet.careEndsAt;
     for (final r in pendingRecords(pet.records)) {
       final due = r.nextDue!;
       final base = baseId('rec:${r.id}');
       for (final (slot, days) in reminderDaysBefore.indexed) {
         final day = DateTime(due.year, due.month, due.day - days, reminderHour);
+        if (until != null && !day.isBefore(until)) continue;
         if (day.isAfter(now)) planned.add((r, days, day, base + slot));
       }
     }
@@ -467,10 +490,12 @@ class NotificationService {
     DateTime now,
   ) {
     final planned = <(Supply, bool, DateTime, int)>[];
+    final until = pet.careEndsAt;
     for (final s in pet.supplies) {
       final base = baseId('sup:${s.id}');
       for (final (slot, day) in [s.warnOn, s.runsOutOn].indexed) {
         final at = DateTime(day.year, day.month, day.day, reminderHour);
+        if (until != null && !at.isBefore(until)) continue;
         if (at.isAfter(now)) planned.add((s, slot == 1, at, base + slot));
       }
     }
@@ -538,6 +563,107 @@ class NotificationService {
     }
   }
 
+  // ---- Walks ----
+
+  /// The "¿ya salió a pasear?" reminder is scheduled for this many days.
+  static const walkDaysAhead = 14;
+
+  static int walkBaseId(String petId) => baseId('walk:$petId');
+
+  /// Days ahead with a walk reminder: (time, notification id). Days it was
+  /// already walked are skipped.
+  static List<(DateTime, int)> plannedWalkReminders(Pet pet, DateTime now) {
+    final r = pet.walkReminder;
+    if (r == null) return const [];
+    final base = walkBaseId(pet.id);
+    final until = pet.careEndsAt;
+    final planned = <(DateTime, int)>[];
+    for (var d = 0; d < walkDaysAhead; d++) {
+      final at = DateTime(now.year, now.month, now.day + d, r.hour, r.minute);
+      if (until != null && !at.isBefore(until)) break;
+      if (!at.isAfter(now) || walksOn(pet.walks, at).isNotEmpty) continue;
+      final dayNumber =
+          DateTime.utc(at.year, at.month, at.day).millisecondsSinceEpoch ~/
+              Duration.millisecondsPerDay;
+      planned.add((at, base + dayNumber % slots));
+    }
+    return planned;
+  }
+
+  static String walkTitle(Pet pet) => 'Paseo de ${pet.name}';
+
+  static String walkBody(Pet pet) =>
+      '¿${pet.name} ya salió a pasear hoy? Si salió, anotalo en PetTime.';
+
+  /// Reschedules the pet's walk reminders (the setting changed, or a walk was
+  /// added or deleted).
+  Future<void> scheduleWalks(Pet pet) async {
+    if (!_ready) return;
+    final keep = {for (final p in plannedWalkReminders(pet, DateTime.now())) p.$2};
+    final base = walkBaseId(pet.id);
+    final pending = await _pendingIds();
+    for (final id in pending) {
+      if (_isSlotOf(id, base) && !keep.contains(id)) await _plugin.cancel(id: id);
+    }
+    await _scheduleWalks(pet, alreadyPending: pending);
+  }
+
+  Future<void> _scheduleWalks(
+    Pet pet, {
+    required Set<int> alreadyPending,
+  }) async {
+    final planned = plannedWalkReminders(pet, DateTime.now());
+    if (planned.every((p) => alreadyPending.contains(p.$2))) return;
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    final exact = await android?.canScheduleExactNotifications() ?? true;
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'walks',
+        'Paseos',
+        channelDescription: 'Avisos cuando una mascota todavía no salió a pasear',
+        color: const Color(0xFF00897B),
+        largeIcon: _existingBitmap(pet.photoPath),
+      ),
+      iOS: const DarwinNotificationDetails(),
+    );
+    for (final (at, id) in planned) {
+      if (alreadyPending.contains(id)) continue;
+      await _plugin.zonedSchedule(
+        id: id,
+        title: walkTitle(pet),
+        body: walkBody(pet),
+        scheduledDate: tz.TZDateTime.from(at, tz.local),
+        notificationDetails: details,
+        androidScheduleMode: exact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    }
+  }
+
+  // ---- Caregivers ----
+
+  /// Tells the caregiver that the pet left their phone because the care is
+  /// over.
+  Future<void> showCareEnded(Pet pet) async {
+    if (!_ready) return;
+    await _plugin.show(
+      id: baseId('care:${pet.id}'),
+      title: 'Terminó el cuidado de ${pet.name}',
+      body: 'Gracias por cuidar a ${pet.name}. Ya no está en tu PetTime.',
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'care',
+          'Cuidado de mascotas',
+          channelDescription: 'Avisos de cuando termina el cuidado de una mascota',
+          color: Color(0xFF00897B),
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   /// Brings the pending alarms in line with the data when the app starts:
   /// removes the ones that no longer belong to any medication or health record
   /// and adds only the missing ones (each add or cancel is a slow call into
@@ -548,11 +674,15 @@ class NotificationService {
     final expected = {
       for (final pet in pets) ...[
         for (final med in pet.medications)
-          for (final (_, id) in plannedDoses(med, now)) id,
+          for (final (_, id) in plannedDoses(med, now, until: pet.careEndsAt))
+            id,
         for (final med in pet.medications)
-          for (final (_, id, _) in plannedFollowUps(med, now)) id,
+          for (final (_, id, _)
+              in plannedFollowUps(med, now, until: pet.careEndsAt))
+            id,
         for (final p in plannedRecordReminders(pet, now)) p.$4,
         for (final p in plannedSupplyReminders(pet, now)) p.$4,
+        for (final p in plannedWalkReminders(pet, now)) p.$2,
       ],
     };
     final pending = await _pendingIds();
@@ -566,6 +696,7 @@ class NotificationService {
       }
       await _scheduleRecords(pet, alreadyPending: pending);
       await _scheduleSupplies(pet, alreadyPending: pending);
+      await _scheduleWalks(pet, alreadyPending: pending);
     }
   }
 }

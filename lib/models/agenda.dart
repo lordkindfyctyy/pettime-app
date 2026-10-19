@@ -3,6 +3,7 @@ import 'medication.dart';
 import 'pet.dart';
 import 'supply.dart';
 import 'vet_visit.dart';
+import 'walk.dart';
 
 /// One scheduled dose of a medication on the "Hoy" screen.
 class DoseSlot {
@@ -107,3 +108,9 @@ List<(Pet, Supply)> suppliesToRestock(Iterable<Pet> pets, DateTime now) {
   ]..sort((a, b) => a.$2.runsOutOn.compareTo(b.$2.runsOutOn));
   return list;
 }
+
+/// Pets with the walk reminder on that haven't been walked on [day] yet.
+List<Pet> petsToWalk(Iterable<Pet> pets, DateTime day) => [
+  for (final p in pets)
+    if (p.walkReminder != null && walksOn(p.walks, day).isEmpty) p,
+];

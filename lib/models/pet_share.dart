@@ -8,6 +8,7 @@ class PetShare {
     this.dirty = false,
     this.photoUrl,
     this.uploadedPhotoPath,
+    this.caregiverId,
   });
 
   /// "K7Q2M9XP", what the family types to join.
@@ -28,7 +29,13 @@ class PetShare {
   /// The local photo already sent to the server.
   final String? uploadedPhotoPath;
 
+  /// Only on a caregiver's phone: which of the pet's caregivers it is (see
+  /// Caregiver). The pet leaves this phone when that care ends.
+  final String? caregiverId;
+
   bool get isOwner => ownerKey != null;
+
+  bool get isCaregiver => caregiverId != null;
 
   /// "K7Q2-M9XP", easier to read and dictate.
   String get displayCode =>
@@ -47,6 +54,7 @@ class PetShare {
         dirty: dirty ?? this.dirty,
         photoUrl: photoUrl ?? this.photoUrl,
         uploadedPhotoPath: uploadedPhotoPath ?? this.uploadedPhotoPath,
+        caregiverId: caregiverId,
       );
 
   Map<String, dynamic> toJson() => {
@@ -56,6 +64,7 @@ class PetShare {
         'dirty': dirty,
         'photoUrl': photoUrl,
         'uploadedPhotoPath': uploadedPhotoPath,
+        if (caregiverId != null) 'caregiverId': caregiverId,
       };
 
   factory PetShare.fromJson(Map<String, dynamic> json) => PetShare(
@@ -65,5 +74,6 @@ class PetShare {
         dirty: json['dirty'] as bool? ?? false,
         photoUrl: json['photoUrl'] as String?,
         uploadedPhotoPath: json['uploadedPhotoPath'] as String?,
+        caregiverId: json['caregiverId'] as String?,
       );
 }

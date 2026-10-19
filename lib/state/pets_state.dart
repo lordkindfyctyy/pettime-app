@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../models/caregiver.dart';
+import '../models/diary_entry.dart';
 import '../models/expense.dart';
 import '../models/health_record.dart';
 import '../models/medication.dart';
@@ -12,6 +14,7 @@ import '../models/pet.dart';
 import '../models/pet_share.dart';
 import '../models/supply.dart';
 import '../models/vet_visit.dart';
+import '../models/walk.dart';
 import '../models/weight_entry.dart';
 import '../services/family_sync.dart';
 import '../services/home_widget_service.dart';
@@ -129,6 +132,15 @@ class PetsState extends ChangeNotifier {
           .scheduleRecords(pet, removedIds: removedRecords);
       await NotificationService.instance
           .scheduleSupplies(pet, removedIds: removedSupplies);
+      await NotificationService.instance.scheduleWalks(pet);
+      // Diary entries someone else deleted take their photos with them.
+      for (final d in old?.diary ?? const <DiaryEntry>[]) {
+        if (!pet.diary.any((n) => n.id == d.id)) {
+          for (final photo in d.photos) {
+            await PhotoService.instance.delete(photo);
+          }
+        }
+      }
     });
   }
 
@@ -165,6 +177,7 @@ class PetsState extends ChangeNotifier {
       }
       await NotificationService.instance.scheduleRecords(pet);
       await NotificationService.instance.scheduleSupplies(pet);
+      await NotificationService.instance.scheduleWalks(pet);
     });
   }
 
@@ -174,6 +187,15 @@ class PetsState extends ChangeNotifier {
     await _save();
     _background(() async {
       await PhotoService.instance.delete(pet?.photoPath);
+      for (final d in pet?.diary ?? const <DiaryEntry>[]) {
+        for (final photo in d.photos) {
+          await PhotoService.instance.delete(photo);
+        }
+      }
+      if (pet?.walkReminder != null) {
+        await NotificationService.instance
+            .scheduleWalks(pet!.copyWith(clearWalkReminder: true));
+      }
       for (final med in pet?.medications ?? const <Medication>[]) {
         await PhotoService.instance.delete(med.photoPath);
         await NotificationService.instance.cancelMedication(med.id);
@@ -340,20 +362,107 @@ class PetsState extends ChangeNotifier {
     final old = _pets;
     _pets = [...pets];
     await _save();
-    final newPhotos = {
-      for (final p in pets) ...[
-        p.photoPath,
-        for (final m in p.medications) m.photoPath,
-      ],
-    };
+    List<String?> photosOf(Pet p) => [
+          p.photoPath,
+          for (final m in p.medications) m.photoPath,
+          for (final d in p.diary) ...d.photos,
+        ];
+    final newPhotos = {for (final p in pets) ...photosOf(p)};
     _background(() async {
       for (final p in old) {
-        for (final path in [p.photoPath, for (final m in p.medications) m.photoPath]) {
+        for (final path in photosOf(p)) {
           if (!newPhotos.contains(path)) await PhotoService.instance.delete(path);
         }
       }
       await NotificationService.instance.syncAll(_pets);
     });
+  }
+
+  /// Adds a walk, or replaces the one with the same id; newest first. The
+  /// reminder of that day is no longer needed.
+  Future<void> saveWalk(String petId, Walk walk) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final updated = pet.copyWith(
+      walks: [...pet.walks.where((w) => w.id != walk.id), walk]
+        ..sort((a, b) => b.date.compareTo(a.date)),
+    );
+    await _store(updated);
+    _background(() => NotificationService.instance.scheduleWalks(updated));
+  }
+
+  Future<void> deleteWalk(String petId, String walkId) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final updated = pet.copyWith(
+      walks: pet.walks.where((w) => w.id != walkId).toList(),
+    );
+    await _store(updated);
+    _background(() => NotificationService.instance.scheduleWalks(updated));
+  }
+
+  /// Turns on (at that time) or off (null) the daily walk reminder.
+  Future<void> setWalkReminder(String petId, WalkReminder? reminder) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final updated = pet.copyWith(
+      walkReminder: reminder,
+      clearWalkReminder: reminder == null,
+    );
+    await _store(updated);
+    _background(() => NotificationService.instance.scheduleWalks(updated));
+  }
+
+  /// Adds or edits a diary entry; newest first. Photos it no longer has are
+  /// deleted.
+  Future<void> saveDiaryEntry(String petId, DiaryEntry entry) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final old = pet.diary.where((d) => d.id == entry.id).firstOrNull;
+    await _store(pet.copyWith(
+      diary: [...pet.diary.where((d) => d.id != entry.id), entry]
+        ..sort((a, b) => b.date.compareTo(a.date)),
+    ));
+    final removed = [
+      for (final p in old?.photos ?? const <String>[])
+        if (!entry.photos.contains(p)) p,
+    ];
+    _background(() async {
+      for (final p in removed) {
+        await PhotoService.instance.delete(p);
+      }
+    });
+  }
+
+  Future<void> deleteDiaryEntry(String petId, String entryId) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    final entry = pet.diary.where((d) => d.id == entryId).firstOrNull;
+    await _store(pet.copyWith(
+      diary: pet.diary.where((d) => d.id != entryId).toList(),
+    ));
+    _background(() async {
+      for (final p in entry?.photos ?? const <String>[]) {
+        await PhotoService.instance.delete(p);
+      }
+    });
+  }
+
+  /// Adds a caregiver (see Caregiver), or replaces the one with the same id.
+  Future<void> saveCaregiver(String petId, Caregiver caregiver) async {
+    final pet = byId(petId);
+    if (pet == null) return;
+    await _store(pet.copyWith(caregivers: [
+      ...pet.caregivers.where((c) => c.id != caregiver.id),
+      caregiver,
+    ]));
+  }
+
+  /// Ends a caregiver's care now: the pet leaves their phone when it syncs.
+  Future<void> endCaregiver(String petId, String caregiverId, [DateTime? now]) async {
+    final c = byId(petId)?.caregivers.where((c) => c.id == caregiverId).firstOrNull;
+    if (c == null) return;
+    await saveCaregiver(petId, c.end(now ?? DateTime.now()));
   }
 
   /// Adds or edits an entry of the health booklet. A newer application of

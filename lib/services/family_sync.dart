@@ -4,10 +4,12 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../models/caregiver.dart';
 import '../models/pet.dart';
 import '../models/pet_merge.dart';
 import '../models/pet_share.dart';
 import '../state/pets_state.dart';
+import 'notification_service.dart';
 import 'pettime_api.dart';
 import 'photo_service.dart';
 
@@ -19,11 +21,18 @@ import 'photo_service.dart';
 /// it is open. If two phones changed the pet at the same time, the server
 /// answers 409 and the changes are combined (see [mergePets]).
 class FamilySync {
-  FamilySync({PetTimeApi? api}) : _api = api ?? PetTimeApi.instance;
+  FamilySync({PetTimeApi? api, DateTime Function()? clock})
+      : _api = api ?? PetTimeApi.instance,
+        _clock = clock ?? DateTime.now;
 
   static final instance = FamilySync();
 
   final PetTimeApi _api;
+  final DateTime Function() _clock;
+
+  /// A caregiver's last changes may still be unsent when the care ends
+  /// (no internet): the pet stays this long after the end to send them.
+  static const careGrace = Duration(days: 3);
   PetsState? _state;
   Timer? _debounce;
   Timer? _periodic;
@@ -74,7 +83,30 @@ class FamilySync {
         for (final pet in state.pets.where((p) => p.share != null).toList()) {
           await _syncPet(pet.id);
         }
+        await _endFinishedCare();
       });
+
+  /// On a caregiver's phone: the pets whose care is over leave it, once
+  /// their last changes were sent (or after [careGrace] without internet).
+  Future<void> _endFinishedCare() async {
+    final state = _state!;
+    final now = _clock();
+    for (final pet in state.pets.toList()) {
+      if (!pet.careFinished(now)) continue;
+      final unsent = pet.share!.dirty;
+      if (unsent && now.isBefore(pet.careEndsAt!.add(careGrace))) continue;
+      await _removeCaredPet(pet);
+    }
+  }
+
+  Future<void> _removeCaredPet(Pet pet) async {
+    await _state!.deletePet(pet.id);
+    try {
+      await NotificationService.instance.showCareEnded(pet);
+    } catch (e) {
+      debugPrint('Could not show the end of the care: $e');
+    }
+  }
 
   /// One sync at a time, so two can't send the same change twice.
   Future<void> _run(Future<void> Function() task) async {
@@ -142,8 +174,13 @@ class FamilySync {
           continue;
         }
         if (e.isNotFound) {
-          // They stopped sharing it: it stays on this phone as its own.
-          await state.setShare(petId, null);
+          if (share.isCaregiver) {
+            // They stopped sharing it: the care is over too.
+            await _removeCaredPet(pet);
+          } else {
+            // They stopped sharing it: it stays on this phone as its own.
+            await state.setShare(petId, null);
+          }
         }
         return;
       }
@@ -225,13 +262,45 @@ class FamilySync {
     return share;
   }
 
-  /// Joins the pet shared with [code]: it is added to this phone.
+  /// Sends a shared pet's changes right away; returns whether they got to
+  /// the server.
+  Future<bool> sendNow(String petId) async {
+    await _run(() => _syncPet(petId));
+    final share = _state?.byId(petId)?.share;
+    return share != null && !share.dirty;
+  }
+
+  /// Joins the pet shared with [code] (the family's, 8 characters, or a
+  /// caregiver's, 12): it is added to this phone.
   Future<Pet> join(String code) async {
-    final res = await _api.post('family/share.php', {
-      'action': 'get',
-      'code': code,
-    });
+    String? caregiverId;
+    if (code.length == 12) {
+      (code, caregiverId) = CaregiverCode.decode(code);
+    }
+    final Map<String, dynamic> res;
+    try {
+      res = await _api.post('family/share.php', {
+        'action': 'get',
+        'code': code,
+      });
+    } on ApiException catch (e) {
+      if (e.isNotFound && caregiverId != null) {
+        throw ApiException('Ese código de cuidador ya no sirve.');
+      }
+      rethrow;
+    }
     final remote = res['pet'] as Map<String, dynamic>;
+    if (caregiverId != null) {
+      final care = Pet.fromJson(remote)
+          .caregivers
+          .where((c) => c.id == caregiverId)
+          .firstOrNull;
+      if (care == null || !care.isActive(_clock())) {
+        throw ApiException(care == null
+            ? 'Ese código de cuidador no existe. Revisalo o pedí uno nuevo.'
+            : 'Ese código de cuidador ya venció.');
+      }
+    }
     final existing = _state!.byId(remote['id'] as String);
     if (existing != null) {
       throw ApiException(existing.share != null
@@ -240,7 +309,11 @@ class FamilySync {
     }
     final pet = petFromShared(
       remote,
-      share: PetShare(code: res['code'] as String, version: res['version'] as int),
+      share: PetShare(
+        code: res['code'] as String,
+        version: res['version'] as int,
+        caregiverId: caregiverId,
+      ),
     );
     await _state!.applySharedPet(pet);
     try {
@@ -263,6 +336,14 @@ class FamilySync {
     await _state!.setShare(pet.id, null);
   }
 
-  /// This phone stops getting the family's changes; it keeps its copy.
-  Future<void> leave(Pet pet) => _state!.setShare(pet.id, null);
+  /// This phone stops getting the family's changes; it keeps its copy. A
+  /// caregiver's phone ends the care: the pet leaves it.
+  Future<void> leave(Pet pet) async {
+    if (pet.share?.isCaregiver ?? false) {
+      await sendNow(pet.id);
+      await _state!.deletePet(pet.id);
+      return;
+    }
+    await _state!.setShare(pet.id, null);
+  }
 }

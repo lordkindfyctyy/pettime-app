@@ -8,6 +8,9 @@ App Flutter para dueños de mascotas: agenda de medicación, visitas al veterina
 - **Medicación:** dosis cada N horas, con alarmas que nombran a la mascota ("Es hora de darle X a Luna").
 - **Veterinaria:** a cuál va, próxima visita y visitas anteriores.
 - **Copia de seguridad:** en Descargas o en Google Drive.
+- **Paseos:** cuánto salió cada día, racha y aviso si hoy no salió.
+- **Diario de salud:** síntomas, notas y fotos; va en la ficha para el veterinario.
+- **Cuidador temporal:** un código para quien la cuida unos días; al terminar, la mascota sale sola de su celular.
 
 ## Estructura
 
