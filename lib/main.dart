@@ -6,7 +6,6 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/home_screen.dart';
-import 'services/calendar_service.dart';
 import 'services/drive_backup_service.dart';
 import 'services/family_sync.dart';
 import 'services/lost_pets_service.dart';
@@ -21,7 +20,6 @@ Future<void> main() async {
   await initializeDateFormatting('es');
   final pets = PetsState();
   await pets.load();
-  await CalendarService.instance.load();
   await DriveBackupService.instance.load();
   await ShopSettings.instance.load();
   await LostPetsService.instance.load();

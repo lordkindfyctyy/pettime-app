@@ -2,8 +2,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../config.dart';
 
-/// The Google account shared by Calendar and the Drive backup, so turning
-/// one of them off doesn't sign the other out.
+/// The Google account used by the Drive backup.
 class GoogleAccount {
   GoogleAccount._();
   static final instance = GoogleAccount._();

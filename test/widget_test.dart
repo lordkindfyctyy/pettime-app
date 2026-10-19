@@ -9,7 +9,6 @@ import 'package:pettime_app/main.dart';
 import 'package:pettime_app/models/medication.dart';
 import 'package:pettime_app/models/pet.dart';
 import 'package:pettime_app/models/vet_visit.dart';
-import 'package:pettime_app/services/calendar_service.dart';
 import 'package:pettime_app/services/notification_service.dart';
 import 'package:pettime_app/state/pets_state.dart';
 import 'package:pettime_app/widgets/medication_card.dart';
@@ -79,25 +78,6 @@ void main() {
     expect(state.byId('p')!.visits, isEmpty);
   });
 
-  test('Calendar event ids are valid base32hex and stable', () {
-    final id = CalendarService.eventId('pm', '3f2a1b9c-0d4e-4f5a-8b6c-7d8e9f0a1b2c');
-    expect(id, 'pm3f2a1b9c0d4e4f5a8b6c7d8e9f0a1b2c');
-    expect(RegExp(r'^[a-v0-9]{5,1024}$').hasMatch(id), isTrue);
-  });
-
-  test('Calendar recurrence repeats every N hours until the end', () {
-    final open = Medication(
-      id: 'm',
-      name: 'X',
-      everyMinutes: 480,
-      startsAt: DateTime.utc(2026, 1, 1, 8),
-    );
-    expect(CalendarService.recurrence(open), 'RRULE:FREQ=HOURLY;INTERVAL=8');
-    final closed = open.copyWith(endsAt: DateTime.utc(2026, 1, 10, 20, 30));
-    expect(CalendarService.recurrence(closed),
-        'RRULE:FREQ=HOURLY;INTERVAL=8;UNTIL=20260110T203000Z');
-  });
-
   test('PetsState logs and removes given doses, keeping them sorted', () async {
     final state = PetsState();
     final med = Medication(
@@ -162,7 +142,6 @@ void main() {
     expect(med.intervalLabel, 'cada 30 min');
     expect(med.copyWith(everyMinutes: 480).intervalLabel, 'cada 8 h');
     expect(med.copyWith(everyMinutes: 90).intervalLabel, 'cada 1 h 30 min');
-    expect(CalendarService.recurrence(med), 'RRULE:FREQ=MINUTELY;INTERVAL=30');
   });
 
   test('Medication saved with whole hours still loads', () {

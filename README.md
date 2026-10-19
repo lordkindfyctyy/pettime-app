@@ -7,7 +7,7 @@ App Flutter para dueños de mascotas: agenda de medicación, visitas al veterina
 - **Ficha de la mascota:** nombre, edad, alimento, medicación que toma.
 - **Medicación:** dosis cada N horas, con alarmas que nombran a la mascota ("Es hora de darle X a Luna").
 - **Veterinaria:** a cuál va, próxima visita y visitas anteriores.
-- **Google Calendar:** sincronizar la agenda de medicación y visitas.
+- **Copia de seguridad:** en Descargas o en Google Drive.
 
 ## Estructura
 
@@ -15,7 +15,7 @@ App Flutter para dueños de mascotas: agenda de medicación, visitas al veterina
 lib/
   models/     # Pet, Medication, VetVisit
   screens/    # pantallas
-  services/   # notificaciones, Google Calendar, almacenamiento
+  services/   # notificaciones, copia en Drive, almacenamiento
   state/      # estado (provider)
   widgets/    # componentes reutilizables
 ```
@@ -32,4 +32,4 @@ flutter run            # Android / Chrome (-d chrome)
 Paquetes: `provider`, `shared_preferences`, `flutter_local_notifications`, `timezone`,
 `flutter_timezone`, `intl`, `uuid`, `google_sign_in`, `googleapis`.
 
-Para Google Calendar hace falta crear un proyecto en Google Cloud, habilitar Calendar API y configurar el OAuth client (pendiente).
+La copia en Google Drive usa el proyecto de Google Cloud `pettime-511919` (Drive API, permiso drive.file).

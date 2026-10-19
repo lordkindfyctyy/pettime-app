@@ -13,7 +13,6 @@ import '../models/pet_share.dart';
 import '../models/supply.dart';
 import '../models/vet_visit.dart';
 import '../models/weight_entry.dart';
-import '../services/calendar_service.dart';
 import '../services/family_sync.dart';
 import '../services/home_widget_service.dart';
 import '../services/notification_service.dart';
@@ -82,7 +81,7 @@ class PetsState extends ChangeNotifier {
   String newId() => _uuid.v4();
 
   /// Stores the pet (adds it, or replaces the one with the same id) and
-  /// updates the screen. Alarms and Calendar are not touched here.
+  /// updates the screen. Alarms are not touched here.
   ///
   /// A change to a pet shared with the family is marked to be sent, unless
   /// it is what came from the server ([fromSync]).
@@ -102,8 +101,8 @@ class PetsState extends ChangeNotifier {
   }
 
   /// Saves what came from the family's server: [pet] replaces this phone's
-  /// copy, and its alarms and Calendar events follow the changes (what the
-  /// others deleted is cancelled here too).
+  /// copy, and its alarms follow the changes (what the others deleted is
+  /// cancelled here too).
   Future<void> applySharedPet(Pet pet) async {
     final old = byId(pet.id);
     await _store(pet, fromSync: true);
@@ -114,12 +113,6 @@ class PetsState extends ChangeNotifier {
       ];
       for (final med in removedMeds) {
         await NotificationService.instance.cancelMedication(med.id);
-        await CalendarService.instance.deleteMedication(med.id);
-      }
-      for (final visit in old?.visits ?? const <VetVisit>[]) {
-        if (!pet.visits.any((v) => v.id == visit.id)) {
-          await CalendarService.instance.deleteVisit(visit.id);
-        }
       }
       for (final med in pet.medications) {
         await NotificationService.instance.scheduleMedication(pet, med);
@@ -136,13 +129,6 @@ class PetsState extends ChangeNotifier {
           .scheduleRecords(pet, removedIds: removedRecords);
       await NotificationService.instance
           .scheduleSupplies(pet, removedIds: removedSupplies);
-      if (removedRecords.isEmpty) {
-        await CalendarService.instance.syncPet(pet);
-      } else {
-        await CalendarService.instance
-            .syncRecords(pet, removedIds: removedRecords);
-        await CalendarService.instance.syncPet(pet);
-      }
     });
   }
 
@@ -157,9 +143,9 @@ class PetsState extends ChangeNotifier {
     );
   }
 
-  /// Alarms and Google Calendar are slow (hundreds of platform calls, network)
-  /// and the data is already saved, so they run after the screen has updated.
-  /// A failure (offline, revoked permission) must not undo or block anything.
+  /// Alarms are slow (hundreds of platform calls) and the data is already
+  /// saved, so they run after the screen has updated. A failure must not undo
+  /// or block anything.
   void _background(Future<void> Function() task) {
     unawaited(() async {
       try {
@@ -179,7 +165,6 @@ class PetsState extends ChangeNotifier {
       }
       await NotificationService.instance.scheduleRecords(pet);
       await NotificationService.instance.scheduleSupplies(pet);
-      await CalendarService.instance.syncPet(pet);
     });
   }
 
@@ -192,10 +177,6 @@ class PetsState extends ChangeNotifier {
       for (final med in pet?.medications ?? const <Medication>[]) {
         await PhotoService.instance.delete(med.photoPath);
         await NotificationService.instance.cancelMedication(med.id);
-        await CalendarService.instance.deleteMedication(med.id);
-      }
-      for (final visit in pet?.visits ?? const <VetVisit>[]) {
-        await CalendarService.instance.deleteVisit(visit.id);
       }
       if (pet != null && pet.supplies.isNotEmpty) {
         await NotificationService.instance.scheduleSupplies(
@@ -207,7 +188,6 @@ class PetsState extends ChangeNotifier {
         final ids = [for (final r in pet.records) r.id];
         final empty = pet.copyWith(records: []);
         await NotificationService.instance.scheduleRecords(empty, removedIds: ids);
-        await CalendarService.instance.syncRecords(empty, removedIds: ids);
       }
     });
   }
@@ -224,10 +204,9 @@ class PetsState extends ChangeNotifier {
     }
     final updated = pet.copyWith(medications: meds);
     await _store(updated);
-    _background(() async {
-      await NotificationService.instance.scheduleMedication(updated, med);
-      await CalendarService.instance.syncMedication(updated, med);
-    });
+    _background(
+      () => NotificationService.instance.scheduleMedication(updated, med),
+    );
   }
 
   /// Records that a dose was given ([at] defaults to now).
@@ -245,7 +224,7 @@ class PetsState extends ChangeNotifier {
     final med = byId(petId)?.medications.where((m) => m.id == medId).firstOrNull;
     if (med == null) return;
     final doses = change(med.givenDoses)..sort();
-    // Doses given are not part of the alarm or the Calendar event, but they
+    // Doses given are not part of the alarm, but they
     // decide which "¿ya le diste…?" reminders are still needed.
     final updatedMed = med.copyWith(givenDoses: doses);
     final pet = byId(petId)!.copyWith(
@@ -270,9 +249,7 @@ class PetsState extends ChangeNotifier {
     } else {
       visits[i] = visit;
     }
-    final updated = pet.copyWith(visits: visits);
-    await _store(updated);
-    _background(() => CalendarService.instance.syncVisit(updated, visit));
+    await _store(pet.copyWith(visits: visits));
   }
 
   Future<void> deleteVisit(String petId, String visitId) async {
@@ -281,7 +258,6 @@ class PetsState extends ChangeNotifier {
     await _store(pet.copyWith(
       visits: pet.visits.where((v) => v.id != visitId).toList(),
     ));
-    _background(() => CalendarService.instance.deleteVisit(visitId));
   }
 
   /// Adds or edits a supply (food, medicine…) and its restocking reminders.
@@ -322,8 +298,7 @@ class PetsState extends ChangeNotifier {
         .scheduleSupplies(updated, removedIds: [supplyId]));
   }
 
-  /// Adds a weighing, keeping them by date. Weights don't touch alarms or
-  /// Calendar.
+  /// Adds a weighing, keeping them by date. Weights don't touch alarms.
   Future<void> addWeight(String petId, WeightEntry entry) async {
     final pet = byId(petId);
     if (pet == null) return;
@@ -360,7 +335,7 @@ class PetsState extends ChangeNotifier {
   }
 
   /// Replaces every pet with the ones of a backup. Alarms are rebuilt, and
-  /// the photos and Calendar events of what is no longer there are removed.
+  /// the photos of what is no longer there are removed.
   Future<void> replaceAll(List<Pet> pets) async {
     final old = _pets;
     _pets = [...pets];
@@ -378,25 +353,6 @@ class PetsState extends ChangeNotifier {
         }
       }
       await NotificationService.instance.syncAll(_pets);
-      final calendar = CalendarService.instance;
-      final medIds = {for (final p in pets) for (final m in p.medications) m.id};
-      final visitIds = {for (final p in pets) for (final v in p.visits) v.id};
-      for (final p in old) {
-        for (final m in p.medications) {
-          if (!medIds.contains(m.id)) await calendar.deleteMedication(m.id);
-        }
-        for (final v in p.visits) {
-          if (!visitIds.contains(v.id)) await calendar.deleteVisit(v.id);
-        }
-        final gone = [
-          for (final r in p.records)
-            if (!pets.any((n) => n.records.any((x) => x.id == r.id))) r.id,
-        ];
-        if (gone.isNotEmpty) {
-          await calendar.syncRecords(p.copyWith(records: []), removedIds: gone);
-        }
-      }
-      await calendar.syncAll(_pets);
     });
   }
 
@@ -415,10 +371,7 @@ class PetsState extends ChangeNotifier {
     }
     final updated = pet.copyWith(records: records);
     await _store(updated);
-    _background(() async {
-      await NotificationService.instance.scheduleRecords(updated);
-      await CalendarService.instance.syncRecords(updated);
-    });
+    _background(() => NotificationService.instance.scheduleRecords(updated));
   }
 
   Future<void> deleteRecord(String petId, String recordId) async {
@@ -428,12 +381,8 @@ class PetsState extends ChangeNotifier {
       records: pet.records.where((r) => r.id != recordId).toList(),
     );
     await _store(updated);
-    _background(() async {
-      await NotificationService.instance
-          .scheduleRecords(updated, removedIds: [recordId]);
-      await CalendarService.instance
-          .syncRecords(updated, removedIds: [recordId]);
-    });
+    _background(() => NotificationService.instance
+        .scheduleRecords(updated, removedIds: [recordId]));
   }
 
   Future<void> deleteMedication(String petId, String medId) async {
@@ -446,7 +395,6 @@ class PetsState extends ChangeNotifier {
     _background(() async {
       await PhotoService.instance.delete(photo);
       await NotificationService.instance.cancelMedication(medId);
-      await CalendarService.instance.deleteMedication(medId);
     });
   }
 }
