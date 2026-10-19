@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../models/medication.dart';
 import '../screens/medication_form_screen.dart';
 import '../state/pets_state.dart';
+import 'confirm_delete.dart';
 import 'dose_history_sheet.dart';
 
 /// One medication in the pet's profile: the photo of the medicine on top, the
@@ -164,8 +165,17 @@ class MedicationCard extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
                     tooltip: 'Eliminar medicación',
-                    onPressed: () =>
-                        context.read<PetsState>().deleteMedication(petId, m.id),
+                    onPressed: () async {
+                      final state = context.read<PetsState>();
+                      if (await confirmDelete(
+                        context,
+                        'la medicación ${m.name}',
+                        detail: 'Se borran también sus alarmas y el historial '
+                            'de tomas. No se puede deshacer.',
+                      )) {
+                        await state.deleteMedication(petId, m.id);
+                      }
+                    },
                   ),
                 ],
               ),

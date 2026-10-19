@@ -9,6 +9,7 @@ import '../services/family_sync.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
 import 'caregiver_sheet.dart';
+import 'copyable_code.dart';
 
 /// What is sent to the family so they can join.
 String familyInviteText(Pet pet) =>
@@ -16,7 +17,23 @@ String familyInviteText(Pet pet) =>
     'remedios, vacunas y turnos.\n\n'
     '1. Instalá PetTime: https://sixsevenweb.com/pettime/\n'
     '2. En "Mascotas" tocá ⋮ → "Unirme con un código"\n'
-    '3. Escribí el código: ${pet.share!.displayCode}';
+    '3. Copiá este mensaje y tocá "Pegar", o escribí el código: '
+    '${pet.share!.displayCode}';
+
+/// The family or caregiver code in [text], which may be the whole invite
+/// message pasted from WhatsApp; null when there is none.
+String? findShareCode(String text) {
+  final upper = text.toUpperCase();
+  final grouped = RegExp(r'\b[A-Z0-9]{4}-[A-Z0-9]{4}(?:-[A-Z0-9]{4})?\b')
+      .allMatches(upper)
+      .map((m) => m[0]!)
+      .toList();
+  if (grouped.isNotEmpty) {
+    return grouped.last.replaceAll('-', '');
+  }
+  final plain = upper.replaceAll(RegExp(r'[\s-]'), '');
+  return RegExp(r'^[A-Z0-9]{8}([A-Z0-9]{4})?$').hasMatch(plain) ? plain : null;
+}
 
 /// Shares [pet] with the family, or shows its code if it already is.
 Future<void> showFamilyShareSheet(BuildContext context, String petId) {
@@ -172,16 +189,7 @@ class _FamilySheetState extends State<_FamilySheet> {
                     : 'Compartida con la familia. Código:',
               ),
               const SizedBox(height: 8),
-              Center(
-                child: SelectableText(
-                  share.displayCode,
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 4,
-                    color: Brand.red,
-                  ),
-                ),
-              ),
+              Center(child: CopyableCode(code: share.displayCode)),
               const SizedBox(height: 4),
               Text(
                 share.dirty ? 'Hay cambios por enviar (se envían al tener internet)' : 'Al día con la familia',
@@ -195,16 +203,6 @@ class _FamilySheetState extends State<_FamilySheet> {
                 onPressed: () => SharePlus.instance.share(
                   ShareParams(text: familyInviteText(pet)),
                 ),
-              ),
-              TextButton.icon(
-                icon: const Icon(Icons.copy),
-                label: const Text('Copiar código'),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: share.code));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Código copiado')),
-                  );
-                },
               ),
               TextButton.icon(
                 icon: const Icon(Icons.sync),
@@ -285,8 +283,27 @@ class _JoinDialogState extends State<_JoinDialog> {
     super.dispose();
   }
 
+  /// Pastes the code, or finds it in the whole invite message.
+  Future<void> _paste() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+    final code = findShareCode(data?.text ?? '');
+    setState(() {
+      if (code == null) {
+        _error = 'No hay ningún código copiado. Copiá el mensaje que te '
+            'mandaron y volvé a tocar "Pegar".';
+      } else {
+        _code.text = code.length == 8
+            ? '${code.substring(0, 4)}-${code.substring(4)}'
+            : '${code.substring(0, 4)}-${code.substring(4, 8)}-${code.substring(8)}';
+        _error = null;
+      }
+    });
+  }
+
   Future<void> _join() async {
-    final code = _code.text.replaceAll(RegExp(r'[\s-]'), '').toUpperCase();
+    final code = findShareCode(_code.text) ??
+        _code.text.replaceAll(RegExp(r'[\s-]'), '').toUpperCase();
     if (code.length != 8 && code.length != 12) {
       setState(
         () => _error = 'El código de la familia tiene 8 letras y números, el de un cuidador 12',
@@ -318,8 +335,14 @@ class _JoinDialogState extends State<_JoinDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
-            'Escribí el código que te pasaron para sumarte a su mascota: el '
-            'de la familia o el de cuidador.',
+            'Copiá el mensaje que te mandaron y tocá "Pegar", o escribí el '
+            'código: el de la familia o el de cuidador.',
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.content_paste),
+            label: const Text('Pegar'),
+            onPressed: _busy ? null : _paste,
           ),
           const SizedBox(height: 12),
           TextField(

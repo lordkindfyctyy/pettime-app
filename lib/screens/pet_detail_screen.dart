@@ -17,6 +17,7 @@ import '../services/vet_report.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
 import '../widgets/caregiver_sheet.dart';
+import '../widgets/confirm_delete.dart';
 import '../widgets/diary_section.dart';
 import '../widgets/expense_section.dart';
 import '../widgets/family_share.dart';
@@ -465,7 +466,15 @@ class PetDetailScreen extends StatelessWidget {
                         IconButton(
                           icon: const Icon(Icons.delete_outline),
                           tooltip: 'Eliminar turno',
-                          onPressed: () => state.deleteVisit(pet.id, v.id),
+                          onPressed: () async {
+                            if (await confirmDelete(
+                              context,
+                              'el turno de ${v.kind.placeLabel.toLowerCase()} '
+                              '${v.clinic} del ${fmt.format(v.date)}',
+                            )) {
+                              await state.deleteVisit(pet.id, v.id);
+                            }
+                          },
                         ),
                       ],
                     ),

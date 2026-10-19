@@ -6,6 +6,7 @@ import '../models/expense.dart';
 import '../models/pet.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
+import 'confirm_delete.dart';
 
 IconData expenseIcon(ExpenseCategory c) => switch (c) {
       ExpenseCategory.food => Icons.set_meal_outlined,
@@ -37,7 +38,13 @@ Future<void> showExpenseDialog(
   );
   if (result == null) return;
   if (result.delete) {
-    await state.deleteExpense(pet.id, expense!.id);
+    if (!context.mounted) return;
+    final ok = await confirmDelete(
+      context,
+      'el gasto de ${formatMoney(expense!.amount)} '
+      '(${expense.category.label})',
+    );
+    if (ok) await state.deleteExpense(pet.id, expense.id);
   } else {
     await state.saveExpense(
       pet.id,

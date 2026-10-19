@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../state/pets_state.dart';
+import 'confirm_delete.dart';
 
 /// Bottom sheet listing the doses given for one medication, newest first.
 class DoseHistorySheet extends StatelessWidget {
@@ -53,7 +54,15 @@ class DoseHistorySheet extends StatelessWidget {
                     trailing: IconButton(
                       icon: const Icon(Icons.delete_outline),
                       tooltip: 'Quitar toma',
-                      onPressed: () => state.removeDose(petId, medId, doses[i]),
+                      onPressed: () async {
+                        if (await confirmDelete(
+                          context,
+                          'la toma de ${med.name} del ${fmt.format(doses[i])}',
+                          detail: 'Queda como no dada. No se puede deshacer.',
+                        )) {
+                          await state.removeDose(petId, medId, doses[i]);
+                        }
+                      },
                     ),
                   ),
                 ),

@@ -8,6 +8,7 @@ import '../models/pet.dart';
 import '../models/walk.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
+import 'confirm_delete.dart';
 
 /// Asks for a walk (how long, optionally how far) and saves it. With [walk],
 /// edits it.
@@ -402,7 +403,15 @@ class WalkHistorySheet extends StatelessWidget {
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
                         tooltip: 'Borrar',
-                        onPressed: () => state.deleteWalk(petId, w.id),
+                        onPressed: () async {
+                          if (await confirmDelete(
+                            context,
+                            'el paseo de ${formatMinutes(w.minutes)} del '
+                            '${fmt.format(w.date)}',
+                          )) {
+                            await state.deleteWalk(petId, w.id);
+                          }
+                        },
                       ),
                     ),
                 ],

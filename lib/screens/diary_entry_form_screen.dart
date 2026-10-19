@@ -123,8 +123,13 @@ class _DiaryEntryFormScreenState extends State<DiaryEntryFormScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('¿Borrar esta anotación?'),
-        content: const Text('Se borran también sus fotos.'),
+        title: Text(
+          '¿Borrar la anotación del diario del '
+          '${DateFormat.yMMMd('es').format(widget.entry!.date)}?',
+        ),
+        content: const Text(
+          'Se borran también sus fotos. No se puede deshacer.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),

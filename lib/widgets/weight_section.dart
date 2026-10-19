@@ -9,6 +9,7 @@ import '../models/pet.dart';
 import '../models/weight_entry.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
+import 'confirm_delete.dart';
 
 /// Asks for a weight and its date and saves it.
 Future<void> showAddWeightDialog(BuildContext context, Pet pet) async {
@@ -251,7 +252,15 @@ class WeightHistorySheet extends StatelessWidget {
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
                         tooltip: 'Borrar',
-                        onPressed: () => state.deleteWeight(petId, w.id),
+                        onPressed: () async {
+                          if (await confirmDelete(
+                            context,
+                            'el peso de ${formatKg(w.kg)} del '
+                            '${fmt.format(w.date)}',
+                          )) {
+                            await state.deleteWeight(petId, w.id);
+                          }
+                        },
                       ),
                     ),
                 ],

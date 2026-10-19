@@ -8,23 +8,26 @@ import '../models/pet.dart';
 import '../services/family_sync.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
+import 'copyable_code.dart';
 
 final _untilFmt = DateFormat("EEEE d 'de' MMMM", 'es');
 
 /// "hasta el sábado 25 de octubre".
 String careUntilLabel(DateTime until) => 'hasta el ${_untilFmt.format(until)}';
 
+/// The 12 characters [c] types to join, as "ABCD-EFGH-JKLM".
+String caregiverCode(Pet pet, Caregiver c) =>
+    CaregiverCode.display(CaregiverCode.encode(pet.share!.code, c.id));
+
 /// What is sent to the caregiver so they can join.
 String caregiverInviteText(Pet pet, Caregiver c) {
-  final code = CaregiverCode.display(
-    CaregiverCode.encode(pet.share!.code, c.id),
-  );
+  final code = caregiverCode(pet, c);
   return 'Te dejo a ${pet.name} en PetTime ${careUntilLabel(c.until)}: '
       'vas a ver sus remedios, vacunas, turnos y paseos, y te avisa cuándo '
       'darle cada cosa.\n\n'
       '1. Instalá PetTime: https://sixsevenweb.com/pettime/\n'
       '2. En "Mascotas" tocá ⋮ → "Unirme con un código"\n'
-      '3. Escribí el código: $code\n\n'
+      '3. Copiá este mensaje y tocá "Pegar", o escribí el código: $code\n\n'
       'Cuando termine, ${pet.name} desaparece de tu PetTime.';
 }
 
@@ -159,25 +162,36 @@ class _CaregiverSheetState extends State<_CaregiverSheet> {
             const SizedBox(height: 12),
             for (final c in active)
               Card(
-                child: ListTile(
-                  leading: const Icon(Icons.person_outline),
-                  title: Text(c.name),
-                  subtitle: Text(careUntilLabel(c.until)),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.send_outlined),
-                        tooltip: 'Mandar el código',
-                        onPressed: () => _sendCode(pet, c),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.person_outline),
+                      title: Text(c.name),
+                      subtitle: Text(careUntilLabel(c.until)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.send_outlined),
+                            tooltip: 'Mandar el código',
+                            onPressed: () => _sendCode(pet, c),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.block),
+                            tooltip: 'Terminar ahora',
+                            onPressed: () => _end(pet, c),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.block),
-                        tooltip: 'Terminar ahora',
-                        onPressed: () => _end(pet, c),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      child: CopyableCode(
+                        code: caregiverCode(pet, c),
+                        large: false,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             const SizedBox(height: 8),
