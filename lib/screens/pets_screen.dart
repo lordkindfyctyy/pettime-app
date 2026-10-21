@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_lang.dart';
 import '../models/weight_entry.dart';
+import '../state/auth_state.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
+import '../widgets/account_dialog.dart';
 import '../widgets/family_share.dart';
 import '../widgets/language_dialog.dart';
 import '../widgets/pet_avatar.dart';
@@ -19,12 +21,25 @@ class PetsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pets = context.watch<PetsState>().pets;
+    final auth = context.watch<AuthState>();
     return Scaffold(
       appBar: AppBar(
         title: Text(tr('Mis mascotas')),
         actions: [
           PopupMenuButton<void>(
             itemBuilder: (_) => [
+              if (auth.available)
+                PopupMenuItem(
+                  child: ListTile(
+                    leading: const Icon(Icons.account_circle_outlined),
+                    title: Text(
+                      auth.signedIn ? auth.user!.label : tr('Iniciar sesión'),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onTap: () => showAccountDialog(context),
+                ),
               PopupMenuItem(
                 child: ListTile(
                   leading: const Icon(Icons.language),

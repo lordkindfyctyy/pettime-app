@@ -24,6 +24,14 @@ class GoogleAccount {
     await account.authorizationClient.authorizeScopes(scopes);
   }
 
+  /// Signs in with Google (showing the account chooser) and returns the ID
+  /// token that Firebase turns into a login.
+  Future<String?> signInForIdToken() async {
+    await _ensureInitialized();
+    final account = await GoogleSignIn.instance.authenticate();
+    return account.authentication.idToken;
+  }
+
   /// The permission for [scopes] without asking anything, or null when not
   /// signed in or the permission was not granted (or was revoked). Turn it
   /// into an API client with `authClient(scopes: ...)`.

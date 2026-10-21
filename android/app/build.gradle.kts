@@ -7,6 +7,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase (login) needs android/app/google-services.json, from the Firebase
+// console. Without it the app builds and runs with no login.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 // Clave de firma compartida (pettime-upload.keystore). Todas las PCs firman la
 // versión final con ella, así cualquiera puede actualizar la app en los
 // celulares sin desinstalarla. Los datos van en android/key.properties, que

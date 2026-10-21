@@ -6,6 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:pettime_app/l10n/app_lang.dart';
 import 'package:pettime_app/l10n/en.dart';
 import 'package:pettime_app/main.dart';
+import 'package:pettime_app/state/auth_state.dart';
 import 'package:pettime_app/state/language_state.dart';
 import 'package:pettime_app/state/pets_state.dart';
 import 'package:provider/provider.dart';
@@ -141,6 +142,7 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (_) => PetsState()),
           ChangeNotifierProvider.value(value: language),
+          ChangeNotifierProvider(create: (_) => AuthState()),
         ],
         child: const PetTimeApp(),
       ),

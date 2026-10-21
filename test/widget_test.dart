@@ -10,6 +10,7 @@ import 'package:pettime_app/models/medication.dart';
 import 'package:pettime_app/models/pet.dart';
 import 'package:pettime_app/models/vet_visit.dart';
 import 'package:pettime_app/services/notification_service.dart';
+import 'package:pettime_app/state/auth_state.dart';
 import 'package:pettime_app/state/language_state.dart';
 import 'package:pettime_app/state/pets_state.dart';
 import 'package:pettime_app/widgets/medication_card.dart';
@@ -392,7 +393,7 @@ void main() {
     addTearDown(tester.view.reset);
     final state = PetsState();
     await tester.pumpWidget(
-      MultiProvider(providers: [ChangeNotifierProvider.value(value: state), ChangeNotifierProvider(create: (_) => LanguageState())], child: const PetTimeApp()),
+      MultiProvider(providers: [ChangeNotifierProvider.value(value: state), ChangeNotifierProvider(create: (_) => LanguageState()), ChangeNotifierProvider(create: (_) => AuthState())], child: const PetTimeApp()),
     );
     // Opens on "Hoy"; the list of pets is in its own tab.
     expect(find.text('Agregá tu primera mascota en la pestaña Mascotas'),
