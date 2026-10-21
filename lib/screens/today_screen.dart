@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/agenda.dart';
 import '../models/health_record.dart';
 import '../models/vet_visit.dart';
@@ -66,8 +67,8 @@ class _TodayScreenState extends State<TodayScreen> {
     final restock = suppliesToRestock(pets, now);
     final toWalk = petsToWalk(pets, now);
     final theme = Theme.of(context);
-    final hm = DateFormat.Hm('es');
-    final dayMonth = DateFormat.yMMMd('es');
+    final hm = DateFormat.Hm(AppLang.code);
+    final dayMonth = DateFormat.yMMMd(AppLang.code);
 
     Widget header(String text, IconData icon, Color color) => Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
@@ -78,19 +79,19 @@ class _TodayScreenState extends State<TodayScreen> {
     if (doses.isNotEmpty) {
       final left = doses.where((d) => !d.given).length;
       children.add(header(
-        left == 0 ? 'Medicación · todo dado ✓' : 'Medicación · faltan $left',
+        left == 0 ? tr('Medicación · todo dado ✓') : tr('Medicación · faltan {left}', {'left': left}),
         Icons.medication_outlined,
         Brand.red,
       ));
       for (final d in doses) {
         final missed = d.missed(now);
         final status = d.given
-            ? 'Dada a las ${hm.format(d.givenAt!)}'
+            ? tr('Dada a las {n}', {'n': hm.format(d.givenAt!)})
             : missed
-                ? 'Sin registrar'
+                ? tr('Sin registrar')
                 : now.isAfter(d.time)
-                    ? 'Atrasada'
-                    : 'Pendiente';
+                    ? tr('Atrasada')
+                    : tr('Pendiente');
         final statusColor = d.given
             ? Colors.green.shade700
             : (missed || now.isAfter(d.time))
@@ -113,7 +114,7 @@ class _TodayScreenState extends State<TodayScreen> {
               : d.canGive(now)
                   ? FilledButton.tonal(
                       onPressed: () => state.logDose(d.pet.id, d.med.id, now),
-                      child: const Text('Dar'),
+                      child: Text(tr('Dar')),
                     )
                   : null,
         ));
@@ -121,7 +122,7 @@ class _TodayScreenState extends State<TodayScreen> {
     }
 
     if (visits.isNotEmpty) {
-      children.add(header('Turnos de hoy', Icons.event_outlined, Brand.teal));
+      children.add(header(tr('Turnos de hoy'), Icons.event_outlined, Brand.teal));
       for (final (pet, v) in visits) {
         children.add(ListTile(
           leading: Icon(
@@ -140,17 +141,17 @@ class _TodayScreenState extends State<TodayScreen> {
     }
 
     if (toWalk.isNotEmpty) {
-      children.add(header('Paseos', Icons.directions_walk, Brand.teal));
+      children.add(header(tr('Paseos'), Icons.directions_walk, Brand.teal));
       for (final pet in toWalk) {
         children.add(
           ListTile(
             leading: PetAvatar(pet: pet),
             title: Text(pet.name),
-            subtitle: const Text('Todavía no salió hoy'),
+            subtitle: Text(tr('Todavía no salió hoy')),
             onTap: () => _openPet(pet.id),
             trailing: FilledButton.tonal(
               onPressed: () => showWalkDialog(context, pet),
-              child: const Text('Anotar'),
+              child: Text(tr('Anotar')),
             ),
           ),
         );
@@ -159,7 +160,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
     if (restock.isNotEmpty) {
       children.add(header(
-        'Por reponer',
+        tr('Por reponer'),
         Icons.shopping_basket_outlined,
         Brand.orange,
       ));
@@ -173,7 +174,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
     if (due.isNotEmpty) {
       children.add(header(
-        'Vacunas y antiparasitarios',
+        tr('Vacunas y antiparasitarios'),
         Icons.vaccines_outlined,
         Brand.orange,
       ));
@@ -191,17 +192,17 @@ class _TodayScreenState extends State<TodayScreen> {
           onTap: () => _openPet(pet.id),
           trailing: IconButton(
             icon: const Icon(Icons.check_circle_outline),
-            tooltip: 'Registrar que se aplicó',
+            tooltip: tr('Registrar que se aplicó'),
             onPressed: () => openRecordForm(context, pet.id, repeatOf: r),
           ),
         ));
       }
     }
 
-    final title = DateFormat("EEEE d 'de' MMMM", 'es').format(now);
+    final title = DateFormat(tr("EEEE d 'de' MMMM"), AppLang.code).format(now);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hoy'),
+        title: Text(tr('Hoy')),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(24),
           child: Padding(
@@ -224,8 +225,8 @@ class _TodayScreenState extends State<TodayScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Text(
                   pets.isEmpty
-                      ? 'Agregá tu primera mascota en la pestaña Mascotas'
-                      : 'No hay nada para hoy 🎉',
+                      ? tr('Agregá tu primera mascota en la pestaña Mascotas')
+                      : tr('No hay nada para hoy 🎉'),
                   textAlign: TextAlign.center,
                   style: theme.textTheme.titleMedium,
                 ),

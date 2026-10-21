@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/health_record.dart';
 import '../state/pets_state.dart';
 
@@ -25,12 +26,13 @@ class HealthRecordFormScreen extends StatefulWidget {
 }
 
 class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
-  static const _shortcuts = [
-    ('1 mes', 1),
-    ('3 meses', 3),
-    ('6 meses', 6),
-    ('1 año', 12),
-  ];
+  static const _shortcutMonths = [1, 3, 6, 12];
+
+  static String _shortcutLabel(int months) => switch (months) {
+        1 => tr('1 mes'),
+        12 => tr('1 año'),
+        _ => tr('{months} meses', {'months': months}),
+      };
 
   final _formKey = GlobalKey<FormState>();
   late HealthKind _kind;
@@ -94,16 +96,16 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('¿Eliminar ${widget.record!.name}?'),
-        content: const Text('Se borra de la libreta y deja de avisar.'),
+        title: Text(tr('¿Eliminar {name}?', {'name': widget.record!.name})),
+        content: Text(tr('Se borra de la libreta y deja de avisar.')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(tr('Cancelar')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar'),
+            child: Text(tr('Eliminar')),
           ),
         ],
       ),
@@ -115,16 +117,16 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat.yMMMd('es');
+    final fmt = DateFormat.yMMMd(AppLang.code);
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.record == null ? 'Nueva aplicación' : 'Editar'),
+        title: Text(widget.record == null ? tr('Nueva aplicación') : tr('Editar')),
         actions: [
           if (widget.record != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: 'Eliminar',
+              tooltip: tr('Eliminar'),
               onPressed: _delete,
             ),
         ],
@@ -142,7 +144,7 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
             DropdownButtonFormField<HealthKind>(
               initialValue: _kind,
               isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Tipo'),
+              decoration: InputDecoration(labelText: tr('Tipo')),
               items: [
                 for (final k in HealthKind.values)
                   DropdownMenuItem(value: k, child: Text(k.label)),
@@ -153,12 +155,12 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
             TextFormField(
               controller: _name,
               decoration: InputDecoration(
-                labelText: 'Nombre',
+                labelText: tr('Nombre'),
                 hintText: _kind.hint,
               ),
               textCapitalization: TextCapitalization.sentences,
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Ingresá el nombre' : null,
+                  (v == null || v.trim().isEmpty) ? tr('Ingresá el nombre') : null,
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -175,7 +177,7 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
             const SizedBox(height: 12),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Aplicada el'),
+              title: Text(tr('Aplicada el')),
               subtitle: Text(fmt.format(_appliedOn)),
               trailing: const Icon(Icons.edit_calendar_outlined),
               onTap: () async {
@@ -184,22 +186,22 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
               },
             ),
             const Divider(),
-            Text('Próxima dosis', style: theme.textTheme.titleSmall),
+            Text(tr('Próxima dosis'), style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 4,
               children: [
-                for (final (label, months) in _shortcuts)
+                for (final months in _shortcutMonths)
                   ChoiceChip(
-                    label: Text(label),
+                    label: Text(_shortcutLabel(months)),
                     selected: _nextDue == _addMonths(_appliedOn, months),
                     onSelected: (_) => setState(
                       () => _nextDue = _addMonths(_appliedOn, months),
                     ),
                   ),
                 ChoiceChip(
-                  label: const Text('Sin próxima'),
+                  label: Text(tr('Sin próxima')),
                   selected: _nextDue == null,
                   onSelected: (_) => setState(() => _nextDue = null),
                 ),
@@ -208,12 +210,11 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                _nextDue == null ? 'Sin próxima dosis' : fmt.format(_nextDue!),
+                _nextDue == null ? tr('Sin próxima dosis') : fmt.format(_nextDue!),
               ),
               subtitle: _nextDue == null
                   ? null
-                  : Text('Te avisamos 3 días antes y el mismo día · '
-                      '${dueLabel(_nextDue!)}'),
+                  : Text(tr('Te avisamos 3 días antes y el mismo día · {n}', {'n': dueLabel(_nextDue!)})),
               trailing: const Icon(Icons.edit_calendar_outlined),
               onTap: () async {
                 final d = await _pick(
@@ -225,15 +226,15 @@ class _HealthRecordFormScreenState extends State<HealthRecordFormScreen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _notes,
-              decoration: const InputDecoration(
-                labelText: 'Notas',
-                hintText: 'Marca, lote, veterinaria…',
+              decoration: InputDecoration(
+                labelText: tr('Notas'),
+                hintText: tr('Marca, lote, veterinaria…'),
               ),
               textCapitalization: TextCapitalization.sentences,
               maxLines: 3,
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: _submit, child: const Text('Guardar')),
+            FilledButton(onPressed: _submit, child: Text(tr('Guardar'))),
           ],
         ),
       ),

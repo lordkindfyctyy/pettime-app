@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/medication.dart';
 import '../services/notification_service.dart';
 import '../services/photo_service.dart';
@@ -119,11 +120,11 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat.yMMMd('es').add_Hm();
+    final fmt = DateFormat.yMMMd(AppLang.code).add_Hm();
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.medication == null ? 'Nueva medicación' : 'Editar medicación',
+          widget.medication == null ? tr('Nueva medicación') : tr('Editar medicación'),
         ),
       ),
       body: Form(
@@ -154,18 +155,18 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _name,
-              decoration: const InputDecoration(labelText: 'Medicamento'),
+              decoration: InputDecoration(labelText: tr('Medicamento')),
               textCapitalization: TextCapitalization.sentences,
               validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Ingresá el medicamento'
+                  ? tr('Ingresá el medicamento')
                   : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _dose,
-              decoration: const InputDecoration(
-                labelText: 'Dosis',
-                hintText: '1 comprimido, 2 ml…',
+              decoration: InputDecoration(
+                labelText: tr('Dosis'),
+                hintText: tr('1 comprimido, 2 ml…'),
               ),
             ),
             const SizedBox(height: 12),
@@ -175,19 +176,19 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 Expanded(
                   child: TextFormField(
                     controller: _interval,
-                    decoration: const InputDecoration(labelText: 'Repetir cada'),
+                    decoration: InputDecoration(labelText: tr('Repetir cada')),
                     keyboardType: TextInputType.number,
                     validator: (v) {
                       final n = int.tryParse(v?.trim() ?? '');
-                      return (n == null || n < 1) ? 'Ingresá un número' : null;
+                      return (n == null || n < 1) ? tr('Ingresá un número') : null;
                     },
                   ),
                 ),
                 const SizedBox(width: 12),
                 SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(value: false, label: Text('min')),
-                    ButtonSegment(value: true, label: Text('horas')),
+                  segments: [
+                    ButtonSegment(value: false, label: Text(tr('min'))),
+                    ButtonSegment(value: true, label: Text(tr('horas'))),
                   ],
                   selected: {_inHours},
                   onSelectionChanged: (s) => setState(() => _inHours = s.first),
@@ -197,7 +198,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             const SizedBox(height: 12),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Primera toma'),
+              title: Text(tr('Primera toma')),
               subtitle: Text(fmt.format(_startsAt)),
               onTap: () async {
                 final d = await _pickDateTime(_startsAt);
@@ -206,8 +207,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Fin del tratamiento'),
-              subtitle: Text(_endsAt == null ? 'Sin fecha' : fmt.format(_endsAt!)),
+              title: Text(tr('Fin del tratamiento')),
+              subtitle: Text(_endsAt == null ? tr('Sin fecha') : fmt.format(_endsAt!)),
               trailing: _endsAt == null
                   ? null
                   : IconButton(
@@ -222,12 +223,12 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _notes,
-              decoration: const InputDecoration(labelText: 'Notas'),
+              decoration: InputDecoration(labelText: tr('Notas')),
               textCapitalization: TextCapitalization.sentences,
               maxLines: 2,
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: _submit, child: const Text('Guardar')),
+            FilledButton(onPressed: _submit, child: Text(tr('Guardar'))),
           ],
         ),
       ),

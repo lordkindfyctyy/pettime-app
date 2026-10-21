@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/health_record.dart';
 import '../models/pet.dart';
 import '../screens/health_record_form_screen.dart';
@@ -48,15 +49,15 @@ class HealthBooklet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat.yMMMd('es');
+    final fmt = DateFormat.yMMMd(AppLang.code);
     final pending = pendingRecords(pet.records);
     final records = [...pet.records]
       ..sort((a, b) => b.appliedOn.compareTo(a.appliedOn));
 
     if (records.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text('Sin vacunas ni antiparasitarios cargados'),
+        child: Text(tr('Sin vacunas ni antiparasitarios cargados')),
       );
     }
     return Column(
@@ -69,10 +70,10 @@ class HealthBooklet extends StatelessWidget {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${r.kind.label} · aplicada ${fmt.format(r.appliedOn)}'),
+                  Text(tr('{label} · aplicada {n}', {'label': r.kind.label, 'n': fmt.format(r.appliedOn)})),
                   if (pending.contains(r))
                     Text(
-                      'Próxima: ${fmt.format(r.nextDue!)} · ${dueLabel(r.nextDue!)}',
+                      tr('Próxima: {n} · {n2}', {'n': fmt.format(r.nextDue!), 'n2': dueLabel(r.nextDue!)}),
                       style: TextStyle(
                         color: dueColor(context, r.nextDue!),
                         fontWeight: FontWeight.w600,
@@ -85,7 +86,7 @@ class HealthBooklet extends StatelessWidget {
               trailing: pending.contains(r)
                   ? IconButton(
                       icon: const Icon(Icons.check_circle_outline),
-                      tooltip: 'Registrar que se aplicó',
+                      tooltip: tr('Registrar que se aplicó'),
                       onPressed: () =>
                           openRecordForm(context, pet.id, repeatOf: r),
                     )

@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
+import 'l10n/app_lang.dart';
 import 'screens/home_screen.dart';
 import 'services/drive_backup_service.dart';
 import 'services/family_sync.dart';
@@ -12,12 +13,16 @@ import 'services/lost_pets_service.dart';
 import 'services/home_widget_service.dart';
 import 'services/notification_service.dart';
 import 'services/shop_settings.dart';
+import 'state/language_state.dart';
 import 'state/pets_state.dart';
 import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('es');
+  // Dates are written in the language of the app, which is Spanish or English.
+  await initializeDateFormatting();
+  final language = LanguageState();
+  await language.load();
   final pets = PetsState();
   await pets.load();
   await DriveBackupService.instance.load();
@@ -36,8 +41,19 @@ Future<void> main() async {
     },
     onPause: FamilySync.instance.pause,
   );
+  // The alarms and the widget carry text: redo them in the new language.
+  language.onLanguageChanged = () {
+    unawaited(NotificationService.instance.rescheduleAll(pets.pets));
+    unawaited(HomeWidgetService.refresh(pets.pets));
+  };
   runApp(
-    ChangeNotifierProvider.value(value: pets, child: const PetTimeApp()),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: pets),
+        ChangeNotifierProvider.value(value: language),
+      ],
+      child: const PetTimeApp(),
+    ),
   );
   // Scheduling the alarms takes hundreds of platform calls; do it after the
   // first frame so the app opens right away.
@@ -63,10 +79,10 @@ class PetTimeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PetTime',
+      title: tr('PetTime'),
       theme: petTimeTheme(),
-      locale: const Locale('es'),
-      supportedLocales: const [Locale('es')],
+      locale: context.watch<LanguageState>().locale,
+      supportedLocales: [for (final code in AppLang.supported) Locale(code)],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

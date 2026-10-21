@@ -1,3 +1,4 @@
+import '../l10n/app_lang.dart';
 /// What can be ticked in the diary instead of writing it.
 enum Symptom {
   vomit('Vómitos'),
@@ -11,9 +12,11 @@ enum Symptom {
   wound('Herida'),
   drinksMuch('Toma mucha agua');
 
-  const Symptom(this.label);
+  const Symptom(this._label);
 
-  final String label;
+  final String _label;
+
+  String get label => tr(_label);
 
   static Symptom? byName(String name) {
     for (final s in values) {

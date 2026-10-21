@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/weight_entry.dart';
 import '../state/pets_state.dart';
 import '../theme.dart';
 import '../widgets/family_share.dart';
+import '../widgets/language_dialog.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/supply_section.dart';
 import 'backup_screen.dart';
@@ -19,14 +21,22 @@ class PetsScreen extends StatelessWidget {
     final pets = context.watch<PetsState>().pets;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis mascotas'),
+        title: Text(tr('Mis mascotas')),
         actions: [
           PopupMenuButton<void>(
             itemBuilder: (_) => [
               PopupMenuItem(
-                child: const ListTile(
+                child: ListTile(
+                  leading: const Icon(Icons.language),
+                  title: Text(tr('Idioma')),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onTap: () => showLanguageDialog(context),
+              ),
+              PopupMenuItem(
+                child: ListTile(
                   leading: Icon(Icons.backup_outlined),
-                  title: Text('Copia de seguridad'),
+                  title: Text(tr('Copia de seguridad')),
                   contentPadding: EdgeInsets.zero,
                 ),
                 onTap: () => Navigator.push(
@@ -35,17 +45,17 @@ class PetsScreen extends StatelessWidget {
                 ),
               ),
               PopupMenuItem(
-                child: const ListTile(
+                child: ListTile(
                   leading: Icon(Icons.storefront_outlined),
-                  title: Text('Pet shop para pedidos'),
+                  title: Text(tr('Pet shop para pedidos')),
                   contentPadding: EdgeInsets.zero,
                 ),
                 onTap: () => showShopSettingsDialog(context),
               ),
               PopupMenuItem(
-                child: const ListTile(
+                child: ListTile(
                   leading: Icon(Icons.group_add_outlined),
-                  title: Text('Unirme con un código'),
+                  title: Text(tr('Unirme con un código')),
                   contentPadding: EdgeInsets.zero,
                 ),
                 onTap: () => showJoinFamilyDialog(context),
@@ -55,7 +65,7 @@ class PetsScreen extends StatelessWidget {
         ],
       ),
       body: pets.isEmpty
-          ? const Center(child: Text('Todavía no agregaste ninguna mascota'))
+          ? Center(child: Text(tr('Todavía no agregaste ninguna mascota')))
           : ListView.builder(
               itemCount: pets.length,
               itemBuilder: (context, i) {
@@ -73,10 +83,10 @@ class PetsScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (pet.share != null)
-                        const Icon(
+                        Icon(
                           Icons.family_restroom,
                           color: Brand.teal,
-                          semanticLabel: 'Compartida con la familia',
+                          semanticLabel: tr('Compartida con la familia'),
                         ),
                       const Icon(Icons.chevron_right),
                     ],
@@ -96,7 +106,7 @@ class PetsScreen extends StatelessWidget {
           MaterialPageRoute(builder: (_) => const PetFormScreen()),
         ),
         icon: const Icon(Icons.add),
-        label: const Text('Mascota'),
+        label: Text(tr('Mascota')),
       ),
     );
   }

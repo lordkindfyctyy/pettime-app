@@ -1,3 +1,4 @@
+import '../l10n/app_lang.dart';
 class Medication {
   Medication({
     required this.id,
@@ -20,9 +21,9 @@ class Medication {
   String get intervalLabel {
     final h = everyMinutes ~/ 60;
     final m = everyMinutes % 60;
-    if (h == 0) return 'cada $m min';
-    if (m == 0) return 'cada $h h';
-    return 'cada $h h $m min';
+    if (h == 0) return tr('cada {m} min', {'m': m});
+    if (m == 0) return tr('cada {h} h', {'h': h});
+    return tr('cada {h} h {m} min', {'h': h, 'm': m});
   }
   final DateTime startsAt;
   final DateTime? endsAt;

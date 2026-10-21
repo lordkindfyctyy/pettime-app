@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/lost_report.dart';
 import '../services/lost_pets_service.dart';
 import '../services/pettime_api.dart';
@@ -40,11 +41,11 @@ class _LostPetsScreenState extends State<LostPetsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Perdidas y encontradas'),
+        title: Text(tr('Perdidas y encontradas')),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_pin_outlined),
-            tooltip: 'Mis avisos',
+            tooltip: tr('Mis avisos'),
             onPressed: () async {
               await Navigator.push(
                 context,
@@ -60,19 +61,19 @@ class _LostPetsScreenState extends State<LostPetsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _publish,
         icon: const Icon(Icons.campaign_outlined),
-        label: const Text('Publicar aviso'),
+        label: Text(tr('Publicar aviso')),
       ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
             child: SegmentedButton<ReportKind?>(
-              segments: const [
-                ButtonSegment(value: null, label: _OneLine('Todas')),
-                ButtonSegment(value: ReportKind.lost, label: _OneLine('Perdidas')),
+              segments: [
+                ButtonSegment(value: null, label: _OneLine(tr('Todas'))),
+                ButtonSegment(value: ReportKind.lost, label: _OneLine(tr('Perdidas'))),
                 ButtonSegment(
                   value: ReportKind.found,
-                  label: _OneLine('Encontradas'),
+                  label: _OneLine(tr('Encontradas')),
                 ),
               ],
               selected: {_kind},
@@ -100,15 +101,14 @@ class _LostPetsScreenState extends State<LostPetsScreen> {
                       text: '${snap.error}',
                       action: TextButton(
                         onPressed: _reload,
-                        child: const Text('Reintentar'),
+                        child: Text(tr('Reintentar')),
                       ),
                     );
                   }
                   final reports = snap.data!;
                   if (reports.isEmpty) {
-                    return const _Message(
-                      text: 'No hay avisos por ahora. Si se perdió tu mascota '
-                          'o encontraste una, publicá un aviso.',
+                    return _Message(
+                      text: tr('No hay avisos por ahora. Si se perdió tu mascota o encontraste una, publicá un aviso.'),
                     );
                   }
                   return ListView.builder(
@@ -211,19 +211,18 @@ class ReportCard extends StatelessWidget {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text(action == 'delete' ? '¿Borrar el aviso?' : '¿Denunciar el aviso?'),
+          title: Text(action == 'delete' ? tr('¿Borrar el aviso?') : tr('¿Denunciar el aviso?')),
           content: Text(action == 'delete'
-              ? 'Deja de verse en la app y en la web.'
-              : 'Si es falso, ofensivo o no es de una mascota, avisanos. '
-                  'Con varias denuncias se oculta.'),
+              ? tr('Deja de verse en la app y en la web.')
+              : tr('Si es falso, ofensivo o no es de una mascota, avisanos. Con varias denuncias se oculta.')),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar'),
+              child: Text(tr('Cancelar')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(action == 'delete' ? 'Borrar' : 'Denunciar'),
+              child: Text(action == 'delete' ? tr('Borrar') : tr('Denunciar')),
             ),
           ],
         ),
@@ -238,10 +237,10 @@ class ReportCard extends StatelessWidget {
       }
       messenger.showSnackBar(SnackBar(
         content: Text(switch (action) {
-          'resolve' => '¡Qué bueno! El aviso ya no se muestra.',
-          'reopen' => 'El aviso se muestra de nuevo.',
-          'delete' => 'Aviso borrado.',
-          _ => 'Gracias, lo vamos a revisar.',
+          'resolve' => tr('¡Qué bueno! El aviso ya no se muestra.'),
+          'reopen' => tr('El aviso se muestra de nuevo.'),
+          'delete' => tr('Aviso borrado.'),
+          _ => tr('Gracias, lo vamos a revisar.'),
         }),
       ));
       onChanged?.call();
@@ -271,7 +270,7 @@ class ReportCard extends StatelessWidget {
                   children: [
                     _Badge(
                       text: report.resolved
-                          ? (lost ? 'Apareció' : 'Volvió a su casa')
+                          ? (lost ? tr('Apareció') : tr('Volvió a su casa'))
                           : report.kind.badge,
                       color: report.resolved
                           ? Colors.grey
@@ -281,7 +280,7 @@ class ReportCard extends StatelessWidget {
                     ),
                     if (mine) ...[
                       const SizedBox(width: 6),
-                      const _Badge(text: 'Tu aviso', color: Brand.orange),
+                      _Badge(text: tr('Tu aviso'), color: Brand.orange),
                     ],
                     const Spacer(),
                     PopupMenuButton<String>(
@@ -289,18 +288,18 @@ class ReportCard extends StatelessWidget {
                           ? shareReport(report)
                           : _act(context, a),
                       itemBuilder: (_) => [
-                        const PopupMenuItem(value: 'share', child: Text('Compartir')),
+                        PopupMenuItem(value: 'share', child: Text(tr('Compartir'))),
                         if (mine && !report.resolved)
                           PopupMenuItem(
                             value: 'resolve',
-                            child: Text(lost ? '¡Ya apareció!' : 'Ya volvió a su casa'),
+                            child: Text(lost ? tr('¡Ya apareció!') : tr('Ya volvió a su casa')),
                           ),
                         if (mine && report.resolved)
-                          const PopupMenuItem(value: 'reopen', child: Text('Mostrar de nuevo')),
+                          PopupMenuItem(value: 'reopen', child: Text(tr('Mostrar de nuevo'))),
                         if (mine)
-                          const PopupMenuItem(value: 'delete', child: Text('Borrar aviso')),
+                          PopupMenuItem(value: 'delete', child: Text(tr('Borrar aviso'))),
                         if (!mine)
-                          const PopupMenuItem(value: 'flag', child: Text('Denunciar')),
+                          PopupMenuItem(value: 'flag', child: Text(tr('Denunciar'))),
                       ],
                     ),
                   ],
@@ -324,7 +323,7 @@ class ReportCard extends StatelessWidget {
                     icon: const Icon(Icons.chat_outlined),
                     label: Text(report.contactName.isEmpty
                         ? 'WhatsApp'
-                        : 'WhatsApp a ${report.contactName}'),
+                        : tr('WhatsApp a {contactName}', {'contactName': report.contactName})),
                     onPressed: () => launchUrl(
                       report.whatsAppUri(),
                       mode: LaunchMode.externalApplication,
@@ -333,7 +332,7 @@ class ReportCard extends StatelessWidget {
                 else if (!report.resolved)
                   FilledButton.icon(
                     icon: const Icon(Icons.celebration_outlined),
-                    label: Text(lost ? '¡Ya apareció!' : 'Ya volvió a su casa'),
+                    label: Text(lost ? tr('¡Ya apareció!') : tr('Ya volvió a su casa')),
                     onPressed: () => _act(context, 'resolve'),
                   ),
               ],
@@ -481,7 +480,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis avisos')),
+      appBar: AppBar(title: Text(tr('Mis avisos'))),
       body: FutureBuilder<List<LostReport>>(
         future: _reports,
         builder: (context, snap) {
@@ -491,7 +490,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
           if (snap.hasError) return _Message(text: '${snap.error}');
           final reports = snap.data!;
           if (reports.isEmpty) {
-            return const _Message(text: 'Todavía no publicaste avisos desde este celular.');
+            return _Message(text: tr('Todavía no publicaste avisos desde este celular.'));
           }
           return ListView(
             padding: const EdgeInsets.all(12),

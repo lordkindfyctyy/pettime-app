@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/diary_entry.dart';
 import '../models/pet.dart';
 import '../screens/diary_entry_form_screen.dart';
@@ -38,7 +39,7 @@ class DiaryEntryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                DateFormat("EEEE d 'de' MMMM, HH:mm", 'es').format(entry.date),
+                DateFormat(tr("EEEE d 'de' MMMM, HH:mm"), AppLang.code).format(entry.date),
                 style: theme.textTheme.labelLarge,
               ),
               if (entry.symptoms.isNotEmpty) ...[
@@ -98,11 +99,10 @@ class DiarySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (pet.diary.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Text(
-          'Anotá síntomas, cambios o lo que te llame la atención, con fotos. '
-          'Va en la ficha para el veterinario.',
+          tr('Anotá síntomas, cambios o lo que te llame la atención, con fotos. Va en la ficha para el veterinario.'),
         ),
       );
     }
@@ -116,7 +116,7 @@ class DiarySection extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton.icon(
               icon: const Icon(Icons.menu_book_outlined),
-              label: Text('Ver todo el diario (${pet.diary.length})'),
+              label: Text(tr('Ver todo el diario ({length})', {'length': pet.diary.length})),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => DiaryScreen(petId: pet.id)),
@@ -138,7 +138,7 @@ class DiaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final pet = context.watch<PetsState>().byId(petId);
     if (pet == null) return const Scaffold(body: SizedBox.shrink());
-    final month = DateFormat.yMMMM('es');
+    final month = DateFormat.yMMMM(AppLang.code);
     final children = <Widget>[];
     String? current;
     for (final d in pet.diary) {
@@ -158,10 +158,10 @@ class DiaryScreen extends StatelessWidget {
       children.add(DiaryEntryCard(petId: petId, entry: d));
     }
     return Scaffold(
-      appBar: AppBar(title: Text('Diario de ${pet.name}')),
+      appBar: AppBar(title: Text(tr('Diario de {name}', {'name': pet.name}))),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.edit_note),
-        label: const Text('Anotar'),
+        label: Text(tr('Anotar')),
         onPressed: () => openDiaryForm(context, petId),
       ),
       body: ListView(

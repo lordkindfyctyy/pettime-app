@@ -1,10 +1,13 @@
+import '../l10n/app_lang.dart';
 enum SupplyKind {
   food('Alimento'),
   medicine('Remedio'),
   other('Otro');
 
-  const SupplyKind(this.label);
-  final String label;
+  const SupplyKind(this._label);
+  final String _label;
+
+  String get label => tr(_label);
 }
 
 /// Something that runs out and has to be bought again: a bag of food, a box
@@ -107,11 +110,11 @@ class Supply {
 
 /// "Quedan 12 días", "Se termina mañana", "Se terminó hace 2 días".
 String daysLeftLabel(int days) {
-  if (days > 1) return 'Quedan $days días';
-  if (days == 1) return 'Se termina mañana';
-  if (days == 0) return 'Se termina hoy';
-  if (days == -1) return 'Se terminó ayer';
-  return 'Se terminó hace ${-days} días';
+  if (days > 1) return tr('Quedan {days} días', {'days': days});
+  if (days == 1) return tr('Se termina mañana');
+  if (days == 0) return tr('Se termina hoy');
+  if (days == -1) return tr('Se terminó ayer');
+  return tr('Se terminó hace {n} días', {'n': -days});
 }
 
 /// Number typed with comma or dot ("0,3"), or null when it isn't positive.
@@ -128,7 +131,8 @@ String formatAmount(double value) {
   return s.replaceAll('.', ',');
 }
 
-/// WhatsApp message to order [supply] for [petName].
+/// WhatsApp message to order [supply] for [petName]. It stays in Spanish: the
+/// shop answers in Spanish.
 String orderMessage(Supply supply, String petName) =>
     'Hola! Quiero pedir ${supply.name} para $petName. ¡Gracias!';
 

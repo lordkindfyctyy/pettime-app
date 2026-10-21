@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/vet_visit.dart';
 import '../services/maps_service.dart';
 import '../state/pets_state.dart';
@@ -83,7 +84,7 @@ class _VisitFormScreenState extends State<VisitFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.visit == null ? 'Nuevo turno' : 'Editar turno'),
+        title: Text(widget.visit == null ? tr('Nuevo turno') : tr('Editar turno')),
       ),
       body: Form(
         key: _formKey,
@@ -109,15 +110,15 @@ class _VisitFormScreenState extends State<VisitFormScreen> {
               decoration: InputDecoration(labelText: _kind.placeLabel),
               textCapitalization: TextCapitalization.words,
               validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Ingresá el nombre del lugar'
+                  ? tr('Ingresá el nombre del lugar')
                   : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _address,
-              decoration: const InputDecoration(
-                labelText: 'Dirección o link de Google Maps',
-                hintText: 'Calle y número, o pegá el link del lugar',
+              decoration: InputDecoration(
+                labelText: tr('Dirección o link de Google Maps'),
+                hintText: tr('Calle y número, o pegá el link del lugar'),
               ),
               keyboardType: TextInputType.streetAddress,
               textCapitalization: TextCapitalization.sentences,
@@ -126,35 +127,35 @@ class _VisitFormScreenState extends State<VisitFormScreen> {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 icon: const Icon(Icons.map_outlined),
-                label: const Text('Ver en Google Maps'),
+                label: Text(tr('Ver en Google Maps')),
                 onPressed: () => openInMaps(context, _draft.mapsUri),
               ),
             ),
             const SizedBox(height: 4),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Fecha y hora'),
-              subtitle: Text(DateFormat.yMMMd('es').add_Hm().format(_date)),
+              title: Text(tr('Fecha y hora')),
+              subtitle: Text(DateFormat.yMMMd(AppLang.code).add_Hm().format(_date)),
               onTap: _pickDate,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _reason,
-              decoration: const InputDecoration(
-                labelText: 'Motivo',
-                hintText: 'Control, vacuna, baño y corte…',
+              decoration: InputDecoration(
+                labelText: tr('Motivo'),
+                hintText: tr('Control, vacuna, baño y corte…'),
               ),
               textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _notes,
-              decoration: const InputDecoration(labelText: 'Notas'),
+              decoration: InputDecoration(labelText: tr('Notas')),
               textCapitalization: TextCapitalization.sentences,
               maxLines: 3,
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: _submit, child: const Text('Guardar')),
+            FilledButton(onPressed: _submit, child: Text(tr('Guardar'))),
           ],
         ),
       ),

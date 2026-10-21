@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/pet.dart';
 import '../services/backup_service.dart';
 import '../services/drive_backup_service.dart';
@@ -62,7 +63,7 @@ class _BackupScreenState extends State<BackupScreen> {
         if (mounted) setState(() => _lastBackup = now);
       }
     } catch (e) {
-      if (mounted) _toast('No se pudo armar la copia: $e');
+      if (mounted) _toast(tr('No se pudo armar la copia: {e}', {'e': e}));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -74,9 +75,8 @@ class _BackupScreenState extends State<BackupScreen> {
     await file.writeAsBytes(bytes);
     final result = await SharePlus.instance.share(ShareParams(
       files: [XFile(file.path, mimeType: 'application/zip')],
-      subject: 'Copia de seguridad de PetTime',
-      text: 'Copia de seguridad de PetTime. Para restaurarla: PetTime → '
-          'Mascotas → ⋮ → Copia de seguridad → Restaurar.',
+      subject: tr('Copia de seguridad de PetTime'),
+      text: tr('Copia de seguridad de PetTime. Para restaurarla: PetTime → Mascotas → ⋮ → Copia de seguridad → Restaurar.'),
     ));
     return result.status != ShareResultStatus.dismissed;
   }
@@ -93,23 +93,23 @@ class _BackupScreenState extends State<BackupScreen> {
       'mime': 'application/zip',
     });
     if (saved != null) {
-      if (mounted) _toast('Copia guardada en Descargas: $saved');
+      if (mounted) _toast(tr('Copia guardada en Descargas: {saved}', {'saved': saved}));
       return true;
     }
     final uri = await FilePicker.saveFile(
-      dialogTitle: 'Guardar la copia de PetTime',
+      dialogTitle: tr('Guardar la copia de PetTime'),
       fileName: name,
       bytes: bytes,
       mimeType: 'application/zip',
     );
     if (uri == null) return false;
-    if (mounted) _toast('Copia guardada');
+    if (mounted) _toast(tr('Copia guardada'));
     return true;
   }
 
   static Future<Uint8List?> _pickFromDevice() async {
     final file = await FilePicker.pickFile(
-      dialogTitle: 'Elegí la copia de PetTime',
+      dialogTitle: tr('Elegí la copia de PetTime'),
       type: FileType.custom,
       allowedExtensions: const ['zip'],
     );
@@ -121,7 +121,7 @@ class _BackupScreenState extends State<BackupScreen> {
     try {
       bytes = await (widget.pickBackup ?? _pickFromDevice)();
     } catch (_) {
-      if (mounted) _toast('No se pudo abrir el archivo.');
+      if (mounted) _toast(tr('No se pudo abrir el archivo.'));
       return;
     }
     if (bytes == null || !mounted) return;
@@ -134,7 +134,7 @@ class _BackupScreenState extends State<BackupScreen> {
       final found = await DriveBackupService.instance.download();
       if (!mounted) return;
       if (found == null) {
-        _toast('No hay ninguna copia de PetTime en tu Google Drive.');
+        _toast(tr('No hay ninguna copia de PetTime en tu Google Drive.'));
         return;
       }
       final (date, bytes) = found;
@@ -142,10 +142,10 @@ class _BackupScreenState extends State<BackupScreen> {
         bytes,
         from: date == null
             ? null
-            : 'Copia de Drive del ${DateFormat.yMMMd('es').add_Hm().format(date)}.',
+            : 'Copia de Drive del ${DateFormat.yMMMd(AppLang.code).add_Hm().format(date)}.',
       );
     } catch (e) {
-      if (mounted) _toast('No se pudo bajar la copia de Drive: $e');
+      if (mounted) _toast(tr('No se pudo bajar la copia de Drive: {e}', {'e': e}));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -157,12 +157,12 @@ class _BackupScreenState extends State<BackupScreen> {
     try {
       if (on) {
         await drive.enable(context.read<PetsState>().pets);
-        if (mounted) _toast('Copia automática activada y guardada en Drive');
+        if (mounted) _toast(tr('Copia automática activada y guardada en Drive'));
       } else {
         await drive.disable();
       }
     } catch (e) {
-      if (mounted) _toast('No se pudo conectar con Google Drive: $e');
+      if (mounted) _toast(tr('No se pudo conectar con Google Drive: {e}', {'e': e}));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -184,38 +184,37 @@ class _BackupScreenState extends State<BackupScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('¿Restaurar la copia?'),
+        title: Text(tr('¿Restaurar la copia?')),
         content: Text(
           '${from == null ? '' : '$from\n\n'}'
-          'La copia tiene ${_count(pets.length)}: '
-          '${pets.map((p) => p.name).join(', ')}.\n\n'
-          '${current == 0 ? 'Se cargan en este celular.' : 'Reemplaza lo que hay ahora en este celular (${_count(current)}).'}',
+          '${tr('La copia tiene {count}: {names}.', {'count': _count(pets.length), 'names': pets.map((p) => p.name).join(', ')})}\n\n'
+          '${current == 0 ? tr('Se cargan en este celular.') : tr('Reemplaza lo que hay ahora en este celular ({count}).', {'count': _count(current)})}',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(tr('Cancelar')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Restaurar'),
+            child: Text(tr('Restaurar')),
           ),
         ],
       ),
     );
     if (ok != true) return;
     await state.replaceAll(pets);
-    if (mounted) _toast('Copia restaurada');
+    if (mounted) _toast(tr('Copia restaurada'));
   }
 
-  static String _count(int n) => n == 1 ? '1 mascota' : '$n mascotas';
+  static String _count(int n) => n == 1 ? tr('1 mascota') : tr('{n} mascotas', {'n': n});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final last = _lastBackup;
     return Scaffold(
-      appBar: AppBar(title: const Text('Copia de seguridad')),
+      appBar: AppBar(title: Text(tr('Copia de seguridad'))),
       body: ListView(
         padding: EdgeInsets.fromLTRB(
           16,
@@ -225,16 +224,12 @@ class _BackupScreenState extends State<BackupScreen> {
         ),
         children: [
           Text(
-            'Todo queda guardado solo en este celular. Hacé una copia de vez '
-            'en cuando y guardala en Google Drive o mandátela por WhatsApp o '
-            'mail: si cambiás o perdés el celular, la restaurás y no perdés '
-            'nada.',
+            tr('Todo queda guardado solo en este celular. Hacé una copia de vez en cuando y guardala en Google Drive o mandátela por WhatsApp o mail: si cambiás o perdés el celular, la restaurás y no perdés nada.'),
             style: theme.textTheme.bodyLarge,
           ),
           const SizedBox(height: 12),
           Text(
-            'Incluye las mascotas con sus fotos, la medicación, las tomas dadas, '
-            'los turnos y la libreta de vacunas.',
+            tr('Incluye las mascotas con sus fotos, la medicación, las tomas dadas, los turnos y la libreta de vacunas.'),
             style: theme.textTheme.bodyMedium,
           ),
           if (DriveBackupService.instance.supported) ...[
@@ -249,21 +244,21 @@ class _BackupScreenState extends State<BackupScreen> {
                     children: [
                       SwitchListTile(
                         secondary: const Icon(Icons.add_to_drive),
-                        title: const Text('Copia automática en Google Drive'),
+                        title: Text(tr('Copia automática en Google Drive')),
                         subtitle: Text(
                           drive.enabled
                               ? lastDrive == null
-                                  ? 'Activada'
-                                  : 'Última: ${DateFormat.yMMMd('es').add_Hm().format(lastDrive)}'
-                              : 'Se guarda sola una vez por día, cuando abrís la app',
+                                  ? tr('Activada')
+                                  : 'Última: ${DateFormat.yMMMd(AppLang.code).add_Hm().format(lastDrive)}'
+                              : tr('Se guarda sola una vez por día, cuando abrís la app'),
                         ),
                         value: drive.enabled,
                         onChanged: _busy ? null : _toggleDrive,
                       ),
                       ListTile(
                         leading: const Icon(Icons.cloud_download_outlined),
-                        title: const Text('Restaurar desde Google Drive'),
-                        subtitle: const Text('Por ejemplo, en un celular nuevo'),
+                        title: Text(tr('Restaurar desde Google Drive')),
+                        subtitle: Text(tr('Por ejemplo, en un celular nuevo')),
                         enabled: !_busy,
                         onTap: _restoreFromDrive,
                       ),
@@ -276,27 +271,27 @@ class _BackupScreenState extends State<BackupScreen> {
           const SizedBox(height: 16),
           Text(
             last == null
-                ? 'Todavía no hiciste ninguna copia manual.'
-                : 'Última copia manual: ${DateFormat.yMMMd('es').add_Hm().format(last)}',
+                ? tr('Todavía no hiciste ninguna copia manual.')
+                : 'Última copia manual: ${DateFormat.yMMMd(AppLang.code).add_Hm().format(last)}',
             style: theme.textTheme.titleSmall,
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: _busy ? null : () => _backup(_saveToFolder),
             icon: const Icon(Icons.save_alt),
-            label: const Text('Guardar en Descargas'),
+            label: Text(tr('Guardar en Descargas')),
           ),
           const SizedBox(height: 12),
           FilledButton.tonalIcon(
             onPressed: _busy ? null : () => _backup(_share),
             icon: const Icon(Icons.share_outlined),
-            label: const Text('Compartir copia (WhatsApp, mail…)'),
+            label: Text(tr('Compartir copia (WhatsApp, mail…)')),
           ),
           const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: _busy ? null : _restore,
             icon: const Icon(Icons.restore),
-            label: const Text('Restaurar una copia'),
+            label: Text(tr('Restaurar una copia')),
           ),
         ],
       ),

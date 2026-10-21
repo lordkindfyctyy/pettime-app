@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import 'supply.dart';
+import '../l10n/app_lang.dart';
 
 enum ExpenseCategory {
   food('Alimento'),
@@ -10,8 +11,10 @@ enum ExpenseCategory {
   accessories('Accesorios'),
   other('Otros');
 
-  const ExpenseCategory(this.label);
-  final String label;
+  const ExpenseCategory(this._label);
+  final String _label;
+
+  String get label => tr(_label);
 
   /// Category of what is bought when restocking a [SupplyKind].
   static ExpenseCategory ofSupply(SupplyKind kind) => switch (kind) {

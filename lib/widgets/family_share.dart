@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/pet.dart';
 import '../screens/pet_detail_screen.dart';
 import '../services/family_sync.dart';
@@ -13,12 +14,7 @@ import 'copyable_code.dart';
 
 /// What is sent to the family so they can join.
 String familyInviteText(Pet pet) =>
-    'Sumate a ${pet.name} en PetTime: así los dos vemos y marcamos sus '
-    'remedios, vacunas y turnos.\n\n'
-    '1. Instalá PetTime: https://sixsevenweb.com/pettime/\n'
-    '2. En "Mascotas" tocá ⋮ → "Unirme con un código"\n'
-    '3. Copiá este mensaje y tocá "Pegar", o escribí el código: '
-    '${pet.share!.displayCode}';
+    tr('Sumate a {name} en PetTime: así los dos vemos y marcamos sus remedios, vacunas y turnos.\n\n1. Instalá PetTime: https://sixsevenweb.com/pettime/\n2. En "Mascotas" tocá ⋮ → "Unirme con un código"\n3. Copiá este mensaje y tocá "Pegar", o escribí el código: {displayCode}', {'name': pet.name, 'displayCode': pet.share!.displayCode});
 
 /// The family or caregiver code in [text], which may be the whole invite
 /// message pasted from WhatsApp; null when there is none.
@@ -79,7 +75,7 @@ class _FamilySheetState extends State<_FamilySheet> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar'),
+              child: Text(tr('Cancelar')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
@@ -111,7 +107,7 @@ class _FamilySheetState extends State<_FamilySheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Compartir a ${pet.name} con la familia',
+                    tr('Compartir a {name} con la familia', {'name': pet.name}),
                     style: theme.textTheme.titleLarge,
                   ),
                 ),
@@ -121,26 +117,24 @@ class _FamilySheetState extends State<_FamilySheet> {
             if (share != null && share.isCaregiver) ...[
               Text(
                 pet.careFinished(DateTime.now())
-                    ? 'Terminó tu cuidado de ${pet.name}. Sale de este celular '
-                          'cuando se envíen tus últimos cambios.'
-                    : 'Cuidás a ${pet.name} ${careUntilLabel(pet.careEndsAt!)}. '
-                          'Lo que marques le llega a su familia.',
+                    ? tr('Terminó tu cuidado de {name}. Sale de este celular cuando se envíen tus últimos cambios.', {'name': pet.name})
+                    : tr('Cuidás a {name} {n}. Lo que marques le llega a su familia.', {'name': pet.name, 'n': careUntilLabel(pet.careEndsAt!)}),
               ),
               const SizedBox(height: 4),
               Text(
                 share.dirty
-                    ? 'Hay cambios por enviar (se envían al tener internet)'
-                    : 'Al día con la familia',
+                    ? tr('Hay cambios por enviar (se envían al tener internet)')
+                    : tr('Al día con la familia'),
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
               FilledButton.icon(
                 icon: const Icon(Icons.sync),
-                label: const Text('Sincronizar ahora'),
+                label: Text(tr('Sincronizar ahora')),
                 onPressed: _busy
                     ? null
-                    : () => _run(sync.syncAll, done: 'Listo'),
+                    : () => _run(sync.syncAll, done: tr('Listo')),
               ),
               const Divider(height: 24),
               TextButton(
@@ -152,62 +146,57 @@ class _FamilySheetState extends State<_FamilySheet> {
                     : () async {
                         final navigator = Navigator.of(context);
                         if (await _confirm(
-                          '¿Terminar el cuidado ahora?',
-                          '${pet.name} sale de este celular. Lo que anotaste ya '
-                              'le llegó a su familia.',
-                          'Terminar',
+                          tr('¿Terminar el cuidado ahora?'),
+                          tr('{name} sale de este celular. Lo que anotaste ya le llegó a su familia.', {'name': pet.name}),
+                          tr('Terminar'),
                         )) {
                           await _run(() => sync.leave(pet));
                           navigator.popUntil((r) => r.isFirst);
                         }
                       },
-                child: const Text('Terminar el cuidado ahora'),
+                child: Text(tr('Terminar el cuidado ahora')),
               ),
             ] else if (share == null) ...[
-              const Text(
-                'Los que se sumen con el código ven a la mascota en su PetTime y '
-                'pueden marcar las tomas, cargar vacunas, turnos y gastos. Los '
-                'cambios de cada uno les llegan a todos, y todos reciben los avisos '
-                'de los remedios.',
+              Text(
+                tr('Los que se sumen con el código ven a la mascota en su PetTime y pueden marcar las tomas, cargar vacunas, turnos y gastos. Los cambios de cada uno les llegan a todos, y todos reciben los avisos de los remedios.'),
               ),
               const SizedBox(height: 8),
               Text(
-                'Para eso la mascota se guarda en sixsevenweb.com. Pasale el '
-                'código solo a quien quieras.',
+                tr('Para eso la mascota se guarda en sixsevenweb.com. Pasale el código solo a quien quieras.'),
                 style: theme.textTheme.bodySmall,
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
                 icon: const Icon(Icons.group_add_outlined),
-                label: Text(_busy ? 'Compartiendo…' : 'Compartir'),
+                label: Text(_busy ? 'Compartiendo…' : tr('Compartir')),
                 onPressed: _busy ? null : () => _run(() => sync.share(pet)),
               ),
             ] else ...[
               Text(
                 share.isOwner
-                    ? 'Pasale este código a tu familia:'
-                    : 'Compartida con la familia. Código:',
+                    ? tr('Pasale este código a tu familia:')
+                    : tr('Compartida con la familia. Código:'),
               ),
               const SizedBox(height: 8),
               Center(child: CopyableCode(code: share.displayCode)),
               const SizedBox(height: 4),
               Text(
-                share.dirty ? 'Hay cambios por enviar (se envían al tener internet)' : 'Al día con la familia',
+                share.dirty ? tr('Hay cambios por enviar (se envían al tener internet)') : tr('Al día con la familia'),
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
               FilledButton.icon(
                 icon: const Icon(Icons.send_outlined),
-                label: const Text('Mandar el código'),
+                label: Text(tr('Mandar el código')),
                 onPressed: () => SharePlus.instance.share(
                   ShareParams(text: familyInviteText(pet)),
                 ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.sync),
-                label: const Text('Sincronizar ahora'),
-                onPressed: _busy ? null : () => _run(sync.syncAll, done: 'Listo'),
+                label: Text(tr('Sincronizar ahora')),
+                onPressed: _busy ? null : () => _run(sync.syncAll, done: tr('Listo')),
               ),
               const Divider(height: 24),
               if (share.isOwner)
@@ -217,15 +206,14 @@ class _FamilySheetState extends State<_FamilySheet> {
                       ? null
                       : () async {
                           if (await _confirm(
-                            '¿Dejar de compartir?',
-                            'Se borra del servidor. Los demás se quedan con su copia, '
-                                'pero ya no reciben los cambios.',
-                            'Dejar de compartir',
+                            tr('¿Dejar de compartir?'),
+                            tr('Se borra del servidor. Los demás se quedan con su copia, pero ya no reciben los cambios.'),
+                            tr('Dejar de compartir'),
                           )) {
-                            await _run(() => sync.stop(pet), done: 'Ya no se comparte');
+                            await _run(() => sync.stop(pet), done: tr('Ya no se comparte'));
                           }
                         },
-                  child: const Text('Dejar de compartir'),
+                  child: Text(tr('Dejar de compartir')),
                 )
               else
                 TextButton(
@@ -234,15 +222,14 @@ class _FamilySheetState extends State<_FamilySheet> {
                       ? null
                       : () async {
                           if (await _confirm(
-                            '¿Dejar de recibir cambios?',
-                            '${pet.name} queda en este celular, pero ya no se '
-                                'sincroniza con la familia.',
-                            'Dejar de recibir',
+                            tr('¿Dejar de recibir cambios?'),
+                            tr('{name} queda en este celular, pero ya no se sincroniza con la familia.', {'name': pet.name}),
+                            tr('Dejar de recibir'),
                           )) {
                             await _run(() => sync.leave(pet));
                           }
                         },
-                  child: const Text('Dejar de recibir cambios'),
+                  child: Text(tr('Dejar de recibir cambios')),
                 ),
             ],
           ],
@@ -290,8 +277,7 @@ class _JoinDialogState extends State<_JoinDialog> {
     final code = findShareCode(data?.text ?? '');
     setState(() {
       if (code == null) {
-        _error = 'No hay ningún código copiado. Copiá el mensaje que te '
-            'mandaron y volvé a tocar "Pegar".';
+        _error = tr('No hay ningún código copiado. Copiá el mensaje que te mandaron y volvé a tocar "Pegar".');
       } else {
         _code.text = code.length == 8
             ? '${code.substring(0, 4)}-${code.substring(4)}'
@@ -306,7 +292,7 @@ class _JoinDialogState extends State<_JoinDialog> {
         _code.text.replaceAll(RegExp(r'[\s-]'), '').toUpperCase();
     if (code.length != 8 && code.length != 12) {
       setState(
-        () => _error = 'El código de la familia tiene 8 letras y números, el de un cuidador 12',
+        () => _error = tr('El código de la familia tiene 8 letras y números, el de un cuidador 12'),
       );
       return;
     }
@@ -330,18 +316,17 @@ class _JoinDialogState extends State<_JoinDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Unirme con un código'),
+      title: Text(tr('Unirme con un código')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Copiá el mensaje que te mandaron y tocá "Pegar", o escribí el '
-            'código: el de la familia o el de cuidador.',
+          Text(
+            tr('Copiá el mensaje que te mandaron y tocá "Pegar", o escribí el código: el de la familia o el de cuidador.'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             icon: const Icon(Icons.content_paste),
-            label: const Text('Pegar'),
+            label: Text(tr('Pegar')),
             onPressed: _busy ? null : _paste,
           ),
           const SizedBox(height: 12),
@@ -350,8 +335,8 @@ class _JoinDialogState extends State<_JoinDialog> {
             autofocus: true,
             textCapitalization: TextCapitalization.characters,
             decoration: InputDecoration(
-              labelText: 'Código',
-              hintText: 'K7Q2-M9XP',
+              labelText: tr('Código'),
+              hintText: tr('K7Q2-M9XP'),
               errorText: _error,
               errorMaxLines: 3,
             ),
@@ -362,11 +347,11 @@ class _JoinDialogState extends State<_JoinDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          child: Text(tr('Cancelar')),
         ),
         FilledButton(
           onPressed: _busy ? null : _join,
-          child: Text(_busy ? 'Buscando…' : 'Unirme'),
+          child: Text(_busy ? 'Buscando…' : tr('Unirme')),
         ),
       ],
     );

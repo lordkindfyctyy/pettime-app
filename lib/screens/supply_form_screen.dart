@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/supply.dart';
 import '../state/pets_state.dart';
 
@@ -92,16 +93,16 @@ class _SupplyFormScreenState extends State<SupplyFormScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('¿Eliminar ${widget.supply!.name}?'),
-        content: const Text('Deja de avisar cuando se termine.'),
+        title: Text(tr('¿Eliminar {name}?', {'name': widget.supply!.name})),
+        content: Text(tr('Deja de avisar cuando se termine.')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(tr('Cancelar')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar'),
+            child: Text(tr('Eliminar')),
           ),
         ],
       ),
@@ -113,17 +114,17 @@ class _SupplyFormScreenState extends State<SupplyFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat.yMMMd('es');
+    final fmt = DateFormat.yMMMd(AppLang.code);
     final draft = _draft;
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.supply == null ? 'Nuevo producto' : 'Editar producto'),
+        title: Text(widget.supply == null ? tr('Nuevo producto') : tr('Editar producto')),
         actions: [
           if (widget.supply != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: 'Eliminar',
+              tooltip: tr('Eliminar'),
               onPressed: _delete,
             ),
         ],
@@ -140,7 +141,7 @@ class _SupplyFormScreenState extends State<SupplyFormScreen> {
           children: [
             DropdownButtonFormField<SupplyKind>(
               initialValue: _kind,
-              decoration: const InputDecoration(labelText: 'Tipo'),
+              decoration: InputDecoration(labelText: tr('Tipo')),
               items: [
                 for (final k in SupplyKind.values)
                   DropdownMenuItem(value: k, child: Text(k.label)),
@@ -150,13 +151,13 @@ class _SupplyFormScreenState extends State<SupplyFormScreen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _name,
-              decoration: const InputDecoration(
-                labelText: 'Producto',
-                hintText: 'Royal Canin Fit 15 kg',
+              decoration: InputDecoration(
+                labelText: tr('Producto'),
+                hintText: tr('Royal Canin Fit 15 kg'),
               ),
               textCapitalization: TextCapitalization.sentences,
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Ingresá el producto' : null,
+                  (v == null || v.trim().isEmpty) ? tr('Ingresá el producto') : null,
             ),
             const SizedBox(height: 12),
             Row(
@@ -167,12 +168,12 @@ class _SupplyFormScreenState extends State<SupplyFormScreen> {
                     controller: _amount,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Trae el paquete',
+                    decoration: InputDecoration(
+                      labelText: tr('Trae el paquete'),
                       hintText: '15',
                     ),
                     validator: (v) => parseAmount(v ?? '') == null
-                        ? 'Ingresá la cantidad'
+                        ? tr('Ingresá la cantidad')
                         : null,
                   ),
                 ),
@@ -181,7 +182,7 @@ class _SupplyFormScreenState extends State<SupplyFormScreen> {
                   child: DropdownButtonFormField<String>(
                     initialValue: Supply.units.contains(_unit) ? _unit : 'unidades',
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Unidad'),
+                    decoration: InputDecoration(labelText: tr('Unidad')),
                     items: [
                       for (final u in Supply.units)
                         DropdownMenuItem(value: u, child: Text(u)),
@@ -196,17 +197,17 @@ class _SupplyFormScreenState extends State<SupplyFormScreen> {
               controller: _perDay,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
-                labelText: 'Usa por día',
+                labelText: tr('Usa por día'),
                 hintText: _unit == 'kg' ? '0,3' : '1',
-                suffixText: '$_unit por día',
+                suffixText: tr('{_unit} por día', {'_unit': _unit}),
               ),
               validator: (v) =>
-                  parseAmount(v ?? '') == null ? 'Ingresá cuánto usa por día' : null,
+                  parseAmount(v ?? '') == null ? tr('Ingresá cuánto usa por día') : null,
             ),
             const SizedBox(height: 4),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Se abrió el paquete el'),
+              title: Text(tr('Se abrió el paquete el')),
               subtitle: Text(fmt.format(_openedOn)),
               trailing: const Icon(Icons.edit_calendar_outlined),
               onTap: () async {
@@ -219,14 +220,14 @@ class _SupplyFormScreenState extends State<SupplyFormScreen> {
                 if (d != null) setState(() => _openedOn = d);
               },
             ),
-            Text('Avisar antes', style: theme.textTheme.titleSmall),
+            Text(tr('Avisar antes'), style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: [
                 for (final days in _warnOptions)
                   ChoiceChip(
-                    label: Text('$days días'),
+                    label: Text(tr('{days} días', {'days': days})),
                     selected: _warn == days,
                     onSelected: (_) => setState(() => _warn = days),
                   ),
@@ -238,16 +239,14 @@ class _SupplyFormScreenState extends State<SupplyFormScreen> {
                 child: ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: Text(
-                    'Dura ${(draft.packageAmount / draft.perDay).floor()} días: '
-                    'se termina el ${fmt.format(draft.runsOutOn)}',
+                    tr('Dura {n} días: se termina el {n2}', {'n': (draft.packageAmount / draft.perDay).floor(), 'n2': fmt.format(draft.runsOutOn)}),
                   ),
-                  subtitle: Text('Te avisamos el ${fmt.format(draft.warnOn)} '
-                      'y el día que se termina.'),
+                  subtitle: Text(tr('Te avisamos el {n} y el día que se termina.', {'n': fmt.format(draft.warnOn)})),
                 ),
               ),
             ],
             const SizedBox(height: 24),
-            FilledButton(onPressed: _submit, child: const Text('Guardar')),
+            FilledButton(onPressed: _submit, child: Text(tr('Guardar'))),
           ],
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../l10n/app_lang.dart';
 
 /// What the user chose in [showPhotoSourceSheet].
 sealed class PhotoChoice {
@@ -29,18 +30,18 @@ Future<PhotoChoice?> showPhotoSourceSheet(
         children: [
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Elegir de la galería'),
+            title: Text(tr('Elegir de la galería')),
             onTap: () => Navigator.pop(ctx, const PickPhoto(ImageSource.gallery)),
           ),
           ListTile(
             leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Sacar una foto'),
+            title: Text(tr('Sacar una foto')),
             onTap: () => Navigator.pop(ctx, const PickPhoto(ImageSource.camera)),
           ),
           if (hasPhoto)
             ListTile(
               leading: const Icon(Icons.delete_outline),
-              title: const Text('Quitar foto'),
+              title: Text(tr('Quitar foto')),
               onTap: () => Navigator.pop(ctx, const RemovePhoto()),
             ),
         ],

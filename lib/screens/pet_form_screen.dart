@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/pet.dart';
 import '../services/photo_service.dart';
 import '../state/pets_state.dart';
@@ -106,7 +107,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.pet == null ? 'Nueva mascota' : 'Editar ficha'),
+        title: Text(widget.pet == null ? tr('Nueva mascota') : tr('Editar ficha')),
       ),
       body: Form(
         key: _formKey,
@@ -143,31 +144,31 @@ class _PetFormScreenState extends State<PetFormScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _name,
-              decoration: const InputDecoration(labelText: 'Nombre'),
+              decoration: InputDecoration(labelText: tr('Nombre')),
               textCapitalization: TextCapitalization.words,
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Ingresá un nombre' : null,
+                  (v == null || v.trim().isEmpty) ? tr('Ingresá un nombre') : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _species,
               decoration:
-                  const InputDecoration(labelText: 'Especie (perro, gato…)'),
+                  InputDecoration(labelText: tr('Especie (perro, gato…)')),
               textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _breed,
-              decoration: const InputDecoration(labelText: 'Raza'),
+              decoration: InputDecoration(labelText: tr('Raza')),
               textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 12),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Fecha de nacimiento'),
+              title: Text(tr('Fecha de nacimiento')),
               subtitle: Text(_birthDate == null
-                  ? 'Sin definir'
-                  : DateFormat.yMMMd('es').format(_birthDate!)),
+                  ? tr('Sin definir')
+                  : DateFormat.yMMMd(AppLang.code).format(_birthDate!)),
               trailing: _birthDate == null
                   ? null
                   : IconButton(
@@ -179,9 +180,9 @@ class _PetFormScreenState extends State<PetFormScreen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _food,
-              decoration: const InputDecoration(
-                labelText: 'Alimento',
-                hintText: 'Marca, cantidad, horarios',
+              decoration: InputDecoration(
+                labelText: tr('Alimento'),
+                hintText: tr('Marca, cantidad, horarios'),
               ),
               textCapitalization: TextCapitalization.sentences,
               maxLines: 2,
@@ -189,12 +190,12 @@ class _PetFormScreenState extends State<PetFormScreen> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _notes,
-              decoration: const InputDecoration(labelText: 'Notas'),
+              decoration: InputDecoration(labelText: tr('Notas')),
               textCapitalization: TextCapitalization.sentences,
               maxLines: 3,
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: _submit, child: const Text('Guardar')),
+            FilledButton(onPressed: _submit, child: Text(tr('Guardar'))),
           ],
         ),
       ),

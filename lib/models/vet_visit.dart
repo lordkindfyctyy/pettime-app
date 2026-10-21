@@ -1,14 +1,17 @@
+import '../l10n/app_lang.dart';
 enum AppointmentKind {
   vet('Veterinaria', 'Veterinaria'),
   grooming('Peluquería / spa', 'Peluquería');
 
-  const AppointmentKind(this.label, this.placeLabel);
+  const AppointmentKind(this._label, this._placeLabel);
 
   /// Name of the kind in the type selector.
-  final String label;
+  final String _label;
+  String get label => tr(_label);
 
   /// What the place is called in the form and in titles.
-  final String placeLabel;
+  final String _placeLabel;
+  String get placeLabel => tr(_placeLabel);
 }
 
 /// An appointment of a pet at the vet or at the groomer / spa.

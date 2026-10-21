@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/pet.dart';
 import 'backup_service.dart';
 import 'google_account.dart';
@@ -70,7 +71,7 @@ class DriveBackupService extends ChangeNotifier {
   Future<drive.DriveApi> _api() async {
     final auth = await GoogleAccount.instance.authorization(_scopes);
     if (auth == null) {
-      throw StateError('Hay que volver a conectar Google Drive.');
+      throw StateError(tr('Hay que volver a conectar Google Drive.'));
     }
     return drive.DriveApi(auth.authClient(scopes: _scopes));
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/medication.dart';
 import '../screens/medication_form_screen.dart';
 import '../state/pets_state.dart';
@@ -52,7 +53,7 @@ class MedicationCard extends StatelessWidget {
             Flexible(child: InteractiveViewer(child: Image.file(File(path)))),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cerrar'),
+              child: Text(tr('Cerrar')),
             ),
           ],
         ),
@@ -65,9 +66,9 @@ class MedicationCard extends StatelessWidget {
     await context.read<PetsState>().logDose(petId, medication.id);
     messenger.showSnackBar(
       SnackBar(
-        content: Text('Toma de ${medication.name} registrada'),
+        content: Text(tr('Toma de {name} registrada', {'name': medication.name})),
         action: SnackBarAction(
-          label: 'Historial',
+          label: tr('Historial'),
           onPressed: () => _showHistory(context),
         ),
       ),
@@ -78,7 +79,7 @@ class MedicationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final m = medication;
-    final fmt = DateFormat.yMMMd('es').add_Hm();
+    final fmt = DateFormat.yMMMd(AppLang.code).add_Hm();
     final next = m.nextDose();
     final photo = m.photoPath;
     final hasPhoto = photo != null && File(photo).existsSync();
@@ -133,16 +134,16 @@ class MedicationCard extends StatelessWidget {
                   line(
                     next == null ? Icons.event_busy_outlined : Icons.alarm,
                     next == null
-                        ? 'Tratamiento terminado'
-                        : 'Próxima toma: ${fmt.format(next)}',
+                        ? tr('Tratamiento terminado')
+                        : tr('Próxima toma: {n}', {'n': fmt.format(next)}),
                   ),
                   if (m.lastGiven != null)
                     line(
                       Icons.check_circle_outline,
-                      'Última dada: ${fmt.format(m.lastGiven!)}',
+                      tr('Última dada: {n}', {'n': fmt.format(m.lastGiven!)}),
                     ),
                   if (m.endsAt != null)
-                    line(Icons.flag_outlined, 'Hasta: ${fmt.format(m.endsAt!)}'),
+                    line(Icons.flag_outlined, tr('Hasta: {n}', {'n': fmt.format(m.endsAt!)})),
                   if (m.notes.isNotEmpty) line(Icons.notes, m.notes),
                 ],
               ),
@@ -153,25 +154,24 @@ class MedicationCard extends StatelessWidget {
                 children: [
                   FilledButton.tonalIcon(
                     icon: const Icon(Icons.check),
-                    label: const Text('Dada ahora'),
+                    label: Text(tr('Dada ahora')),
                     onPressed: () => _logDose(context),
                   ),
                   TextButton.icon(
                     icon: const Icon(Icons.history),
-                    label: const Text('Historial'),
+                    label: Text(tr('Historial')),
                     onPressed: () => _showHistory(context),
                   ),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
-                    tooltip: 'Eliminar medicación',
+                    tooltip: tr('Eliminar medicación'),
                     onPressed: () async {
                       final state = context.read<PetsState>();
                       if (await confirmDelete(
                         context,
-                        'la medicación ${m.name}',
-                        detail: 'Se borran también sus alarmas y el historial '
-                            'de tomas. No se puede deshacer.',
+                        tr('la medicación {name}', {'name': m.name}),
+                        detail: tr('Se borran también sus alarmas y el historial de tomas. No se puede deshacer.'),
                       )) {
                         await state.deleteMedication(petId, m.id);
                       }

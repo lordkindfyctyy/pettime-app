@@ -1,25 +1,29 @@
+import '../l10n/app_lang.dart';
 enum HealthKind {
   vaccine('Vacuna', 'Antirrábica, séxtuple, triple felina…'),
   deworming('Desparasitario interno', 'Pastilla o jarabe para parásitos internos'),
   fleaTick('Pulgas y garrapatas', 'Pipeta, collar o pastilla');
 
-  const HealthKind(this.label, this.hint);
+  const HealthKind(this._label, this._hint);
 
-  final String label;
-  final String hint;
+  final String _label;
+  final String _hint;
+
+  String get label => tr(_label);
+  String get hint => tr(_hint);
 
   /// Common names offered as shortcuts in the form.
   List<String> get suggestions => switch (this) {
-        HealthKind.vaccine => const [
-            'Antirrábica',
-            'Séxtuple',
-            'Quíntuple',
-            'Triple felina',
-            'Leucemia felina',
-            'Tos de las perreras',
+        HealthKind.vaccine => [
+            tr('Antirrábica'),
+            tr('Séxtuple'),
+            tr('Quíntuple'),
+            tr('Triple felina'),
+            tr('Leucemia felina'),
+            tr('Tos de las perreras'),
           ],
-        HealthKind.deworming => const ['Desparasitario interno'],
-        HealthKind.fleaTick => const ['Pipeta', 'Collar', 'Pastilla antipulgas'],
+        HealthKind.deworming => [tr('Desparasitario interno')],
+        HealthKind.fleaTick => [tr('Pipeta'), tr('Collar'), tr('Pastilla antipulgas')],
       };
 }
 
@@ -99,9 +103,9 @@ int daysUntil(DateTime date, [DateTime? now]) {
 /// "Hoy", "Mañana", "En 5 días", "Vencida hace 2 días".
 String dueLabel(DateTime date, [DateTime? now]) {
   final d = daysUntil(date, now);
-  if (d == 0) return 'Hoy';
-  if (d == 1) return 'Mañana';
-  if (d > 1) return 'En $d días';
-  if (d == -1) return 'Vencida ayer';
-  return 'Vencida hace ${-d} días';
+  if (d == 0) return tr('Hoy');
+  if (d == 1) return tr('Mañana');
+  if (d > 1) return tr('En {d} días', {'d': d});
+  if (d == -1) return tr('Vencida ayer');
+  return tr('Vencida hace {n} días', {'n': -d});
 }

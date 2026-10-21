@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/expense.dart';
 import 'pettime_api.dart';
 import 'shop_settings.dart';
@@ -65,7 +66,9 @@ class ShopProduct {
   final String promoText;
 
   String get priceLabel =>
-      byWeight ? '${formatMoney(price)} el kg' : formatMoney(price);
+      byWeight
+          ? tr('{price} el kg', {'price': formatMoney(price)})
+          : formatMoney(price);
 
   factory ShopProduct.fromJson(Map<String, dynamic> j) => ShopProduct(
         id: j['id'] as int,
@@ -80,7 +83,7 @@ class ShopProduct {
         promoText: j['promo'] == true
             ? ((j['promoText'] as String?)?.trim().isNotEmpty ?? false
                 ? (j['promoText'] as String).trim()
-                : 'Promo')
+                : tr('Promo'))
             : '',
       );
 }

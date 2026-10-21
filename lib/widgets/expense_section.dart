@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/expense.dart';
 import '../models/pet.dart';
 import '../state/pets_state.dart';
@@ -41,8 +42,7 @@ Future<void> showExpenseDialog(
     if (!context.mounted) return;
     final ok = await confirmDelete(
       context,
-      'el gasto de ${formatMoney(expense!.amount)} '
-      '(${expense.category.label})',
+      tr('el gasto de {n} ({label})', {'n': formatMoney(expense!.amount), 'label': expense.category.label}),
     );
     if (ok) await state.deleteExpense(pet.id, expense.id);
   } else {
@@ -124,7 +124,7 @@ class _ExpenseDialogState extends State<_ExpenseDialog> {
   Widget build(BuildContext context) {
     final editing = widget.expense != null;
     return AlertDialog(
-      title: Text(editing ? 'Gasto' : 'Gasto en ${widget.pet.name}'),
+      title: Text(editing ? tr('Gasto') : tr('Gasto en {name}', {'name': widget.pet.name})),
       scrollable: true,
       content: Form(
         key: _formKey,
@@ -136,13 +136,13 @@ class _ExpenseDialogState extends State<_ExpenseDialog> {
               controller: _amount,
               autofocus: !editing,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Monto',
+              decoration: InputDecoration(
+                labelText: tr('Monto'),
                 prefixText: r'$ ',
                 hintText: '45.300',
               ),
               validator: (v) =>
-                  parseMoney(v ?? '') == null ? 'Ingresá cuánto gastaste' : null,
+                  parseMoney(v ?? '') == null ? tr('Ingresá cuánto gastaste') : null,
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -163,15 +163,15 @@ class _ExpenseDialogState extends State<_ExpenseDialog> {
             TextFormField(
               controller: _note,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Detalle (opcional)',
-                hintText: 'Royal Canin 15 kg, consulta, vacuna…',
+              decoration: InputDecoration(
+                labelText: tr('Detalle (opcional)'),
+                hintText: tr('Royal Canin 15 kg, consulta, vacuna…'),
               ),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Fecha'),
-              subtitle: Text(DateFormat.yMMMd('es').format(_date)),
+              title: Text(tr('Fecha')),
+              subtitle: Text(DateFormat.yMMMd(AppLang.code).format(_date)),
               trailing: const Icon(Icons.edit_calendar_outlined),
               onTap: () async {
                 final d = await showDatePicker(
@@ -190,11 +190,11 @@ class _ExpenseDialogState extends State<_ExpenseDialog> {
         if (editing)
           TextButton(
             onPressed: () => Navigator.pop(context, _DialogResult.delete()),
-            child: const Text('Eliminar'),
+            child: Text(tr('Eliminar')),
           ),
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          child: Text(tr('Cancelar')),
         ),
         FilledButton(
           onPressed: () {
@@ -209,7 +209,7 @@ class _ExpenseDialogState extends State<_ExpenseDialog> {
               ),
             );
           },
-          child: const Text('Guardar'),
+          child: Text(tr('Guardar')),
         ),
       ],
     );
@@ -217,7 +217,7 @@ class _ExpenseDialogState extends State<_ExpenseDialog> {
 }
 
 String _monthName(DateTime month) {
-  final s = DateFormat.yMMMM('es').format(month);
+  final s = DateFormat.yMMMM(AppLang.code).format(month);
   return s[0].toUpperCase() + s.substring(1);
 }
 
@@ -239,7 +239,7 @@ class ExpenseTile extends StatelessWidget {
       title: Text(expense.note.isEmpty ? expense.category.label : expense.note),
       subtitle: Text(
         '${expense.category.label} · '
-        '${DateFormat.yMMMd('es').format(expense.date)}',
+        '${DateFormat.yMMMd(AppLang.code).format(expense.date)}',
       ),
       trailing: Text(
         formatMoney(expense.amount),
@@ -266,8 +266,7 @@ class ExpenseSection extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
-          'Anotá lo que gastás en ${pet.name}: alimento, veterinaria, '
-          'remedios… y te mostramos cuánto es por mes.',
+          tr('Anotá lo que gastás en {name}: alimento, veterinaria, remedios… y te mostramos cuánto es por mes.', {'name': pet.name}),
         ),
       );
     }
@@ -282,7 +281,7 @@ class ExpenseSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Este mes', style: theme.textTheme.labelLarge),
+            Text(tr('Este mes'), style: theme.textTheme.labelLarge),
             Text(
               formatMoney(thisMonth),
               style: theme.textTheme.headlineMedium?.copyWith(
@@ -291,7 +290,7 @@ class ExpenseSection extends StatelessWidget {
               ),
             ),
             Text(
-              'El mes pasado: ${formatMoney(lastMonth)}',
+              tr('El mes pasado: {n}', {'n': formatMoney(lastMonth)}),
               style: theme.textTheme.bodySmall,
             ),
             if (categories.isNotEmpty) const SizedBox(height: 12),
@@ -337,7 +336,7 @@ class ExpenseSection extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 icon: const Icon(Icons.history),
-                label: Text('Ver todos (${pet.expenses.length})'),
+                label: Text(tr('Ver todos ({length})', {'length': pet.expenses.length})),
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -370,14 +369,14 @@ class ExpensesScreen extends StatelessWidget {
       if (!months.contains(m)) months.add(m);
     }
     return Scaffold(
-      appBar: AppBar(title: Text('Gastos de ${pet.name}')),
+      appBar: AppBar(title: Text(tr('Gastos de {name}', {'name': pet.name}))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showExpenseDialog(context, pet),
         icon: const Icon(Icons.add),
-        label: const Text('Gasto'),
+        label: Text(tr('Gasto')),
       ),
       body: pet.expenses.isEmpty
-          ? const Center(child: Text('Todavía no anotaste gastos'))
+          ? Center(child: Text(tr('Todavía no anotaste gastos')))
           : ListView(
               padding: EdgeInsets.fromLTRB(
                 16,

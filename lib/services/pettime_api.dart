@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import '../l10n/app_lang.dart';
 
 /// PetTime's server on sixsevenweb.com (public/pettime/api in the website
 /// repo): lost & found pets, the shop catalog and pets shared with the
@@ -85,11 +86,11 @@ class PetTimeApi {
     try {
       response = await request();
     } on SocketException {
-      throw ApiException('No hay conexión a internet.');
+      throw ApiException(tr('No hay conexión a internet.'));
     } on http.ClientException {
-      throw ApiException('No hay conexión a internet.');
+      throw ApiException(tr('No hay conexión a internet.'));
     } on Exception {
-      throw ApiException('El servidor no responde. Probá de nuevo en un rato.');
+      throw ApiException(tr('El servidor no responde. Probá de nuevo en un rato.'));
     }
 
     Map<String, dynamic>? body;
@@ -110,8 +111,8 @@ class PetTimeApi {
       error is String && error != 'conflict'
           ? error
           : response.statusCode == 429
-              ? 'Demasiados intentos. Probá de nuevo en un rato.'
-              : 'Algo salió mal en el servidor. Probá de nuevo en un rato.',
+              ? tr('Demasiados intentos. Probá de nuevo en un rato.')
+              : tr('Algo salió mal en el servidor. Probá de nuevo en un rato.'),
       status: response.statusCode,
       body: body,
     );
@@ -121,7 +122,7 @@ class PetTimeApi {
   Future<File> download(String url, File target) async {
     final response = await _client.get(Uri.parse(url)).timeout(_timeout);
     if (response.statusCode != 200) {
-      throw ApiException('No se pudo bajar la foto.', status: response.statusCode);
+      throw ApiException(tr('No se pudo bajar la foto.'), status: response.statusCode);
     }
     await target.parent.create(recursive: true);
     return target.writeAsBytes(response.bodyBytes);

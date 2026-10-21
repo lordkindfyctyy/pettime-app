@@ -1,12 +1,16 @@
 import 'package:intl/intl.dart';
+import '../l10n/app_lang.dart';
 
 enum ReportKind {
   lost('Se perdió', 'Perdidas'),
   found('Encontrada', 'Encontradas');
 
-  const ReportKind(this.badge, this.plural);
-  final String badge;
-  final String plural;
+  const ReportKind(this._badge, this._plural);
+  final String _badge;
+  final String _plural;
+
+  String get badge => tr(_badge);
+  String get plural => tr(_plural);
 }
 
 /// A lost or found pet notice, as sixsevenweb.com publishes it.
@@ -52,8 +56,8 @@ class LostReport {
   String get title => petName.isNotEmpty
       ? petName
       : kind == ReportKind.lost
-          ? 'Mascota perdida'
-          : 'Mascota encontrada';
+          ? tr('Mascota perdida')
+          : tr('Mascota encontrada');
 
   /// "Perro · Labrador".
   String get details =>
@@ -61,11 +65,12 @@ class LostReport {
 
   /// "Se perdió el 17 oct, 18:30" / "Vista el 17 oct, 18:30".
   String whenLabel() {
-    final f = DateFormat("d MMM, HH:mm", 'es').format(eventAt);
-    return kind == ReportKind.lost ? 'Se perdió el $f' : 'Vista el $f';
+    final f = DateFormat(tr("d MMM, HH:mm"), AppLang.code).format(eventAt);
+    return kind == ReportKind.lost ? tr('Se perdió el {f}', {'f': f}) : tr('Vista el {f}', {'f': f});
   }
 
-  /// The WhatsApp chat with whoever published it, with a first message.
+  /// The WhatsApp chat with whoever published it, with a first message. It
+  /// stays in Spanish: the notices are published for people in Argentina.
   Uri whatsAppUri() {
     final text = kind == ReportKind.lost
         ? 'Hola! Vi el aviso de $title en PetTime.'
@@ -76,15 +81,15 @@ class LostReport {
   /// What is sent when sharing the notice.
   String shareText() {
     final head = kind == ReportKind.lost
-        ? '¡Se perdió $title!'
-        : 'Se encontró esta mascota';
+        ? tr('¡Se perdió {title}!', {'title': title})
+        : tr('Se encontró esta mascota');
     return [
       head,
       if (details.isNotEmpty) details,
       whenLabel(),
-      'Zona: $zone',
+      tr('Zona: {zone}', {'zone': zone}),
       if (description.isNotEmpty) description,
-      'Contacto por WhatsApp: https://wa.me/$contactPhone',
+      tr('Contacto por WhatsApp: https://wa.me/{contactPhone}', {'contactPhone': contactPhone}),
       webUrl,
     ].join('\n');
   }

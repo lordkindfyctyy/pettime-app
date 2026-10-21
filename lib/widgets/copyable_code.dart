@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/app_lang.dart';
 import '../theme.dart';
 
 /// A family or caregiver code that is copied with one tap, ready to paste in
@@ -52,7 +53,7 @@ class _CopyableCodeState extends State<CopyableCode> {
             );
     return Semantics(
       button: true,
-      label: 'Copiar el código ${widget.code}',
+      label: tr('Copiar el código {code}', {'code': widget.code}),
       child: Material(
         color: Brand.red.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
@@ -81,8 +82,8 @@ class _CopyableCodeState extends State<CopyableCode> {
                     Flexible(
                       child: Text(
                         _copied
-                            ? '¡Copiado! Ya lo podés pegar'
-                            : 'Tocá para copiar',
+                            ? tr('¡Copiado! Ya lo podés pegar')
+                            : tr('Tocá para copiar'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: _copied ? Brand.teal : null,
                           fontWeight: _copied ? FontWeight.w700 : null,

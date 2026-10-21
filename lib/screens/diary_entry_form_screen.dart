@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/diary_entry.dart';
 import '../services/photo_service.dart';
 import '../state/pets_state.dart';
@@ -92,8 +93,8 @@ class _DiaryEntryFormScreenState extends State<DiaryEntryFormScreen> {
   Future<void> _save() async {
     if (_symptoms.isEmpty && _text.text.trim().isEmpty && _photos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Marcá un síntoma, escribí algo o agregá una foto'),
+        SnackBar(
+          content: Text(tr('Marcá un síntoma, escribí algo o agregá una foto')),
         ),
       );
       return;
@@ -124,20 +125,19 @@ class _DiaryEntryFormScreenState extends State<DiaryEntryFormScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          '¿Borrar la anotación del diario del '
-          '${DateFormat.yMMMd('es').format(widget.entry!.date)}?',
+          tr('¿Borrar la anotación del diario del {n}?', {'n': DateFormat.yMMMd(AppLang.code).format(widget.entry!.date)}),
         ),
-        content: const Text(
-          'Se borran también sus fotos. No se puede deshacer.',
+        content: Text(
+          tr('Se borran también sus fotos. No se puede deshacer.'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(tr('Cancelar')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Borrar'),
+            child: Text(tr('Borrar')),
           ),
         ],
       ),
@@ -154,13 +154,13 @@ class _DiaryEntryFormScreenState extends State<DiaryEntryFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.entry == null ? 'Anotar en el diario' : 'Editar anotación',
+          widget.entry == null ? tr('Anotar en el diario') : tr('Editar anotación'),
         ),
         actions: [
           if (widget.entry != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: 'Borrar',
+              tooltip: tr('Borrar'),
               onPressed: _delete,
             ),
         ],
@@ -176,13 +176,13 @@ class _DiaryEntryFormScreenState extends State<DiaryEntryFormScreen> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.event_outlined),
-            title: const Text('Cuándo'),
-            subtitle: Text(DateFormat.yMMMd('es').add_Hm().format(_date)),
+            title: Text(tr('Cuándo')),
+            subtitle: Text(DateFormat.yMMMd(AppLang.code).add_Hm().format(_date)),
             trailing: const Icon(Icons.edit_calendar_outlined),
             onTap: _pickDate,
           ),
           const SizedBox(height: 8),
-          Text('¿Qué le notaste?', style: theme.textTheme.titleSmall),
+          Text(tr('¿Qué le notaste?'), style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -204,15 +204,15 @@ class _DiaryEntryFormScreenState extends State<DiaryEntryFormScreen> {
             minLines: 3,
             maxLines: 8,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Qué pasó',
-              hintText: 'Vomitó dos veces a la mañana, después comió bien…',
+            decoration: InputDecoration(
+              labelText: tr('Qué pasó'),
+              hintText: tr('Vomitó dos veces a la mañana, después comió bien…'),
               alignLabelWithHint: true,
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 16),
-          Text('Fotos', style: theme.textTheme.titleSmall),
+          Text(tr('Fotos'), style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -228,7 +228,7 @@ class _DiaryEntryFormScreenState extends State<DiaryEntryFormScreen> {
                       child: IconButton.filledTonal(
                         visualDensity: VisualDensity.compact,
                         iconSize: 18,
-                        tooltip: 'Quitar foto',
+                        tooltip: tr('Quitar foto'),
                         icon: const Icon(Icons.close),
                         onPressed: () => _removePhoto(p),
                       ),
@@ -255,14 +255,14 @@ class _DiaryEntryFormScreenState extends State<DiaryEntryFormScreen> {
           if (pet?.share != null) ...[
             const SizedBox(height: 8),
             Text(
-              'Las fotos quedan solo en este celular; lo escrito le llega a todos.',
+              tr('Las fotos quedan solo en este celular; lo escrito le llega a todos.'),
               style: theme.textTheme.bodySmall,
             ),
           ],
           const SizedBox(height: 24),
           FilledButton.icon(
             icon: const Icon(Icons.check),
-            label: const Text('Guardar'),
+            label: Text(tr('Guardar')),
             onPressed: _save,
           ),
         ],

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/pet.dart';
 import '../models/weight_entry.dart';
 import '../state/pets_state.dart';
@@ -54,7 +55,7 @@ class _AddWeightDialogState extends State<_AddWeightDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Peso de ${widget.pet.name}'),
+      title: Text(tr('Peso de {name}', {'name': widget.pet.name})),
       content: Form(
         key: _formKey,
         child: Column(
@@ -64,19 +65,19 @@ class _AddWeightDialogState extends State<_AddWeightDialog> {
               controller: _kg,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Peso',
-                suffixText: 'kg',
+              decoration: InputDecoration(
+                labelText: tr('Peso'),
+                suffixText: tr('kg'),
                 hintText: '32,5',
               ),
               validator: (v) =>
-                  parseKg(v ?? '') == null ? 'Ingresá el peso en kg' : null,
+                  parseKg(v ?? '') == null ? tr('Ingresá el peso en kg') : null,
             ),
             const SizedBox(height: 8),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Fecha'),
-              subtitle: Text(DateFormat.yMMMd('es').format(_date)),
+              title: Text(tr('Fecha')),
+              subtitle: Text(DateFormat.yMMMd(AppLang.code).format(_date)),
               trailing: const Icon(Icons.edit_calendar_outlined),
               onTap: () async {
                 final d = await showDatePicker(
@@ -94,7 +95,7 @@ class _AddWeightDialogState extends State<_AddWeightDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          child: Text(tr('Cancelar')),
         ),
         FilledButton(
           onPressed: () {
@@ -102,7 +103,7 @@ class _AddWeightDialogState extends State<_AddWeightDialog> {
               Navigator.pop(context, (parseKg(_kg.text)!, _date));
             }
           },
-          child: const Text('Guardar'),
+          child: Text(tr('Guardar')),
         ),
       ],
     );
@@ -121,12 +122,12 @@ class WeightSection extends StatelessWidget {
     final weights = pet.weights;
     final theme = Theme.of(context);
     if (weights.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text('Todavía no anotaste ningún peso'),
+        child: Text(tr('Todavía no anotaste ningún peso')),
       );
     }
-    final fmt = DateFormat.yMMMd('es');
+    final fmt = DateFormat.yMMMd(AppLang.code);
     final last = weights.last;
     final previous = weights.length > 1 ? weights[weights.length - 2] : null;
     final diff = previous == null ? null : last.kg - previous.kg;
@@ -154,7 +155,7 @@ class WeightSection extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Text(
                         diff.abs() < 0.005
-                            ? 'Igual que antes'
+                            ? tr('Igual que antes')
                             : '${diff > 0 ? '▲ +' : '▼ −'}'
                                 '${formatKg(diff.abs())}',
                         style: theme.textTheme.titleSmall?.copyWith(
@@ -172,9 +173,8 @@ class WeightSection extends StatelessWidget {
             ),
             Text(
               previous == null
-                  ? 'Pesado el ${fmt.format(last.date)}'
-                  : 'Pesado el ${fmt.format(last.date)} · antes '
-                      '${formatKg(previous.kg)} (${fmt.format(previous.date)})',
+                  ? tr('Pesado el {n}', {'n': fmt.format(last.date)})
+                  : tr('Pesado el {n} · antes {n2} ({n3})', {'n': fmt.format(last.date), 'n2': formatKg(previous.kg), 'n3': fmt.format(previous.date)}),
               style: theme.textTheme.bodySmall,
             ),
             if (weights.length > 1) ...[
@@ -197,7 +197,7 @@ class WeightSection extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 icon: const Icon(Icons.history),
-                label: Text('Historial (${weights.length})'),
+                label: Text(tr('Historial ({length})', {'length': weights.length})),
                 onPressed: () => showModalBottomSheet<void>(
                   context: context,
                   isScrollControlled: true,
@@ -223,7 +223,7 @@ class WeightHistorySheet extends StatelessWidget {
     final state = context.watch<PetsState>();
     final pet = state.byId(petId);
     if (pet == null) return const SizedBox.shrink();
-    final fmt = DateFormat.yMMMd('es');
+    final fmt = DateFormat.yMMMd(AppLang.code);
     final list = pet.weights.reversed.toList();
     return SafeArea(
       child: ConstrainedBox(
@@ -236,7 +236,7 @@ class WeightHistorySheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Pesos de ${pet.name}',
+                tr('Pesos de {name}', {'name': pet.name}),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -251,12 +251,11 @@ class WeightHistorySheet extends StatelessWidget {
                       subtitle: Text(fmt.format(w.date)),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline),
-                        tooltip: 'Borrar',
+                        tooltip: tr('Borrar'),
                         onPressed: () async {
                           if (await confirmDelete(
                             context,
-                            'el peso de ${formatKg(w.kg)} del '
-                            '${fmt.format(w.date)}',
+                            tr('el peso de {n} del {n2}', {'n': formatKg(w.kg), 'n2': fmt.format(w.date)}),
                           )) {
                             await state.deleteWeight(petId, w.id);
                           }
@@ -350,7 +349,7 @@ class WeightChartPainter extends CustomPainter {
       );
     }
 
-    final dates = DateFormat.MMMd('es');
+    final dates = DateFormat.MMMd(AppLang.code);
     _text(canvas, dates.format(weights.first.date), Offset(left, top + h + 4));
     final end = dates.format(weights.last.date);
     _text(canvas, end, Offset(left + w, top + h + 4), alignRight: true);

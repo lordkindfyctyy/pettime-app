@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/pet.dart';
 
 /// Backup of everything in a single .zip: `pettime.json` with the pets
@@ -77,15 +78,15 @@ class BackupService {
     try {
       archive = ZipDecoder().decodeBytes(bytes);
     } catch (_) {
-      throw const FormatException('El archivo no es una copia de PetTime.');
+      throw FormatException(tr('El archivo no es una copia de PetTime.'));
     }
     final data = archive.findFile(dataFile);
     if (data == null) {
-      throw const FormatException('El archivo no es una copia de PetTime.');
+      throw FormatException(tr('El archivo no es una copia de PetTime.'));
     }
     final json = jsonDecode(utf8.decode(data.content)) as Map<String, dynamic>;
     if (json['app'] != 'PetTime' || json['pets'] is! List) {
-      throw const FormatException('El archivo no es una copia de PetTime.');
+      throw FormatException(tr('El archivo no es una copia de PetTime.'));
     }
 
     photosDir.createSync(recursive: true);

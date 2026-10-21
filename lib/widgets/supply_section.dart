@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/expense.dart';
 import '../models/pet.dart';
 import '../models/supply.dart';
@@ -35,7 +36,7 @@ Future<void> orderByWhatsApp(BuildContext context, Pet pet, Supply supply) async
   } catch (_) {}
   if (!opened) {
     messenger.showSnackBar(
-      const SnackBar(content: Text('No se pudo abrir WhatsApp')),
+      SnackBar(content: Text(tr('No se pudo abrir WhatsApp'))),
     );
   }
 }
@@ -48,24 +49,23 @@ Future<void> showShopSettingsDialog(BuildContext context) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Pet shop para pedidos'),
+      title: Text(tr('Pet shop para pedidos')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: name,
-            decoration: const InputDecoration(labelText: 'Nombre'),
+            decoration: InputDecoration(labelText: tr('Nombre')),
             textCapitalization: TextCapitalization.words,
           ),
           const SizedBox(height: 12),
           TextField(
             controller: phone,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: 'WhatsApp',
+            decoration: InputDecoration(
+              labelText: tr('WhatsApp'),
               hintText: '+54 9 11 1234-5678',
-              helperText: 'Con código de país y de área. Si lo dejás vacío,\n'
-                  'WhatsApp te deja elegir a quién mandarlo.',
+              helperText: tr('Con código de país y de área. Si lo dejás vacío,\nWhatsApp te deja elegir a quién mandarlo.'),
               helperMaxLines: 3,
             ),
           ),
@@ -74,11 +74,11 @@ Future<void> showShopSettingsDialog(BuildContext context) async {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancelar'),
+          child: Text(tr('Cancelar')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Guardar'),
+          child: Text(tr('Guardar')),
         ),
       ],
     ),
@@ -118,9 +118,9 @@ class SupplyCard extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     await context.read<PetsState>().restock(pet.id, supply.id);
     messenger.showSnackBar(SnackBar(
-      content: Text('Paquete nuevo de ${supply.name}'),
+      content: Text(tr('Paquete nuevo de {name}', {'name': supply.name})),
       action: SnackBarAction(
-        label: 'Anotar gasto',
+        label: tr('Anotar gasto'),
         onPressed: () {
           if (!context.mounted) return;
           showExpenseDialog(
@@ -138,7 +138,7 @@ class SupplyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final at = now ?? DateTime.now();
     final color = supplyColor(context, supply, at);
-    final fmt = DateFormat.yMMMd('es');
+    final fmt = DateFormat.yMMMd(AppLang.code);
     final theme = Theme.of(context);
     return Card(
       child: InkWell(
@@ -173,12 +173,11 @@ class SupplyCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                '${daysLeftLabel(supply.daysLeft(at))} · '
-                'se termina el ${fmt.format(supply.runsOutOn)}',
+                tr('{n} · se termina el {n2}', {'n': daysLeftLabel(supply.daysLeft(at)), 'n2': fmt.format(supply.runsOutOn)}),
                 style: TextStyle(color: color, fontWeight: FontWeight.w600),
               ),
               Text(
-                'Usa ${formatAmount(supply.perDay)} ${supply.unit} por día',
+                tr('Usa {n} {unit} por día', {'n': formatAmount(supply.perDay), 'unit': supply.unit}),
                 style: theme.textTheme.bodySmall,
               ),
               Wrap(
@@ -186,12 +185,12 @@ class SupplyCard extends StatelessWidget {
                 children: [
                   TextButton.icon(
                     icon: const Icon(Icons.autorenew),
-                    label: const Text('Repuse'),
+                    label: Text(tr('Repuse')),
                     onPressed: () => _restock(context),
                   ),
                   TextButton.icon(
                     icon: const Icon(Icons.chat_outlined),
-                    label: const Text('Pedir por WhatsApp'),
+                    label: Text(tr('Pedir por WhatsApp')),
                     onPressed: () => orderByWhatsApp(context, pet, supply),
                   ),
                 ],

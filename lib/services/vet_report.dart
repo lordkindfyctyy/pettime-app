@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../l10n/app_lang.dart';
 import '../models/diary_entry.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
@@ -46,11 +47,11 @@ class VetReport {
   static const _grey = PdfColor.fromInt(0xFF616161);
   static const _light = PdfColor.fromInt(0xFFFFF7F2);
 
-  static final _day = DateFormat('dd/MM/yyyy', 'es');
-  static final _dayTime = DateFormat('dd/MM/yyyy HH:mm', 'es');
+  static DateFormat get _day => DateFormat('dd/MM/yyyy', AppLang.code);
+  static DateFormat get _dayTime => DateFormat('dd/MM/yyyy HH:mm', AppLang.code);
 
   static String fileName(Pet pet, DateTime now) =>
-      'Ficha de ${pet.name} ${DateFormat('yyyy-MM-dd').format(now)}.pdf';
+      tr('Ficha de {name} {date}.pdf', {'name': pet.name, 'date': DateFormat('yyyy-MM-dd').format(now)});
 
   /// Medications still going on at [now], and the ones that already ended.
   static (List<Medication>, List<Medication>) splitMedications(
@@ -95,9 +96,11 @@ class VetReport {
     final minutes = walks.fold(0, (sum, w) => sum + w.minutes);
     final km = walks.fold(0.0, (sum, w) => sum + (w.km ?? 0));
     return [
-      '${walks.length} ${walks.length == 1 ? 'paseo' : 'paseos'} en los últimos 30 días',
-      '${formatMinutes((minutes / 30).round())} por día en promedio',
-      if (km > 0) '${formatKm(km)} en total',
+      walks.length == 1
+          ? tr('{count} paseo en los últimos 30 días', {'count': 1})
+          : tr('{count} paseos en los últimos 30 días', {'count': walks.length}),
+      tr('{n} por día en promedio', {'n': formatMinutes((minutes / 30).round())}),
+      if (km > 0) tr('{n} en total', {'n': formatKm(km)}),
     ].join(' · ');
   }
 
@@ -126,7 +129,7 @@ class VetReport {
       ..sort((a, b) => b.date.compareTo(a.date));
 
     final doc = pw.Document(
-      title: 'Ficha de ${pet.name}',
+      title: tr('Ficha de {name}', {'name': pet.name}),
       author: 'PetTime',
       creator: 'PetTime',
     );
@@ -141,7 +144,7 @@ class VetReport {
           : pw.Container(
               margin: const pw.EdgeInsets.only(bottom: 12),
               child: pw.Text(
-                'Ficha de ${pet.name} (continuación)',
+                tr('Ficha de {name} (continuación)', {'name': pet.name}),
                 style: const pw.TextStyle(color: _grey, fontSize: 9),
               ),
             ),
@@ -151,11 +154,11 @@ class VetReport {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(
-              'Generada con PetTime · $shopName',
+              tr('Generada con PetTime · {shopName}', {'shopName': shopName}),
               style: const pw.TextStyle(color: _grey, fontSize: 8),
             ),
             pw.Text(
-              'Página ${context.pageNumber} de ${context.pagesCount}',
+              tr('Página {pageNumber} de {pagesCount}', {'pageNumber': context.pageNumber, 'pagesCount': context.pagesCount}),
               style: const pw.TextStyle(color: _grey, fontSize: 8),
             ),
           ],
@@ -163,12 +166,12 @@ class VetReport {
       ),
       build: (context) => [
         _petData(pet, photo, now),
-        _section('Medicación actual'),
+        _section(tr('Medicación actual')),
         if (currentMeds.isEmpty)
-          _empty('No está tomando medicación.')
+          _empty(tr('No está tomando medicación.'))
         else
           _table(
-            ['Medicamento', 'Dosis', 'Frecuencia', 'Desde', 'Hasta', 'Última toma'],
+            [tr('Medicamento'), tr('Dosis'), tr('Frecuencia'), tr('Desde'), tr('Hasta'), tr('Última toma')],
             [
               for (final m in currentMeds)
                 [
@@ -176,15 +179,15 @@ class VetReport {
                   m.dose,
                   m.intervalLabel,
                   _day.format(m.startsAt),
-                  m.endsAt == null ? 'Sin fecha' : _day.format(m.endsAt!),
+                  m.endsAt == null ? tr('Sin fecha') : _day.format(m.endsAt!),
                   m.lastGiven == null ? '—' : _dayTime.format(m.lastGiven!),
                 ],
             ],
           ),
         if (pastMeds.isNotEmpty) ...[
-          _section('Medicación anterior'),
+          _section(tr('Medicación anterior')),
           _table(
-            ['Medicamento', 'Dosis', 'Frecuencia', 'Desde', 'Hasta', 'Tomas dadas'],
+            [tr('Medicamento'), tr('Dosis'), tr('Frecuencia'), tr('Desde'), tr('Hasta'), tr('Tomas dadas')],
             [
               for (final m in pastMeds)
                 [
@@ -198,12 +201,12 @@ class VetReport {
             ],
           ),
         ],
-        _section('Vacunas y antiparasitarios'),
+        _section(tr('Vacunas y antiparasitarios')),
         if (records.isEmpty)
-          _empty('No hay vacunas ni antiparasitarios cargados.')
+          _empty(tr('No hay vacunas ni antiparasitarios cargados.'))
         else
           _table(
-            ['Tipo', 'Nombre', 'Aplicada', 'Próxima', 'Notas'],
+            [tr('Tipo'), tr('Nombre'), tr('Aplicada'), tr('Próxima'), tr('Notas')],
             [
               for (final r in records)
                 [
@@ -216,9 +219,9 @@ class VetReport {
             ],
           ),
         if (weights.isNotEmpty) ...[
-          _section('Peso'),
+          _section(tr('Peso')),
           _table(
-            ['Fecha', 'Peso', 'Cambio'],
+            [tr('Fecha'), tr('Peso'), tr('Cambio')],
             [
               for (final (i, w) in weights.indexed)
                 [
@@ -233,14 +236,14 @@ class VetReport {
           ),
         ],
         if (vetVisits.isNotEmpty) ...[
-          _section('Turnos en la veterinaria'),
+          _section(tr('Turnos en la veterinaria')),
           _table(
-            ['Fecha', 'Veterinaria', 'Motivo', 'Notas'],
+            [tr('Fecha'), tr('Veterinaria'), tr('Motivo'), tr('Notas')],
             [
               for (final v in vetVisits)
                 [
                   _dayTime.format(v.date) +
-                      (v.date.isAfter(now) ? ' (próximo)' : ''),
+                      (v.date.isAfter(now) ? tr(' (próximo)') : ''),
                   v.clinic,
                   v.reason,
                   v.notes,
@@ -249,11 +252,11 @@ class VetReport {
           ),
         ],
         if (walks != null) ...[
-          _section('Paseos'),
+          _section(tr('Paseos')),
           pw.Text(walks),
         ],
         if (diary.isNotEmpty) ...[
-          _section('Diario de salud (últimos $diaryDays días)'),
+          _section(tr('Diario de salud (últimos {days} días)', {'days': diaryDays})),
           for (final d in diary) _diaryEntry(d, diaryImages[d.id]!),
         ],
       ],
@@ -286,7 +289,7 @@ class VetReport {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    'Ficha de ${pet.name}',
+                    tr('Ficha de {name}', {'name': pet.name}),
                     style: pw.TextStyle(
                       fontSize: 20,
                       fontWeight: pw.FontWeight.bold,
@@ -294,7 +297,7 @@ class VetReport {
                     ),
                   ),
                   pw.Text(
-                    'Para el veterinario · ${DateFormat.yMMMMd('es').format(now)}',
+                    tr('Para el veterinario · {n}', {'n': DateFormat.yMMMMd(AppLang.code).format(now)}),
                     style: const pw.TextStyle(color: _grey, fontSize: 10),
                   ),
                 ],
@@ -308,20 +311,20 @@ class VetReport {
     final weight = pet.currentWeight;
     final birth = pet.birthDate;
     final rows = [
-      ('Especie', pet.species),
-      ('Raza', pet.breed),
+      (tr('Especie'), pet.species),
+      (tr('Raza'), pet.breed),
       (
-        'Nacimiento',
+        tr('Nacimiento'),
         birth == null ? '' : '${_day.format(birth)} (${pet.ageLabel(now)})',
       ),
       (
-        'Peso actual',
+        tr('Peso actual'),
         weight == null
             ? ''
-            : '${formatKg(weight.kg)} (el ${_day.format(weight.date)})',
+            : tr('{kg} (el {date})', {'kg': formatKg(weight.kg), 'date': _day.format(weight.date)}),
       ),
-      ('Alimento', pet.food),
-      ('Notas', pet.notes),
+      (tr('Alimento'), pet.food),
+      (tr('Notas'), pet.notes),
     ].where((r) => r.$2.trim().isNotEmpty);
 
     return pw.Row(

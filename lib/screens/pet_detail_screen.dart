@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/caregiver.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
@@ -36,7 +37,7 @@ import 'visit_form_screen.dart';
 /// mail, Drive…).
 Future<void> shareVetReport(BuildContext context, Pet pet) async {
   final messenger = ScaffoldMessenger.of(context);
-  messenger.showSnackBar(const SnackBar(content: Text('Armando la ficha…')));
+  messenger.showSnackBar(SnackBar(content: Text(tr('Armando la ficha…'))));
   try {
     final now = DateTime.now();
     final bytes = await VetReport.build(
@@ -51,13 +52,13 @@ Future<void> shareVetReport(BuildContext context, Pet pet) async {
     messenger.hideCurrentSnackBar();
     await SharePlus.instance.share(ShareParams(
       files: [XFile(file.path, mimeType: 'application/pdf')],
-      subject: 'Ficha de ${pet.name}',
-      text: 'Ficha de ${pet.name} para el veterinario, hecha con PetTime.',
+      subject: tr('Ficha de {name}', {'name': pet.name}),
+      text: tr('Ficha de {name} para el veterinario, hecha con PetTime.', {'name': pet.name}),
     ));
   } catch (e) {
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
-      SnackBar(content: Text('No se pudo armar la ficha: $e')),
+      SnackBar(content: Text(tr('No se pudo armar la ficha: {e}', {'e': e}))),
     );
   }
 }
@@ -74,7 +75,7 @@ class PetDetailScreen extends StatelessWidget {
     if (pet == null) return const Scaffold(body: SizedBox.shrink());
 
     final theme = Theme.of(context);
-    final fmt = DateFormat.yMMMd('es').add_Hm();
+    final fmt = DateFormat.yMMMd(AppLang.code).add_Hm();
     final now = DateTime.now();
     final caring = pet.share?.isCaregiver ?? false;
     final caregivers = caring ? const <Caregiver>[] : pet.activeCaregivers(now);
@@ -104,12 +105,12 @@ class PetDetailScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.picture_as_pdf_outlined),
-            tooltip: 'Ficha para el veterinario',
+            tooltip: tr('Ficha para el veterinario'),
             onPressed: () => shareVetReport(context, pet),
           ),
           IconButton(
             icon: const Icon(Icons.edit),
-            tooltip: 'Editar ficha',
+            tooltip: tr('Editar ficha'),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => PetFormScreen(pet: pet)),
@@ -135,21 +136,20 @@ class PetDetailScreen extends StatelessWidget {
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: Text('¿Eliminar a ${pet.name}?'),
+                  title: Text(tr('¿Eliminar a {name}?', {'name': pet.name})),
                   content: Text(pet.share == null
-                      ? 'Se borra la ficha y su medicación.'
+                      ? tr('Se borra la ficha y su medicación.')
                       : pet.share!.isOwner
-                          ? 'Se borra la ficha y su medicación, y se deja de '
-                              'compartir: la familia se queda con su copia.'
-                          : 'Se borra de este celular. La familia la sigue teniendo.'),
+                          ? tr('Se borra la ficha y su medicación, y se deja de compartir: la familia se queda con su copia.')
+                          : tr('Se borra de este celular. La familia la sigue teniendo.')),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('Cancelar'),
+                      child: Text(tr('Cancelar')),
                     ),
                     FilledButton(
                       onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Eliminar'),
+                      child: Text(tr('Eliminar')),
                     ),
                   ],
                 ),
@@ -175,36 +175,36 @@ class PetDetailScreen extends StatelessWidget {
                   leading: const Icon(Icons.family_restroom),
                   title: Text(
                     caring
-                        ? 'Mi cuidado'
+                        ? tr('Mi cuidado')
                         : pet.share == null
-                        ? 'Compartir con la familia'
-                        : 'Compartida con la familia',
+                        ? tr('Compartir con la familia')
+                        : tr('Compartida con la familia'),
                   ),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
               if (!caring)
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'caregiver',
                   child: ListTile(
                     leading: Icon(Icons.volunteer_activism_outlined),
-                    title: Text('Dejar con un cuidador'),
+                    title: Text(tr('Dejar con un cuidador')),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'lost',
                 child: ListTile(
                   leading: Icon(Icons.campaign_outlined),
-                  title: Text('Publicar aviso: se perdió'),
+                  title: Text(tr('Publicar aviso: se perdió')),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
                 child: ListTile(
                   leading: Icon(Icons.delete_outline),
-                  title: Text('Eliminar'),
+                  title: Text(tr('Eliminar')),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -225,10 +225,10 @@ class PetDetailScreen extends StatelessWidget {
               color: Brand.teal.withValues(alpha: 0.12),
               child: ListTile(
                 leading: const Icon(Icons.volunteer_activism_outlined),
-                title: Text('Cuidás a ${pet.name}'),
+                title: Text(tr('Cuidás a {name}', {'name': pet.name})),
                 subtitle: Text(
                   pet.careFinished(now)
-                      ? 'El cuidado terminó'
+                      ? tr('El cuidado terminó')
                       : careUntilLabel(pet.careEndsAt!),
                 ),
                 onTap: () => showFamilyShareSheet(context, pet.id),
@@ -239,33 +239,33 @@ class PetDetailScreen extends StatelessWidget {
               color: Brand.teal.withValues(alpha: 0.12),
               child: ListTile(
                 leading: const Icon(Icons.volunteer_activism_outlined),
-                title: Text('La cuida ${c.name}'),
+                title: Text(tr('La cuida {name}', {'name': c.name})),
                 subtitle: Text(careUntilLabel(c.until)),
                 onTap: () => showCaregiverSheet(context, pet.id),
               ),
             ),
           Center(child: PetAvatar(pet: pet, radius: 56)),
           const SizedBox(height: 16),
-          const SectionTitle(text: 'Ficha', icon: Icons.pets, color: Brand.teal),
+          SectionTitle(text: tr('Ficha'), icon: Icons.pets, color: Brand.teal),
           const SizedBox(height: 8),
-          row('Especie', pet.species),
-          row('Raza', pet.breed),
-          row('Edad', pet.ageLabel() ?? ''),
-          row('Alimento', pet.food),
-          row('Notas', pet.notes),
+          row(tr('Especie'), pet.species),
+          row(tr('Raza'), pet.breed),
+          row(tr('Edad'), pet.ageLabel() ?? ''),
+          row(tr('Alimento'), pet.food),
+          row(tr('Notas'), pet.notes),
           const Divider(height: 32),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: SectionTitle(
-                  text: 'Peso',
+                  text: tr('Peso'),
                   icon: Icons.monitor_weight_outlined,
                   color: Brand.teal,
                 ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Anotar peso'),
+                label: Text(tr('Anotar peso')),
                 onPressed: () => showAddWeightDialog(context, pet),
               ),
             ],
@@ -274,16 +274,16 @@ class PetDetailScreen extends StatelessWidget {
           const Divider(height: 32),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: SectionTitle(
-                  text: 'Paseos',
+                  text: tr('Paseos'),
                   icon: Icons.directions_walk,
                   color: Brand.teal,
                 ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Paseo'),
+                label: Text(tr('Paseo')),
                 onPressed: () => showWalkDialog(context, pet),
               ),
             ],
@@ -292,16 +292,16 @@ class PetDetailScreen extends StatelessWidget {
           const Divider(height: 32),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: SectionTitle(
-                  text: 'Diario de salud',
+                  text: tr('Diario de salud'),
                   icon: Icons.menu_book_outlined,
                   color: Brand.red,
                 ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Anotar'),
+                label: Text(tr('Anotar')),
                 onPressed: () => openDiaryForm(context, pet.id),
               ),
             ],
@@ -310,41 +310,41 @@ class PetDetailScreen extends StatelessWidget {
           const Divider(height: 32),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: SectionTitle(
-                  text: 'Reposición',
+                  text: tr('Reposición'),
                   icon: Icons.shopping_basket_outlined,
                   color: Brand.orange,
                 ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Agregar'),
+                label: Text(tr('Agregar')),
                 onPressed: () => openSupplyForm(context, pet.id),
               ),
             ],
           ),
           if (pet.supplies.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'Cargá el alimento o los remedios y te avisamos antes de que se terminen',
+                tr('Cargá el alimento o los remedios y te avisamos antes de que se terminen'),
               ),
             ),
           for (final s in pet.supplies) SupplyCard(pet: pet, supply: s),
           const Divider(height: 32),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: SectionTitle(
-                  text: 'Gastos',
+                  text: tr('Gastos'),
                   icon: Icons.payments_outlined,
                   color: Brand.orange,
                 ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Gasto'),
+                label: Text(tr('Gasto')),
                 onPressed: () => showExpenseDialog(context, pet),
               ),
             ],
@@ -355,14 +355,14 @@ class PetDetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: SectionTitle(
-                  text: 'Medicación',
+                  text: tr('Medicación'),
                   icon: Icons.medication_outlined,
                   color: Brand.red,
                 ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Agregar'),
+                label: Text(tr('Agregar')),
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -373,9 +373,9 @@ class PetDetailScreen extends StatelessWidget {
             ],
           ),
           if (pet.medications.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('Sin medicación cargada'),
+              child: Text(tr('Sin medicación cargada')),
             ),
           for (final Medication m in pet.medications)
             MedicationCard(petId: pet.id, medication: m),
@@ -384,14 +384,14 @@ class PetDetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: SectionTitle(
-                  text: 'Vacunas y antiparasitarios',
+                  text: tr('Vacunas y antiparasitarios'),
                   icon: Icons.vaccines_outlined,
                   color: Brand.orange,
                 ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Agregar'),
+                label: Text(tr('Agregar')),
                 onPressed: () => openRecordForm(context, pet.id),
               ),
             ],
@@ -402,14 +402,14 @@ class PetDetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: SectionTitle(
-                  text: 'Turnos',
+                  text: tr('Turnos'),
                   icon: Icons.event_outlined,
                   color: Brand.teal,
                 ),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Turno'),
+                label: Text(tr('Turno')),
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -420,13 +420,13 @@ class PetDetailScreen extends StatelessWidget {
             ],
           ),
           if (pet.visits.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('Sin turnos registrados'),
+              child: Text(tr('Sin turnos registrados')),
             ),
           for (final (label, list) in [
-            ('Próximas', upcoming),
-            ('Anteriores', past),
+            (tr('Próximas'), upcoming),
+            (tr('Anteriores'), past),
           ])
             if (list.isNotEmpty) ...[
               Padding(
@@ -460,17 +460,16 @@ class PetDetailScreen extends StatelessWidget {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.map_outlined),
-                          tooltip: 'Ver en Google Maps',
+                          tooltip: tr('Ver en Google Maps'),
                           onPressed: () => openInMaps(context, v.mapsUri),
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete_outline),
-                          tooltip: 'Eliminar turno',
+                          tooltip: tr('Eliminar turno'),
                           onPressed: () async {
                             if (await confirmDelete(
                               context,
-                              'el turno de ${v.kind.placeLabel.toLowerCase()} '
-                              '${v.clinic} del ${fmt.format(v.date)}',
+                              tr('el turno de {toLowerCase} {clinic} del {n}', {'toLowerCase': v.kind.placeLabel.toLowerCase(), 'clinic': v.clinic, 'n': fmt.format(v.date)}),
                             )) {
                               await state.deleteVisit(pet.id, v.id);
                             }

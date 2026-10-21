@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/caregiver.dart';
 import '../models/pet.dart';
 import '../models/pet_merge.dart';
@@ -285,7 +286,7 @@ class FamilySync {
       });
     } on ApiException catch (e) {
       if (e.isNotFound && caregiverId != null) {
-        throw ApiException('Ese código de cuidador ya no sirve.');
+        throw ApiException(tr('Ese código de cuidador ya no sirve.'));
       }
       rethrow;
     }
@@ -297,15 +298,15 @@ class FamilySync {
           .firstOrNull;
       if (care == null || !care.isActive(_clock())) {
         throw ApiException(care == null
-            ? 'Ese código de cuidador no existe. Revisalo o pedí uno nuevo.'
-            : 'Ese código de cuidador ya venció.');
+            ? tr('Ese código de cuidador no existe. Revisalo o pedí uno nuevo.')
+            : tr('Ese código de cuidador ya venció.'));
       }
     }
     final existing = _state!.byId(remote['id'] as String);
     if (existing != null) {
       throw ApiException(existing.share != null
-          ? '${existing.name} ya está compartida en este celular.'
-          : '${existing.name} ya está en este celular: la compartiste desde acá.');
+          ? tr('{name} ya está compartida en este celular.', {'name': existing.name})
+          : tr('{name} ya está en este celular: la compartiste desde acá.', {'name': existing.name}));
     }
     final pet = petFromShared(
       remote,

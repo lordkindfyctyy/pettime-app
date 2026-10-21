@@ -4,6 +4,7 @@ import 'lost_pets_screen.dart';
 import 'pets_screen.dart';
 import 'shop_screen.dart';
 import 'today_screen.dart';
+import '../l10n/app_lang.dart';
 
 /// The app opens on "Hoy"; "Mascotas" has the list and the profiles;
 /// "Perdidas" and "Tienda" come from sixsevenweb.com.
@@ -38,26 +39,26 @@ class _HomeScreenState extends State<HomeScreen> {
           _tab = i;
           _opened.add(i);
         }),
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.today_outlined),
             selectedIcon: Icon(Icons.today),
-            label: 'Hoy',
+            label: tr('Hoy'),
           ),
           NavigationDestination(
             icon: Icon(Icons.pets_outlined),
             selectedIcon: Icon(Icons.pets),
-            label: 'Mascotas',
+            label: tr('Mascotas'),
           ),
           NavigationDestination(
             icon: Icon(Icons.campaign_outlined),
             selectedIcon: Icon(Icons.campaign),
-            label: 'Perdidas',
+            label: tr('Perdidas'),
           ),
           NavigationDestination(
             icon: Icon(Icons.storefront_outlined),
             selectedIcon: Icon(Icons.storefront),
-            label: 'Tienda',
+            label: tr('Tienda'),
           ),
         ],
       ),

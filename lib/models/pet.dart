@@ -8,6 +8,7 @@ import 'supply.dart';
 import 'vet_visit.dart';
 import 'walk.dart';
 import 'weight_entry.dart';
+import '../l10n/app_lang.dart';
 
 class Pet {
   Pet({
@@ -112,10 +113,13 @@ class Pet {
     if (months < 0) months = 0;
     final years = months ~/ 12;
     final rest = months % 12;
-    if (years == 0) return rest == 1 ? '1 mes' : '$rest meses';
-    final y = years == 1 ? '1 año' : '$years años';
+    if (years == 0) return rest == 1 ? tr('1 mes') : tr('{rest} meses', {'rest': rest});
+    final y = years == 1 ? tr('1 año') : tr('{years} años', {'years': years});
     if (rest == 0) return y;
-    return '$y y ${rest == 1 ? '1 mes' : '$rest meses'}';
+    return tr('{y} y {months}', {
+      'y': y,
+      'months': rest == 1 ? tr('1 mes') : tr('{rest} meses', {'rest': rest}),
+    });
   }
 
   Pet copyWith({

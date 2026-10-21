@@ -1,3 +1,4 @@
+import '../l10n/app_lang.dart';
 /// One walk of a pet.
 class Walk {
   Walk({
@@ -89,9 +90,9 @@ int walkStreak(Iterable<Walk> walks, DateTime today) {
 
 /// "45 min", "1 h", "1 h 20 min".
 String formatMinutes(int minutes) {
-  if (minutes < 60) return '$minutes min';
+  if (minutes < 60) return tr('{minutes} min', {'minutes': minutes});
   final h = minutes ~/ 60, m = minutes % 60;
-  return m == 0 ? '$h h' : '$h h $m min';
+  return m == 0 ? tr('{h} h', {'h': h}) : tr('{h} h {m} min', {'h': h, 'm': m});
 }
 
 /// Reads a distance typed "2,5" or "2.5", or null when it isn't sensible.

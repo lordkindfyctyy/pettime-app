@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_lang.dart';
 import '../state/pets_state.dart';
 import 'confirm_delete.dart';
 
@@ -20,7 +21,7 @@ class DoseHistorySheet extends StatelessWidget {
     if (pet == null || med == null) return const SizedBox.shrink();
 
     final doses = med.givenDoses.reversed.toList();
-    final fmt = DateFormat.yMMMd('es').add_Hm();
+    final fmt = DateFormat.yMMMd(AppLang.code).add_Hm();
 
     return SafeArea(
       child: ConstrainedBox(
@@ -34,14 +35,14 @@ class DoseHistorySheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
-                'Tomas de ${med.name} · ${pet.name}',
+                tr('Tomas de {name} · {name2}', {'name': med.name, 'name2': pet.name}),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
             if (doses.isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(16),
-                child: Text('Todavía no registraste ninguna toma'),
+                child: Text(tr('Todavía no registraste ninguna toma')),
               )
             else
               Flexible(
@@ -53,12 +54,12 @@ class DoseHistorySheet extends StatelessWidget {
                     title: Text(fmt.format(doses[i])),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete_outline),
-                      tooltip: 'Quitar toma',
+                      tooltip: tr('Quitar toma'),
                       onPressed: () async {
                         if (await confirmDelete(
                           context,
-                          'la toma de ${med.name} del ${fmt.format(doses[i])}',
-                          detail: 'Queda como no dada. No se puede deshacer.',
+                          tr('la toma de {name} del {n}', {'name': med.name, 'n': fmt.format(doses[i])}),
+                          detail: tr('Queda como no dada. No se puede deshacer.'),
                         )) {
                           await state.removeDose(petId, medId, doses[i]);
                         }

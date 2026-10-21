@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_lang.dart';
 import '../services/shop_service.dart';
 import '../theme.dart';
 
@@ -85,7 +86,7 @@ class _ShopScreenState extends State<ShopScreen> {
               ),
               if (p.promoText.isNotEmpty) Text(p.promoText, style: const TextStyle(color: Brand.orange)),
               if (!p.inStock)
-                const Text('Sin stock por ahora: consultá', style: TextStyle(color: Colors.grey)),
+                Text(tr('Sin stock por ahora: consultá'), style: TextStyle(color: Colors.grey)),
               if (p.description.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(p.description),
@@ -97,7 +98,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
                     icon: const Icon(Icons.chat_outlined),
-                    label: Text(p.inStock ? 'Pedir por WhatsApp' : 'Consultar por WhatsApp'),
+                    label: Text(p.inStock ? tr('Pedir por WhatsApp') : tr('Consultar por WhatsApp')),
                     onPressed: () => _whatsApp(
                       shop,
                       'Hola! Quiero pedir ${p.name} (${p.priceLabel}). Lo vi en PetTime.',
@@ -116,12 +117,12 @@ class _ShopScreenState extends State<ShopScreen> {
     final catalog = _catalog;
     return Scaffold(
       appBar: AppBar(
-        title: Text(catalog?.shop.name ?? 'Tienda'),
+        title: Text(catalog?.shop.name ?? tr('Tienda')),
         actions: [
           if (catalog != null && catalog.shop.catalogUrl.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.public),
-              tooltip: 'Ver el catálogo en la web',
+              tooltip: tr('Ver el catálogo en la web'),
               onPressed: () => _open(catalog.shop.catalogUrl),
             ),
         ],
@@ -135,8 +136,8 @@ class _ShopScreenState extends State<ShopScreen> {
                   if (_loading)
                     const Center(child: CircularProgressIndicator())
                   else ...[
-                    Text(_error ?? 'No se pudo cargar la tienda', textAlign: TextAlign.center),
-                    TextButton(onPressed: _load, child: const Text('Reintentar')),
+                    Text(_error ?? tr('No se pudo cargar la tienda'), textAlign: TextAlign.center),
+                    TextButton(onPressed: _load, child: Text(tr('Reintentar'))),
                   ],
                 ],
               )
@@ -178,19 +179,19 @@ class _ShopScreenState extends State<ShopScreen> {
                       if (shop.whatsapp.isNotEmpty)
                         TextButton.icon(
                           icon: const Icon(Icons.chat_outlined),
-                          label: const Text('Consultar'),
+                          label: Text(tr('Consultar')),
                           onPressed: () => _whatsApp(shop, 'Hola! Tengo una consulta. Te escribo desde PetTime.'),
                         ),
                       if (shop.catalogUrl.isNotEmpty)
                         TextButton.icon(
                           icon: const Icon(Icons.public),
-                          label: const Text('Catálogo web'),
+                          label: Text(tr('Catálogo web')),
                           onPressed: () => _open(shop.catalogUrl),
                         ),
                       if (shop.lostPetsUrl.isNotEmpty)
                         TextButton.icon(
                           icon: const Icon(Icons.campaign_outlined),
-                          label: const Text('Perdidas en la web'),
+                          label: Text(tr('Perdidas en la web')),
                           onPressed: () => _open(shop.lostPetsUrl),
                         ),
                     ],
@@ -204,9 +205,9 @@ class _ShopScreenState extends State<ShopScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
             child: TextField(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: 'Buscar alimento, piedras, juguetes…',
+                hintText: tr('Buscar alimento, piedras, juguetes…'),
                 border: OutlineInputBorder(),
                 isDense: true,
               ),
@@ -226,7 +227,7 @@ class _ShopScreenState extends State<ShopScreen> {
                     Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: ChoiceChip(
-                        label: Text(c == null ? 'Todo' : _capitalize(c)),
+                        label: Text(c == null ? tr('Todo') : _capitalize(c)),
                         selected: _category == c,
                         showCheckmark: false,
                         onSelected: (_) => setState(() => _category = c),
@@ -241,16 +242,16 @@ class _ShopScreenState extends State<ShopScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Sin conexión: mostramos el catálogo guardado.',
+                tr('Sin conexión: mostramos el catálogo guardado.'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
           ),
         if (products.isEmpty)
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(32),
-              child: Text('No hay productos que coincidan', textAlign: TextAlign.center),
+              child: Text(tr('No hay productos que coincidan'), textAlign: TextAlign.center),
             ),
           ),
         SliverPadding(
@@ -320,10 +321,10 @@ class _ProductTile extends StatelessWidget {
                       child: _Tag(text: product.promoText, color: Brand.orange),
                     ),
                   if (!product.inStock)
-                    const Positioned(
+                    Positioned(
                       right: 6,
                       top: 6,
-                      child: _Tag(text: 'Sin stock', color: Colors.grey),
+                      child: _Tag(text: tr('Sin stock'), color: Colors.grey),
                     ),
                 ],
               ),

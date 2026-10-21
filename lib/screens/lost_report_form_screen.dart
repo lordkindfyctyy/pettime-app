@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/lost_report.dart';
 import '../models/pet.dart';
 import '../services/lost_pets_service.dart';
@@ -109,7 +110,7 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
     final messenger = ScaffoldMessenger.of(context);
     if (_photos.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Agregá al menos una foto de la mascota')),
+        SnackBar(content: Text(tr('Agregá al menos una foto de la mascota'))),
       );
       return;
     }
@@ -129,8 +130,8 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
         ),
         _photos,
       );
-      messenger.showSnackBar(const SnackBar(
-        content: Text('Aviso publicado. Se ve en la app y en sixsevenweb.com'),
+      messenger.showSnackBar(SnackBar(
+        content: Text(tr('Aviso publicado. Se ve en la app y en sixsevenweb.com')),
       ));
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -143,7 +144,7 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
   Widget build(BuildContext context) {
     final lost = _kind == ReportKind.lost;
     return Scaffold(
-      appBar: AppBar(title: const Text('Publicar aviso')),
+      appBar: AppBar(title: Text(tr('Publicar aviso'))),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -155,20 +156,20 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
           ),
           children: [
             SegmentedButton<ReportKind>(
-              segments: const [
+              segments: [
                 // Short labels that shrink instead of wrapping with a big font.
                 ButtonSegment(
                   value: ReportKind.lost,
                   label: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('Se perdió', maxLines: 1, softWrap: false),
+                    child: Text(tr('Se perdió'), maxLines: 1, softWrap: false),
                   ),
                 ),
                 ButtonSegment(
                   value: ReportKind.found,
                   label: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('La encontré', maxLines: 1, softWrap: false),
+                    child: Text(tr('La encontré'), maxLines: 1, softWrap: false),
                   ),
                 ),
               ],
@@ -177,7 +178,7 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
               onSelectionChanged: (s) => setState(() => _kind = s.first),
             ),
             const SizedBox(height: 16),
-            Text('Fotos (hasta $maxPhotos)', style: Theme.of(context).textTheme.labelLarge),
+            Text(tr('Fotos (hasta {maxPhotos})', {'maxPhotos': maxPhotos}), style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -196,7 +197,7 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
                         child: IconButton.filledTonal(
                           visualDensity: VisualDensity.compact,
                           icon: const Icon(Icons.close, size: 18),
-                          tooltip: 'Quitar foto',
+                          tooltip: tr('Quitar foto'),
                           onPressed: () => setState(() => _photos.removeAt(i)),
                         ),
                       ),
@@ -205,12 +206,12 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
                 if (_photos.length < maxPhotos) ...[
                   _AddPhotoButton(
                     icon: Icons.photo_library_outlined,
-                    label: 'Galería',
+                    label: tr('Galería'),
                     onTap: () => _addPhotos(ImageSource.gallery),
                   ),
                   _AddPhotoButton(
                     icon: Icons.photo_camera_outlined,
-                    label: 'Cámara',
+                    label: tr('Cámara'),
                     onTap: () => _addPhotos(ImageSource.camera),
                   ),
                 ],
@@ -221,10 +222,10 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
               controller: _name,
               textCapitalization: TextCapitalization.words,
               decoration: InputDecoration(
-                labelText: lost ? 'Nombre de la mascota' : 'Nombre (si tiene chapita)',
+                labelText: lost ? tr('Nombre de la mascota') : tr('Nombre (si tiene chapita)'),
               ),
               validator: (v) => lost && (v ?? '').trim().isEmpty
-                  ? 'Escribí el nombre de tu mascota'
+                  ? tr('Escribí el nombre de tu mascota')
                   : null,
             ),
             Row(
@@ -233,9 +234,9 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
                   child: TextFormField(
                     controller: _species,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Especie',
-                      hintText: 'Perro, gato…',
+                    decoration: InputDecoration(
+                      labelText: tr('Especie'),
+                      hintText: tr('Perro, gato…'),
                     ),
                   ),
                 ),
@@ -244,7 +245,7 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
                   child: TextFormField(
                     controller: _breed,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(labelText: 'Raza o color'),
+                    decoration: InputDecoration(labelText: tr('Raza o color')),
                   ),
                 ),
               ],
@@ -255,49 +256,48 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
               maxLines: 3,
               minLines: 1,
               maxLength: 1000,
-              decoration: const InputDecoration(
-                labelText: 'Descripción',
-                hintText: 'Collar, señas, si es mansa o asustadiza…',
+              decoration: InputDecoration(
+                labelText: tr('Descripción'),
+                hintText: tr('Collar, señas, si es mansa o asustadiza…'),
               ),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.schedule),
-              title: Text(lost ? 'Cuándo se perdió' : 'Cuándo la viste'),
-              subtitle: Text(DateFormat("EEEE d 'de' MMMM, HH:mm", 'es').format(_when)),
+              title: Text(lost ? tr('Cuándo se perdió') : tr('Cuándo la viste')),
+              subtitle: Text(DateFormat(tr("EEEE d 'de' MMMM, HH:mm"), AppLang.code).format(_when)),
               trailing: const Icon(Icons.edit_calendar_outlined),
               onTap: _pickWhen,
             ),
             TextFormField(
               controller: _zone,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Zona',
-                hintText: 'Barrio y calles, ej. Villa Ballester, Pueyrredón y Alvear',
+              decoration: InputDecoration(
+                labelText: tr('Zona'),
+                hintText: tr('Barrio y calles, ej. Villa Ballester, Pueyrredón y Alvear'),
               ),
               validator: (v) =>
-                  (v ?? '').trim().isEmpty ? 'Indicá la zona' : null,
+                  (v ?? '').trim().isEmpty ? tr('Indicá la zona') : null,
             ),
             TextFormField(
               controller: _contactName,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(labelText: 'Tu nombre (opcional)'),
+              decoration: InputDecoration(labelText: tr('Tu nombre (opcional)')),
             ),
             TextFormField(
               controller: _phone,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Tu WhatsApp',
+              decoration: InputDecoration(
+                labelText: tr('Tu WhatsApp'),
                 hintText: '11 6472-2908',
               ),
               validator: (v) => (v ?? '').replaceAll(RegExp(r'\D'), '').length < 8
-                  ? 'Ingresá tu WhatsApp con código de área'
+                  ? tr('Ingresá tu WhatsApp con código de área')
                   : null,
             ),
             const SizedBox(height: 8),
             Text(
-              'El aviso es público: se ve en PetTime y en sixsevenweb.com durante '
-              '60 días. No pongas tu dirección exacta.',
+              tr('El aviso es público: se ve en PetTime y en sixsevenweb.com durante 60 días. No pongas tu dirección exacta.'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
@@ -310,7 +310,7 @@ class _LostReportFormScreenState extends State<LostReportFormScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.campaign_outlined),
-              label: Text(_sending ? 'Publicando…' : 'Publicar aviso'),
+              label: Text(_sending ? 'Publicando…' : tr('Publicar aviso')),
             ),
           ],
         ),

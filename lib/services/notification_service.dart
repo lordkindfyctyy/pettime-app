@@ -10,6 +10,7 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../l10n/app_lang.dart';
 import '../models/health_record.dart';
 import '../models/medication.dart';
 import '../models/pet.dart';
@@ -100,8 +101,8 @@ class NotificationService {
     final petPhoto = _existingBitmap(pet.photoPath);
     return AndroidNotificationDetails(
       'medication',
-      'Medicación',
-      channelDescription: 'Avisos para dar la medicación a tus mascotas',
+      tr('Medicación'),
+      channelDescription: tr('Avisos para dar la medicación a tus mascotas'),
       color: const Color(0xFFE53935),
       importance: Importance.high,
       priority: Priority.high,
@@ -114,8 +115,8 @@ class NotificationService {
               contentTitle: messageTitle(pet),
               summaryText: messageBody(pet, med),
             ),
-      actions: const [
-        AndroidNotificationAction(_doseGivenAction, 'Dada ✓'),
+      actions: [
+        AndroidNotificationAction(_doseGivenAction, tr('Dada ✓')),
       ],
     );
   }
@@ -193,11 +194,11 @@ class NotificationService {
     return (h << 6) | (1 << 30);
   }
 
-  static String messageTitle(Pet pet) => 'Medicación de ${pet.name}';
+  static String messageTitle(Pet pet) => tr('Medicación de {name}', {'name': pet.name});
 
   static String messageBody(Pet pet, Medication med) {
     final dose = med.dose.isEmpty ? '' : ' (${med.dose})';
-    return 'Es hora de darle ${med.name}$dose a ${pet.name}';
+    return tr('Es hora de darle {name}{dose} a {name2}', {'name': med.name, 'dose': dose, 'name2': pet.name});
   }
 
   /// Ids of the alarms of one medication: [baseId] plus a slot below [slots].
@@ -278,8 +279,7 @@ class NotificationService {
   static String followUpBody(Pet pet, Medication med, DateTime doseTime) {
     final dose = med.dose.isEmpty ? '' : ' (${med.dose})';
     String two(int n) => n.toString().padLeft(2, '0');
-    return '¿Ya le diste ${med.name}$dose a ${pet.name}? '
-        'Era a las ${two(doseTime.hour)}:${two(doseTime.minute)}';
+    return tr('¿Ya le diste {name}{dose} a {name2}? Era a las {n}:{n2}', {'name': med.name, 'dose': dose, 'name2': pet.name, 'n': two(doseTime.hour), 'n2': two(doseTime.minute)});
   }
 
   /// Brings the reminders of one medication in line with its doses: removes
@@ -419,11 +419,11 @@ class NotificationService {
   }
 
   static String recordTitle(Pet pet, HealthRecord r) =>
-      '${r.kind.label} de ${pet.name}';
+      tr('{kind} de {name}', {'kind': r.kind.label, 'name': pet.name});
 
   static String recordBody(Pet pet, HealthRecord r, int daysBefore) {
-    final when = daysBefore == 0 ? 'Hoy' : 'En $daysBefore días';
-    return '$when le toca ${r.name} a ${pet.name}';
+    final when = daysBefore == 0 ? tr('Hoy') : tr('En {daysBefore} días', {'daysBefore': daysBefore});
+    return tr('{when} le toca {name} a {name2}', {'when': when, 'name': r.name, 'name2': pet.name});
   }
 
   /// Schedules the reminders of the pet's health booklet from scratch and
@@ -456,8 +456,8 @@ class NotificationService {
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         'health',
-        'Vacunas y antiparasitarios',
-        channelDescription: 'Avisos de vacunas y antiparasitarios por vencer',
+        tr('Vacunas y antiparasitarios'),
+        channelDescription: tr('Avisos de vacunas y antiparasitarios por vencer'),
         color: const Color(0xFFE53935),
         importance: Importance.high,
         priority: Priority.high,
@@ -503,12 +503,12 @@ class NotificationService {
   }
 
   static String supplyTitle(Pet pet, Supply s) =>
-      'Reponer ${s.kind.label.toLowerCase()} de ${pet.name}';
+      tr('Reponer {toLowerCase} de {name}', {'toLowerCase': s.kind.label.toLowerCase(), 'name': pet.name});
 
   static String supplyBody(Pet pet, Supply s, bool runsOutToday) =>
       runsOutToday
-          ? 'Hoy se termina ${s.name}. Pedilo desde PetTime.'
-          : 'Quedan unos ${s.warnDaysBefore} días de ${s.name}. Pedilo desde PetTime.';
+          ? tr('Hoy se termina {name}. Pedilo desde PetTime.', {'name': s.name})
+          : tr('Quedan unos {warnDaysBefore} días de {name}. Pedilo desde PetTime.', {'warnDaysBefore': s.warnDaysBefore, 'name': s.name});
 
   /// Reschedules the restocking reminders of the pet and removes the ones of
   /// supplies that were edited, restocked or deleted.
@@ -539,8 +539,8 @@ class NotificationService {
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         'restock',
-        'Reposición',
-        channelDescription: 'Avisos de alimento y remedios por terminarse',
+        tr('Reposición'),
+        channelDescription: tr('Avisos de alimento y remedios por terminarse'),
         color: const Color(0xFFE53935),
         importance: Importance.high,
         priority: Priority.high,
@@ -590,10 +590,10 @@ class NotificationService {
     return planned;
   }
 
-  static String walkTitle(Pet pet) => 'Paseo de ${pet.name}';
+  static String walkTitle(Pet pet) => tr('Paseo de {name}', {'name': pet.name});
 
   static String walkBody(Pet pet) =>
-      '¿${pet.name} ya salió a pasear hoy? Si salió, anotalo en PetTime.';
+      tr('¿{name} ya salió a pasear hoy? Si salió, anotalo en PetTime.', {'name': pet.name});
 
   /// Reschedules the pet's walk reminders (the setting changed, or a walk was
   /// added or deleted).
@@ -620,8 +620,8 @@ class NotificationService {
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         'walks',
-        'Paseos',
-        channelDescription: 'Avisos cuando una mascota todavía no salió a pasear',
+        tr('Paseos'),
+        channelDescription: tr('Avisos cuando una mascota todavía no salió a pasear'),
         color: const Color(0xFF00897B),
         largeIcon: _existingBitmap(pet.photoPath),
       ),
@@ -650,18 +650,26 @@ class NotificationService {
     if (!_ready) return;
     await _plugin.show(
       id: baseId('care:${pet.id}'),
-      title: 'Terminó el cuidado de ${pet.name}',
-      body: 'Gracias por cuidar a ${pet.name}. Ya no está en tu PetTime.',
-      notificationDetails: const NotificationDetails(
+      title: tr('Terminó el cuidado de {name}', {'name': pet.name}),
+      body: tr('Gracias por cuidar a {name}. Ya no está en tu PetTime.', {'name': pet.name}),
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'care',
-          'Cuidado de mascotas',
-          channelDescription: 'Avisos de cuando termina el cuidado de una mascota',
+          tr('Cuidado de mascotas'),
+          channelDescription: tr('Avisos de cuando termina el cuidado de una mascota'),
           color: Color(0xFF00897B),
         ),
         iOS: DarwinNotificationDetails(),
       ),
     );
+  }
+
+  /// Schedules everything again, e.g. after the language changed: the alarms
+  /// already pending keep the text they were scheduled with.
+  Future<void> rescheduleAll(Iterable<Pet> pets) async {
+    if (!_ready) return;
+    await _plugin.cancelAll();
+    await syncAll(pets);
   }
 
   /// Brings the pending alarms in line with the data when the app starts:
