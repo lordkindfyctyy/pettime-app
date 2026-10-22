@@ -20,8 +20,14 @@ import '../services/family_sync.dart';
 import '../services/home_widget_service.dart';
 import '../services/notification_service.dart';
 import '../services/photo_service.dart';
+import '../services/tag_service.dart';
 
 class PetsState extends ChangeNotifier {
+  PetsState({TagService? tags}) : _tags = tags ?? TagService.instance;
+
+  /// The collar tags, to turn off the one of a deleted pet.
+  final TagService _tags;
+
   static const storageKey = 'pets_v1';
   static const _key = storageKey;
   static const _uuid = Uuid();
@@ -185,6 +191,8 @@ class PetsState extends ChangeNotifier {
     final pet = byId(id);
     _pets.removeWhere((p) => p.id == id);
     await _save();
+    // Its collar tag is public: turn it off too.
+    _background(() => _tags.removeForPet(id));
     _background(() async {
       await PhotoService.instance.delete(pet?.photoPath);
       for (final d in pet?.diary ?? const <DiaryEntry>[]) {

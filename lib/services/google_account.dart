@@ -2,7 +2,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../config.dart';
 
-/// The Google account used by the Drive backup.
+//// The Google account used by the Drive backup. The app's login does not use
+/// it (see FirebaseAuthBackend.signInWithGoogle): signing in or out of the app
+/// must not change or disconnect the account of the backup.
 class GoogleAccount {
   GoogleAccount._();
   static final instance = GoogleAccount._();
@@ -22,14 +24,6 @@ class GoogleAccount {
         await GoogleSignIn.instance.attemptLightweightAuthentication() ??
             await GoogleSignIn.instance.authenticate();
     await account.authorizationClient.authorizeScopes(scopes);
-  }
-
-  /// Signs in with Google (showing the account chooser) and returns the ID
-  /// token that Firebase turns into a login.
-  Future<String?> signInForIdToken() async {
-    await _ensureInitialized();
-    final account = await GoogleSignIn.instance.authenticate();
-    return account.authentication.idToken;
   }
 
   /// The permission for [scopes] without asking anything, or null when not

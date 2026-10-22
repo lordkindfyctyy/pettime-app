@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb;
-import 'package:google_sign_in/google_sign_in.dart';
 
 import '../l10n/app_lang.dart';
-import 'google_account.dart';
 
 /// Who is signed in.
 class AuthUser {
@@ -88,7 +86,8 @@ class FirebaseAuthBackend implements AuthBackend {
       }
       return user;
     } on fb.FirebaseAuthException catch (e) {
-      throw AuthException(messageFor(e.code));
+      // An empty message is the user closing the window: nothing to show.
+      throw AuthException(isCancel(e.code) ? '' : messageFor(e.code));
     }
   }
 
@@ -110,27 +109,20 @@ class FirebaseAuthBackend implements AuthBackend {
 
   @override
   Future<AuthUser> signInWithGoogle() async {
-    final String? idToken;
-    try {
-      idToken = await GoogleAccount.instance.signInForIdToken();
-    } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled ||
-          e.code == GoogleSignInExceptionCode.interrupted) {
-        throw const AuthException('');
-      }
-      throw AuthException(
-        tr('No se pudo iniciar sesión con Google ({code}).', {'code': e.code.name}),
-      );
-    }
-    if (idToken == null) {
-      throw AuthException(tr('No se pudo iniciar sesión con Google.'));
-    }
-    return _run(
-      () => _auth.signInWithCredential(
-        fb.GoogleAuthProvider.credential(idToken: idToken),
-      ),
-    );
+    // Firebase's own Google flow, not the google_sign_in plugin: that one is
+    // shared with the Drive backup, and signing in or out of the app would
+    // change or disconnect the account the backup uses.
+    return _run(() => _auth.signInWithProvider(fb.GoogleAuthProvider()));
   }
+
+  /// The codes Firebase gives when the user closes the Google window.
+  static bool isCancel(String code) => const {
+        'web-context-canceled',
+        'web-context-already-presented',
+        'canceled',
+        'cancelled-popup-request',
+        'popup-closed-by-user',
+      }.contains(code);
 
   @override
   Future<void> sendPasswordReset(String email) async {
@@ -142,10 +134,7 @@ class FirebaseAuthBackend implements AuthBackend {
   }
 
   @override
-  Future<void> signOut() async {
-    await GoogleAccount.instance.signOut();
-    await _auth.signOut();
-  }
+  Future<void> signOut() => _auth.signOut();
 
   @override
   Future<void> deleteAccount() async {

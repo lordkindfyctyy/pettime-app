@@ -168,7 +168,7 @@ class _FamilySheetState extends State<_FamilySheet> {
               const SizedBox(height: 16),
               FilledButton.icon(
                 icon: const Icon(Icons.group_add_outlined),
-                label: Text(_busy ? 'Compartiendo…' : tr('Compartir')),
+                label: Text(_busy ? tr('Compartiendo…') : tr('Compartir')),
                 onPressed: _busy ? null : () => _run(() => sync.share(pet)),
               ),
             ] else ...[
@@ -351,7 +351,7 @@ class _JoinDialogState extends State<_JoinDialog> {
         ),
         FilledButton(
           onPressed: _busy ? null : _join,
-          child: Text(_busy ? 'Buscando…' : tr('Unirme')),
+          child: Text(_busy ? tr('Buscando…') : tr('Unirme')),
         ),
       ],
     );

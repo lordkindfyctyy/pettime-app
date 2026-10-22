@@ -16,6 +16,7 @@ import 'services/lost_pets_service.dart';
 import 'services/home_widget_service.dart';
 import 'services/notification_service.dart';
 import 'services/shop_settings.dart';
+import 'services/tag_service.dart';
 import 'state/auth_state.dart';
 import 'state/language_state.dart';
 import 'state/pets_state.dart';
@@ -34,6 +35,7 @@ Future<void> main() async {
   await DriveBackupService.instance.load();
   await ShopSettings.instance.load();
   await LostPetsService.instance.load();
+  await TagService.instance.load();
   NotificationService.instance.onDoseGiven =
       (petId, medId) => pets.logDose(petId, medId);
   // Pets shared with the family: sync now, every minute while the app is
@@ -67,6 +69,8 @@ Future<void> main() async {
   unawaited(_startAlarms(pets));
   // The "Próximas tomas" widget, in case time went by since it was drawn.
   unawaited(HomeWidgetService.refresh(pets.pets));
+  // Collar tags of pets deleted while the server could not be reached.
+  unawaited(TagService.instance.retryPending());
   // The daily copy to Google Drive, if it's on (uploads in the background).
   unawaited(DriveBackupService.instance.backupIfDue(pets.pets));
 }

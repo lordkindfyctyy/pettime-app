@@ -142,7 +142,7 @@ class _BackupScreenState extends State<BackupScreen> {
         bytes,
         from: date == null
             ? null
-            : 'Copia de Drive del ${DateFormat.yMMMd(AppLang.code).add_Hm().format(date)}.',
+            : tr('Copia de Drive del {date}.', {'date': DateFormat.yMMMd(AppLang.code).add_Hm().format(date)}),
       );
     } catch (e) {
       if (mounted) _toast(tr('No se pudo bajar la copia de Drive: {e}', {'e': e}));
@@ -249,7 +249,7 @@ class _BackupScreenState extends State<BackupScreen> {
                           drive.enabled
                               ? lastDrive == null
                                   ? tr('Activada')
-                                  : 'Última: ${DateFormat.yMMMd(AppLang.code).add_Hm().format(lastDrive)}'
+                                  : tr('Última: {date}', {'date': DateFormat.yMMMd(AppLang.code).add_Hm().format(lastDrive)})
                               : tr('Se guarda sola una vez por día, cuando abrís la app'),
                         ),
                         value: drive.enabled,
@@ -272,7 +272,7 @@ class _BackupScreenState extends State<BackupScreen> {
           Text(
             last == null
                 ? tr('Todavía no hiciste ninguna copia manual.')
-                : 'Última copia manual: ${DateFormat.yMMMd(AppLang.code).add_Hm().format(last)}',
+                : tr('Última copia manual: {date}', {'date': DateFormat.yMMMd(AppLang.code).add_Hm().format(last)}),
             style: theme.textTheme.titleSmall,
           ),
           const SizedBox(height: 24),

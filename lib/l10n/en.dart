@@ -307,8 +307,6 @@ const enStrings = <String, String>{
   'Demasiados intentos. Probá de nuevo en un rato.': 'Too many attempts. Try again in a while.',
   'No se pudo iniciar sesión ({code}).': 'Could not sign in ({code}).',
   'No se pudo iniciar sesión.': 'Could not sign in.',
-  'No se pudo iniciar sesión con Google ({code}).': 'Could not sign in with Google ({code}).',
-  'No se pudo iniciar sesión con Google.': 'Could not sign in with Google.',
   'El archivo no es una copia de PetTime.': 'The file is not a PetTime backup.',
   'Hay que volver a conectar Google Drive.': 'Google Drive has to be connected again.',
   'Ese código de cuidador ya no sirve.': 'That caregiver code no longer works.',
@@ -566,4 +564,9 @@ const enStrings = <String, String>{
       "The QR page says it is lost and that you're looking for it.",
   'Si cambiás la foto o el nombre de {pet}, tocá el lápiz y Guardar para actualizar la página. El QR no cambia.':
       "If you change {pet}'s photo or name, tap the pencil and Save to update the page. The QR doesn't change.",
+  'Copia de Drive del {date}.': 'Drive backup from {date}.',
+  'Última: {date}': 'Last: {date}',
+  'Última copia manual: {date}': 'Last manual backup: {date}',
+  'Compartiendo…': 'Sharing…',
+  'Buscando…': 'Searching…',
 };

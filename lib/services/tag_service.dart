@@ -67,9 +67,16 @@ class TagService extends ChangeNotifier {
 
   static final instance = TagService();
   static const _key = 'pet_tags_v1';
+  static const _pendingKey = 'pet_tags_to_delete_v1';
 
   final PetTimeApi _api;
   Map<String, PetTag> _tags = {};
+
+  /// Tags of pets that were deleted, still to be turned off on the server (it
+  /// was not reachable, or the app closed before). They keep their key, which
+  /// is what turns a public page off.
+  List<PetTag> _pending = [];
+  bool _retrying = false;
 
   PetTag? of(String petId) => _tags[petId];
 
@@ -87,6 +94,17 @@ class TagService extends ChangeNotifier {
         debugPrint('Could not read the tags: $e');
       }
     }
+    final pending = prefs.getString(_pendingKey);
+    if (pending != null) {
+      try {
+        _pending = [
+          for (final t in jsonDecode(pending) as List)
+            PetTag.fromJson(t as Map<String, dynamic>),
+        ];
+      } catch (e) {
+        debugPrint('Could not read the tags to delete: $e');
+      }
+    }
     notifyListeners();
   }
 
@@ -96,7 +114,49 @@ class TagService extends ChangeNotifier {
       _key,
       jsonEncode({for (final e in _tags.entries) e.key: e.value.toJson()}),
     );
+    await prefs.setString(
+      _pendingKey,
+      jsonEncode([for (final t in _pending) t.toJson()]),
+    );
     notifyListeners();
+  }
+
+  /// The pet was deleted: its tag goes with it, so its public page (name,
+  /// photo and the family's WhatsApp) doesn't stay online with nobody able to
+  /// turn it off. If the server can't be reached now, it is retried on the
+  /// next start.
+  Future<void> removeForPet(String petId) async {
+    final tag = _tags.remove(petId);
+    if (tag == null) return;
+    _pending.add(tag);
+    await _persist();
+    await retryPending();
+  }
+
+  /// Turns off on the server the tags of deleted pets that are still online.
+  Future<void> retryPending() async {
+    if (_retrying || _pending.isEmpty) return;
+    _retrying = true;
+    try {
+      for (final tag in List.of(_pending)) {
+        try {
+          await _api.post('tags/delete.php', {
+            'code': tag.code,
+            'ownerKey': tag.ownerKey,
+          });
+        } on ApiException catch (e) {
+          // Already gone from the server; any other error is tried again later.
+          if (!e.isNotFound) {
+            debugPrint('Could not turn off the tag ${tag.code}: $e');
+            continue;
+          }
+        }
+        _pending.remove(tag);
+      }
+      await _persist();
+    } finally {
+      _retrying = false;
+    }
   }
 
   /// Creates the pet's tag, or updates it (name, photo, contact, lost…).

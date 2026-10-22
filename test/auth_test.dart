@@ -131,6 +131,12 @@ void main() {
       expect(const AuthUser(uid: 'x').label, '');
     });
 
+    test('closing the Google window is a cancel, not an error', () {
+      expect(FirebaseAuthBackend.isCancel('web-context-canceled'), isTrue);
+      expect(FirebaseAuthBackend.isCancel('popup-closed-by-user'), isTrue);
+      expect(FirebaseAuthBackend.isCancel('wrong-password'), isFalse);
+    });
+
     test('Firebase error codes have a message', () {
       expect(
         FirebaseAuthBackend.messageFor('wrong-password'),

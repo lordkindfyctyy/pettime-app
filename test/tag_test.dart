@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,11 @@ class FakeTagServer {
   final requests = <String>[];
   bool deleted = false;
 
+  /// The server cannot be reached.
+  bool offline = false;
+
   late final client = MockClient((request) async {
+    if (offline) throw const SocketException('offline');
     requests.add(request.url.path);
     if (request.url.path.endsWith('tags/save.php')) {
       final body = utf8.decode(request.bodyBytes);
@@ -101,6 +106,47 @@ void main() {
     await again.delete('p1');
     expect(server.deleted, isTrue);
     expect(again.of('p1'), isNull);
+  });
+
+  test('deleting a pet turns its tag off on the server', () async {
+    final server = FakeTagServer();
+    final tags = TagService(api: PetTimeApi(client: server.client, base: 'https://x'));
+    final state = PetsState(tags: tags);
+    await state.savePet(pancho());
+    await tags.save(pancho(), contactName: 'Lalo', contactPhone: '11 6472-2908');
+    expect(tags.of('p1'), isNotNull);
+
+    await state.deletePet('p1');
+    for (var i = 0; i < 100 && !server.deleted; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(server.deleted, isTrue);
+    expect(tags.of('p1'), isNull);
+  });
+
+  test('a tag that could not be turned off is retried on the next start', () async {
+    final server = FakeTagServer();
+    final tags = TagService(api: PetTimeApi(client: server.client, base: 'https://x'));
+    await tags.save(pancho(), contactName: 'Lalo', contactPhone: '11 6472-2908');
+
+    server.offline = true;
+    await tags.removeForPet('p1');
+    expect(server.deleted, isFalse);
+    expect(tags.of('p1'), isNull);
+
+    // The app starts again, with the server reachable.
+    server.offline = false;
+    final next = TagService(api: PetTimeApi(client: server.client, base: 'https://x'));
+    await next.load();
+    await next.retryPending();
+    expect(server.deleted, isTrue);
+
+    // Done: a later start has nothing left to turn off.
+    final calls = server.requests.length;
+    final last = TagService(api: PetTimeApi(client: server.client, base: 'https://x'));
+    await last.load();
+    await last.retryPending();
+    expect(server.requests.length, calls);
   });
 
   test('the printable sheet is a PDF', () async {
