@@ -80,6 +80,14 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Deletes the account. Returns whether it was deleted; if not, [error]
+  /// says why.
+  Future<bool> deleteAccount() async {
+    final ok = await _guard(backend!.deleteAccount);
+    if (ok) await signOut();
+    return ok;
+  }
+
   Future<bool> _run(Future<AuthUser> Function() action) async {
     return _guard(() async {
       _user = await action();

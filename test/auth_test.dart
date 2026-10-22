@@ -39,6 +39,14 @@ class FakeAuth implements AuthBackend {
 
   @override
   Future<void> signOut() async => _user = null;
+
+  bool deleted = false;
+
+  @override
+  Future<void> deleteAccount() async {
+    deleted = true;
+    _user = null;
+  }
 }
 
 void main() {
@@ -84,6 +92,18 @@ void main() {
       expect(auth.user!.label, 'ana@example.com');
 
       await auth.signOut();
+      expect(auth.signedIn, isFalse);
+      expect(auth.showLogin, isTrue);
+    });
+
+    test('deleting the account signs out', () async {
+      final backend = FakeAuth();
+      final auth = AuthState(backend);
+      await auth.load();
+      await auth.signInWithEmail('ana@example.com', 'secreto');
+
+      expect(await auth.deleteAccount(), isTrue);
+      expect(backend.deleted, isTrue);
       expect(auth.signedIn, isFalse);
       expect(auth.showLogin, isTrue);
     });

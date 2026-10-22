@@ -43,6 +43,10 @@ abstract class AuthBackend {
 
   Future<void> sendPasswordReset(String email);
   Future<void> signOut();
+
+  /// Deletes the account of whoever is signed in (Play asks apps with
+  /// accounts to let them be deleted from the app).
+  Future<void> deleteAccount();
 }
 
 /// [AuthBackend] on Firebase Authentication.
@@ -141,5 +145,21 @@ class FirebaseAuthBackend implements AuthBackend {
   Future<void> signOut() async {
     await GoogleAccount.instance.signOut();
     await _auth.signOut();
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    try {
+      await _auth.currentUser?.delete();
+    } on fb.FirebaseAuthException catch (e) {
+      // Firebase only deletes accounts that signed in a short while ago.
+      if (e.code == 'requires-recent-login') {
+        throw AuthException(tr(
+            'Por seguridad, cerrá sesión, volvé a entrar y probá de nuevo.'));
+      }
+      throw AuthException(
+          tr('No se pudo borrar la cuenta ({code}).', {'code': e.code}));
+    }
+    await signOut();
   }
 }

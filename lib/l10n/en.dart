@@ -544,6 +544,14 @@ const enStrings = <String, String>{
   'escaneame para avisarle': 'scan me to let',
   'a mi familia': 'my family know',
   'Para recortar': 'To cut out',
+  'Borrar cuenta': 'Delete account',
+  '¿Borrar tu cuenta?': 'Delete your account?',
+  'Se borra la cuenta {email}. Tus mascotas y sus datos siguen en este celular.':
+      'The account {email} is deleted. Your pets and their data stay on this phone.',
+  'Cuenta borrada.': 'Account deleted.',
+  'Por seguridad, cerrá sesión, volvé a entrar y probá de nuevo.':
+      'For security, sign out, sign in again and try once more.',
+  'No se pudo borrar la cuenta ({code}).': 'Could not delete the account ({code}).',
   'Chapita de {pet}': "{pet}'s tag",
   'Una chapita con un QR para el collar. Si {pet} se pierde, quien la encuentre escanea el QR con la cámara y ve su foto y tu WhatsApp, sin instalar nada.':
       "A tag with a QR code for the collar. If {pet} gets lost, whoever finds it scans the QR with their camera and sees its photo and your WhatsApp, without installing anything.",

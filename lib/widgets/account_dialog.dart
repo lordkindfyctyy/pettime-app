@@ -15,22 +15,55 @@ Future<void> showAccountDialog(BuildContext context) async {
     );
     return;
   }
-  final out = await showDialog<bool>(
+  final action = await showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(tr('Cuenta')),
       content: Text(auth.user!.label),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
+          onPressed: () => Navigator.pop(ctx, 'delete'),
+          child: Text(tr('Borrar cuenta')),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
           child: Text(tr('Cerrar')),
         ),
         FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
+          onPressed: () => Navigator.pop(ctx, 'out'),
           child: Text(tr('Cerrar sesión')),
         ),
       ],
     ),
   );
-  if (out == true) await auth.signOut();
+  if (action == 'out') await auth.signOut();
+  if (action == 'delete' && context.mounted) await _deleteAccount(context);
+}
+
+Future<void> _deleteAccount(BuildContext context) async {
+  final auth = context.read<AuthState>();
+  final sure = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(tr('¿Borrar tu cuenta?')),
+      content: Text(tr('Se borra la cuenta {email}. Tus mascotas y sus datos '
+          'siguen en este celular.', {'email': auth.user!.label})),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(tr('Cancelar')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(tr('Borrar cuenta')),
+        ),
+      ],
+    ),
+  );
+  if (sure != true) return;
+  final ok = await auth.deleteAccount();
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text(ok ? tr('Cuenta borrada.') : auth.error ?? ''),
+  ));
 }
