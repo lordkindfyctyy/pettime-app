@@ -31,6 +31,7 @@ import '../widgets/weight_section.dart';
 import 'lost_report_form_screen.dart';
 import 'medication_form_screen.dart';
 import 'pet_form_screen.dart';
+import 'pet_tag_screen.dart';
 import 'visit_form_screen.dart';
 
 /// Builds the PDF for the vet and opens Android's share sheet (WhatsApp,
@@ -124,6 +125,13 @@ class PetDetailScreen extends StatelessWidget {
               }
               if (action == 'caregiver') {
                 await showCaregiverSheet(context, pet.id);
+                return;
+              }
+              if (action == 'tag') {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => PetTagScreen(petId: pet.id)),
+                );
                 return;
               }
               if (action == 'lost') {

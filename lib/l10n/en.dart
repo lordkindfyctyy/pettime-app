@@ -525,4 +525,37 @@ const enStrings = <String, String>{
   'Remedio': 'Medicine',
   'Otro': 'Other',
   'Peluquería / spa': 'Grooming / spa',
+  // QR collar tag
+  'Mensaje para quien la encuentre (opcional)': 'Message for whoever finds it (optional)',
+  'Toma un remedio para el corazón. Es mansa.': 'Takes heart medication. Friendly.',
+  'Guardando…': 'Saving…',
+  'Crear chapita': 'Create tag',
+  'Guardar cambios': 'Save changes',
+  'Si me encontraste, escaneame': 'If you found me, scan me',
+  'Si se pierde, activalo: la página del QR lo dice bien grande.': 'If it gets lost, turn this on: the QR page says so in big letters.',
+  'Imprimir o guardar en PDF': 'Print or save as PDF',
+  'Compartir el QR como imagen': 'Share the QR as an image',
+  'Pedir la chapita grabada a {shop}': 'Order the engraved tag from {shop}',
+  'Ver la página del QR': 'See the QR page',
+  'Editar datos': 'Edit details',
+  'Borrar chapita': 'Delete tag',
+  'Recortá el QR del tamaño que necesites y pegalo en la chapita o el collar, o llevá esta hoja para grabarlo. Quien la encuentre lo escanea con la cámara y ve tu WhatsApp.': 'Cut out the QR in the size you need and stick it on the tag or collar, or take this sheet to have it engraved. Whoever finds your pet scans it with their camera and sees your WhatsApp.',
+  'Si me encontraste,': 'If you found me,',
+  'escaneame para avisarle': 'scan me to let',
+  'a mi familia': 'my family know',
+  'Para recortar': 'To cut out',
+  'Chapita de {pet}': "{pet}'s tag",
+  'Una chapita con un QR para el collar. Si {pet} se pierde, quien la encuentre escanea el QR con la cámara y ve su foto y tu WhatsApp, sin instalar nada.':
+      "A tag with a QR code for the collar. If {pet} gets lost, whoever finds it scans the QR with their camera and sees its photo and your WhatsApp, without installing anything.",
+  'Se muestran en una página pública de sixsevenweb.com: el nombre y la foto de {pet}, tu nombre, tu WhatsApp y el mensaje.':
+      "Shown on a public page on sixsevenweb.com: {pet}'s name and photo, your name, your WhatsApp and the message.",
+  'Hola! Quiero una chapita grabada con el QR de {pet}. Este es el link del QR: {url}':
+      "Hi! I'd like an engraved tag with {pet}'s QR code. This is the QR link: {url}",
+  'la chapita de {pet}': "{pet}'s tag",
+  'El QR deja de mostrar a {pet}. Si la volvés a crear, tiene un QR nuevo y hay que reimprimirlo.':
+      "The QR stops showing {pet}. If you create it again, it gets a new QR that has to be printed again.",
+  'La página del QR dice que está perdida y que la están buscando.':
+      "The QR page says it is lost and that you're looking for it.",
+  'Si cambiás la foto o el nombre de {pet}, tocá el lápiz y Guardar para actualizar la página. El QR no cambia.':
+      "If you change {pet}'s photo or name, tap the pencil and Save to update the page. The QR doesn't change.",
 };
