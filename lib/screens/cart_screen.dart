@@ -23,8 +23,10 @@ class _CartScreenState extends State<CartScreen> {
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: _cart.contact.name);
   late final _phone = TextEditingController(text: _cart.contact.phone);
-  late final _address = TextEditingController(text: _cart.contact.address);
-  final _note = TextEditingController();
+  late final _address = TextEditingController(
+    text: _cart.editing?.address ?? _cart.contact.address,
+  );
+  late final _note = TextEditingController(text: _cart.editing?.note ?? '');
   bool _sending = false;
 
   @override
@@ -39,6 +41,7 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _send() async {
     if (!_form.currentState!.validate()) return;
     setState(() => _sending = true);
+    final changing = _cart.editing != null;
     try {
       final result = await _cart.placeOrder(
         OrderContact(
@@ -49,7 +52,7 @@ class _CartScreenState extends State<CartScreen> {
         note: _note.text.trim(),
       );
       if (!mounted) return;
-      await _showDone(result);
+      await _showDone(result, changed: changing);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -58,22 +61,55 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  Future<void> _showDone(OrderResult result) async {
+  Future<void> _cancelEditing() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('¿Descartar los cambios?')),
+        content: Text(tr('El pedido queda como estaba y se vacía el carrito.')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr('Seguir editando')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr('Descartar')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await _cart.clear();
+    if (mounted) Navigator.pop(context);
+  }
+
+  Future<void> _showDone(OrderResult result, {required bool changed}) async {
+    final values = {
+      'number': result.order.number,
+      'total': formatMoney(result.order.total),
+    };
     final next = await showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.check_circle, color: Brand.teal, size: 48),
-        title: Text(tr('¡Recibimos tu pedido!')),
+        title: Text(
+          changed
+              ? tr('¡Listo, pedido modificado!')
+              : tr('¡Recibimos tu pedido!'),
+        ),
         content: Text(
-          tr(
-            'Pedido #{number} por {total}. Lo De Lalo te va a avisar por WhatsApp cuando lo acepte. '
-            'Podés ver cómo va en "Mis pedidos".',
-            {
-              'number': result.order.number,
-              'total': formatMoney(result.order.total),
-            },
-          ),
+          changed
+              ? tr(
+                  'Pedido #{number}, ahora por {total}. Le avisamos a Lo De Lalo del cambio.',
+                  values,
+                )
+              : tr(
+                  'Pedido #{number} por {total}. Lo De Lalo te va a avisar por WhatsApp cuando lo acepte. '
+                  'Podés ver cómo va en "Mis pedidos".',
+                  values,
+                ),
         ),
         actionsOverflowDirection: VerticalDirection.down,
         actionsOverflowButtonSpacing: 4,
@@ -114,11 +150,23 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(tr('Tu carrito'))),
+      appBar: AppBar(
+        title: ListenableBuilder(
+          listenable: _cart,
+          builder: (context, _) => Text(
+            _cart.editing == null
+                ? tr('Tu carrito')
+                : tr('Modificar pedido #{number}', {
+                    'number': _cart.editing!.number,
+                  }),
+          ),
+        ),
+      ),
       body: ListenableBuilder(
         listenable: _cart,
         builder: (context, _) {
-          if (_cart.isEmpty) {
+          final editing = _cart.editing;
+          if (_cart.isEmpty && editing == null) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -143,6 +191,40 @@ class _CartScreenState extends State<CartScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (editing != null)
+                    Card(
+                      color: Brand.orange.withValues(alpha: 0.12),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.edit_note, color: Brand.orange),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                tr(
+                                  'Estás cambiando el pedido #{number}. Podés sumar productos desde la Tienda.',
+                                  {'number': editing.number},
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _cancelEditing,
+                              child: Text(tr('Descartar')),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (_cart.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        tr('Todavía no agregaste productos.'),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   for (final line in _cart.lines)
                     _LineTile(line: line, cart: _cart),
                   const Divider(height: 24),
@@ -238,11 +320,15 @@ class _CartScreenState extends State<CartScreen> {
                           )
                         : const Icon(Icons.shopping_bag_outlined),
                     label: Text(
-                      tr('Hacer pedido · {total}', {
-                        'total': formatMoney(_cart.total),
-                      }),
+                      editing == null
+                          ? tr('Hacer pedido · {total}', {
+                              'total': formatMoney(_cart.total),
+                            })
+                          : tr('Guardar cambios · {total}', {
+                              'total': formatMoney(_cart.total),
+                            }),
                     ),
-                    onPressed: _sending ? null : _send,
+                    onPressed: _sending || _cart.isEmpty ? null : _send,
                   ),
                 ],
               ),

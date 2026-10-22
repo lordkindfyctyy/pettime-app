@@ -30,8 +30,8 @@ Map<String, dynamic> orderJson({String status = 'new'}) => {
       'rejectReason': null,
       'createdAt': '2026-10-22 14:06:36',
       'items': [
-        {'name': 'Producto 1', 'quantity': 2, 'unitPrice': 8000, 'subtotal': 16000},
-        {'name': 'Producto 2', 'quantity': 0.5, 'unitPrice': 8000, 'subtotal': 4000},
+        {'productId': 1, 'name': 'Producto 1', 'quantity': 2, 'unitPrice': 8000, 'subtotal': 16000},
+        {'productId': 2, 'name': 'Producto 2', 'quantity': 0.5, 'unitPrice': 8000, 'subtotal': 4000},
       ],
     };
 
@@ -155,5 +155,88 @@ void main() {
     expect(find.text('Escribí tu nombre', skipOffstage: false), findsOneWidget);
     expect(find.text('Escribí la dirección de entrega', skipOffstage: false), findsOneWidget);
     expect(cart.hasOrders, isFalse);
+  });
+
+  ShopCatalog catalogWith(List<ShopProduct> products) => ShopCatalog(
+        ShopInfo(name: 'Lo De Lalo', whatsapp: '', address: '', catalogUrl: '', lostPetsUrl: ''),
+        products,
+      );
+
+  PlacedOrder placed({bool canEdit = true}) => PlacedOrder.fromJson({
+        ...orderJson(),
+        'address': 'Quirno Costa 1164',
+        'note': 'Timbre 2B',
+        'canEdit': canEdit,
+        'items': [
+          {'productId': 1, 'name': 'Producto 1', 'quantity': 2, 'unitPrice': 8000, 'subtotal': 16000},
+          {'productId': 7, 'name': 'Ya no se vende', 'quantity': 1, 'unitPrice': 500, 'subtotal': 500},
+          {'productId': null, 'name': 'Agregado a mano', 'quantity': 1, 'unitPrice': 100, 'subtotal': 100},
+        ],
+      });
+
+  test('repetir pedido: suma lo que se sigue vendiendo, al precio de hoy', () async {
+    final cart = ShopCart(api: PetTimeApi(client: MockClient((_) async => http.Response('{}', 200)), base: 'https://x'));
+    await cart.load();
+    final missing = await cart.repeat(placed(), catalogWith([product(1, price: 9000)]));
+    expect(missing, ['Ya no se vende', 'Agregado a mano']);
+    expect(cart.lineFor(1)!.quantity, 2);
+    expect(cart.lineFor(1)!.price, 9000);
+    expect(cart.editing, isNull);
+  });
+
+  test('modificar pedido: lo carga en el carrito y guarda los cambios en el mismo pedido', () async {
+    final sent = <String, Map<String, dynamic>>{};
+    final client = MockClient((req) async {
+      sent[req.url.path] = jsonDecode(req.body) as Map<String, dynamic>;
+      if (req.url.path.endsWith('order_update.php')) {
+        return http.Response(
+          jsonEncode({'ok': true, 'order': {...orderJson(), 'total': 27000, 'canEdit': true}, 'whatsapp': '', 'whatsappText': ''}),
+          200,
+        );
+      }
+      return http.Response(
+        jsonEncode({'ok': true, 'order': {...orderJson(), 'canEdit': true}, 'orderKey': 'clave', 'whatsapp': '', 'whatsappText': ''}),
+        201,
+      );
+    });
+    final cart = ShopCart(api: PetTimeApi(client: client, base: 'https://x'));
+    await cart.load();
+    await cart.add(product(1), 2);
+    await cart.placeOrder(const OrderContact(name: 'Lalo', phone: '1164722908', address: 'Quirno Costa 1164'));
+
+    await cart.startEditing(cart.orders.single, catalogWith([product(1), product(2)]));
+    expect(cart.editing!.id, 34);
+    expect(cart.lineFor(1)!.quantity, 2);
+    await cart.add(product(2), 1);
+
+    final result = await cart.placeOrder(
+      const OrderContact(name: 'Lalo', phone: '1164722908', address: 'Otra calle 456'),
+    );
+    final body = sent['/shop/order_update.php']!;
+    expect(body['id'], 34);
+    expect(body['key'], 'clave');
+    expect(body['address'], 'Otra calle 456');
+    expect((body['items'] as List).length, 2);
+    expect(result.order.total, 27000);
+    expect(cart.orders.length, 1, reason: 'no crea un pedido nuevo');
+    expect(cart.orders.single.total, 27000);
+    expect(cart.isEmpty, isTrue);
+    expect(cart.editing, isNull);
+  });
+
+  test('descartar la edición vacía el carrito y deja de modificar', () async {
+    final client = MockClient((_) async => http.Response(
+          jsonEncode({'ok': true, 'order': orderJson(), 'orderKey': 'clave', 'whatsapp': '', 'whatsappText': ''}),
+          201,
+        ));
+    final cart = ShopCart(api: PetTimeApi(client: client, base: 'https://x'));
+    await cart.load();
+    await cart.add(product(1), 1);
+    await cart.placeOrder(const OrderContact(name: 'Lalo', phone: '1164722908', address: 'Quirno Costa 1164'));
+    await cart.startEditing(cart.orders.single, catalogWith([product(1)]));
+    expect(cart.editing, isNotNull);
+    await cart.clear();
+    expect(cart.editing, isNull);
+    expect(cart.isEmpty, isTrue);
   });
 }

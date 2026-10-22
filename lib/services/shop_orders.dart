@@ -34,41 +34,46 @@ class CartLine {
 
   String get quantityLabel => formatCartQuantity(quantity, byWeight: byWeight);
 
-  CartLine copyWith({double? quantity, String? name, double? price, String? imageUrl}) => CartLine(
-        productId: productId,
-        name: name ?? this.name,
-        price: price ?? this.price,
-        byWeight: byWeight,
-        quantity: quantity ?? this.quantity,
-        imageUrl: imageUrl ?? this.imageUrl,
-      );
+  CartLine copyWith({
+    double? quantity,
+    String? name,
+    double? price,
+    String? imageUrl,
+  }) => CartLine(
+    productId: productId,
+    name: name ?? this.name,
+    price: price ?? this.price,
+    byWeight: byWeight,
+    quantity: quantity ?? this.quantity,
+    imageUrl: imageUrl ?? this.imageUrl,
+  );
 
   factory CartLine.fromProduct(ShopProduct p, double quantity) => CartLine(
-        productId: p.id,
-        name: p.name,
-        price: p.price,
-        byWeight: p.byWeight,
-        quantity: quantity,
-        imageUrl: p.imageUrl,
-      );
+    productId: p.id,
+    name: p.name,
+    price: p.price,
+    byWeight: p.byWeight,
+    quantity: quantity,
+    imageUrl: p.imageUrl,
+  );
 
   Map<String, dynamic> toJson() => {
-        'productId': productId,
-        'name': name,
-        'price': price,
-        'byWeight': byWeight,
-        'quantity': quantity,
-        'imageUrl': imageUrl,
-      };
+    'productId': productId,
+    'name': name,
+    'price': price,
+    'byWeight': byWeight,
+    'quantity': quantity,
+    'imageUrl': imageUrl,
+  };
 
   factory CartLine.fromJson(Map<String, dynamic> j) => CartLine(
-        productId: j['productId'] as int,
-        name: j['name'] as String,
-        price: (j['price'] as num).toDouble(),
-        byWeight: j['byWeight'] as bool? ?? false,
-        quantity: (j['quantity'] as num).toDouble(),
-        imageUrl: j['imageUrl'] as String?,
-      );
+    productId: j['productId'] as int,
+    name: j['name'] as String,
+    price: (j['price'] as num).toDouble(),
+    byWeight: j['byWeight'] as bool? ?? false,
+    quantity: (j['quantity'] as num).toDouble(),
+    imageUrl: j['imageUrl'] as String?,
+  );
 }
 
 /// "2", or "1,5 kg" for products sold by the kilo.
@@ -87,13 +92,17 @@ class OrderContact {
   final String phone;
   final String address;
 
-  Map<String, dynamic> toJson() => {'name': name, 'phone': phone, 'address': address};
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'phone': phone,
+    'address': address,
+  };
 
   factory OrderContact.fromJson(Map<String, dynamic> j) => OrderContact(
-        name: j['name'] as String? ?? '',
-        phone: j['phone'] as String? ?? '',
-        address: j['address'] as String? ?? '',
-      );
+    name: j['name'] as String? ?? '',
+    phone: j['phone'] as String? ?? '',
+    address: j['address'] as String? ?? '',
+  );
 }
 
 /// An order made from the app, as the shop sees it in SixSeven.
@@ -107,6 +116,9 @@ class PlacedOrder {
     required this.createdAt,
     required this.items,
     this.rejectReason,
+    this.address = '',
+    this.note = '',
+    this.canEdit = false,
   });
 
   final int id;
@@ -118,34 +130,48 @@ class PlacedOrder {
   final String statusLabel;
   final String createdAt;
   final String? rejectReason;
-  final List<({String name, double quantity, double subtotal})> items;
+  final String address;
+
+  /// What the customer wrote, without the server's "from PetTime" mark.
+  final String note;
+
+  /// The customer can still change it: the shop has not accepted it yet.
+  final bool canEdit;
+
+  /// productId is null when the shop added a free-text item.
+  final List<({int? productId, String name, double quantity, double subtotal})>
+  items;
 
   /// The shop's label is in Spanish; translated here.
   String get statusText => switch (status) {
-        'new' => tr('Recibido'),
-        'accepted' => tr('Aceptado'),
-        'converted' => tr('Confirmado'),
-        'rejected' => tr('Rechazado'),
-        _ => statusLabel,
-      };
+    'new' => tr('Recibido'),
+    'accepted' => tr('Aceptado'),
+    'converted' => tr('Confirmado'),
+    'rejected' => tr('Rechazado'),
+    _ => statusLabel,
+  };
 
   factory PlacedOrder.fromJson(Map<String, dynamic> j) => PlacedOrder(
-        id: j['id'] as int,
-        number: j['number'] as int? ?? j['id'] as int,
-        total: (j['total'] as num).toDouble(),
-        status: j['status'] as String,
-        statusLabel: j['statusLabel'] as String? ?? '',
-        createdAt: j['createdAt'] as String? ?? '',
-        rejectReason: j['rejectReason'] as String?,
-        items: [
-          for (final i in j['items'] as List? ?? const [])
-            (
-              name: (i as Map)['name'] as String,
-              quantity: (i['quantity'] as num).toDouble(),
-              subtotal: (i['subtotal'] as num).toDouble(),
-            ),
-        ],
-      );
+    id: j['id'] as int,
+    number: j['number'] as int? ?? j['id'] as int,
+    total: (j['total'] as num).toDouble(),
+    status: j['status'] as String,
+    statusLabel: j['statusLabel'] as String? ?? '',
+    createdAt: j['createdAt'] as String? ?? '',
+    rejectReason: j['rejectReason'] as String?,
+    address: j['address'] as String? ?? '',
+    note: j['note'] as String? ?? '',
+    canEdit: j['canEdit'] as bool? ?? false,
+    items: [
+      for (final i in j['items'] as List? ?? const [])
+        (
+          productId: (i as Map)['productId'] as int?,
+          name: i['name'] as String,
+          quantity: (i['quantity'] as num).toDouble(),
+          subtotal: (i['subtotal'] as num).toDouble(),
+        ),
+    ],
+  );
 }
 
 /// What the server answers when an order is placed.
@@ -170,6 +196,7 @@ class ShopCart extends ChangeNotifier {
   static const _cartKey = 'shop_cart_v1';
   static const _contactKey = 'shop_order_contact';
   static const _ordersKey = 'shop_orders_v1';
+  static const _editingKey = 'shop_cart_editing';
 
   final PetTimeApi _api;
   final List<CartLine> _lines = [];
@@ -179,19 +206,30 @@ class ShopCart extends ChangeNotifier {
   List<Map<String, dynamic>> _orders = [];
   bool _loaded = false;
 
+  /// The order being changed in the cart ("Modificar"); null for a new one.
+  int? _editingId;
+
   List<CartLine> get lines => List.unmodifiable(_lines);
   OrderContact get contact => _contact;
   bool get isEmpty => _lines.isEmpty;
   bool get hasOrders => _orders.isNotEmpty;
+
+  PlacedOrder? get editing {
+    for (final o in orders) {
+      if (o.id == _editingId) return o;
+    }
+    return null;
+  }
 
   /// How many products (not units) are in the cart, for the badge.
   int get count => _lines.length;
   double get total => _lines.fold(0, (sum, l) => sum + l.subtotal);
 
   List<PlacedOrder> get orders => [
-        for (final o in _orders)
-          if (o['order'] is Map) PlacedOrder.fromJson((o['order'] as Map).cast<String, dynamic>()),
-      ];
+    for (final o in _orders)
+      if (o['order'] is Map)
+        PlacedOrder.fromJson((o['order'] as Map).cast<String, dynamic>()),
+  ];
 
   CartLine? lineFor(int productId) {
     for (final l in _lines) {
@@ -211,12 +249,14 @@ class ShopCart extends ChangeNotifier {
             CartLine.fromJson((j as Map).cast<String, dynamic>()),
         ]);
       _contact = OrderContact.fromJson(
-        (jsonDecode(prefs.getString(_contactKey) ?? '{}') as Map).cast<String, dynamic>(),
+        (jsonDecode(prefs.getString(_contactKey) ?? '{}') as Map)
+            .cast<String, dynamic>(),
       );
       _orders = [
         for (final o in jsonDecode(prefs.getString(_ordersKey) ?? '[]') as List)
           (o as Map).cast<String, dynamic>(),
       ];
+      _editingId = prefs.getInt(_editingKey);
     } on Object {
       // A broken save starts empty rather than blocking the shop.
     }
@@ -226,7 +266,10 @@ class ShopCart extends ChangeNotifier {
 
   Future<void> _saveCart() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_cartKey, jsonEncode([for (final l in _lines) l.toJson()]));
+    await prefs.setString(
+      _cartKey,
+      jsonEncode([for (final l in _lines) l.toJson()]),
+    );
   }
 
   Future<void> _saveOrders() async {
@@ -235,7 +278,11 @@ class ShopCart extends ChangeNotifier {
   }
 
   /// Adds [quantity] of [product] (or sets it, when [replace]).
-  Future<void> add(ShopProduct product, double quantity, {bool replace = false}) async {
+  Future<void> add(
+    ShopProduct product,
+    double quantity, {
+    bool replace = false,
+  }) async {
     final i = _lines.indexWhere((l) => l.productId == product.id);
     if (i < 0) {
       _lines.add(CartLine.fromProduct(product, quantity));
@@ -266,10 +313,52 @@ class ShopCart extends ChangeNotifier {
 
   Future<void> remove(int productId) => setQuantity(productId, 0);
 
+  /// Empties the cart and stops changing an order, if it was.
   Future<void> clear() async {
     _lines.clear();
+    await _setEditing(null);
     notifyListeners();
     await _saveCart();
+  }
+
+  Future<void> _setEditing(int? orderId) async {
+    _editingId = orderId;
+    final prefs = await SharedPreferences.getInstance();
+    if (orderId == null) {
+      await prefs.remove(_editingKey);
+    } else {
+      await prefs.setInt(_editingKey, orderId);
+    }
+  }
+
+  /// Adds the products of [order] that the shop still sells, at today's
+  /// price. Returns the names of the ones left out.
+  Future<List<String>> repeat(PlacedOrder order, ShopCatalog catalog) async {
+    final byId = {for (final p in catalog.products) p.id: p};
+    final missing = <String>[];
+    for (final item in order.items) {
+      final p = item.productId == null ? null : byId[item.productId];
+      if (p == null || !p.inStock) {
+        missing.add(item.name);
+      } else {
+        await add(p, item.quantity);
+      }
+    }
+    return missing;
+  }
+
+  /// Puts [order] in the cart to change it; the cart had better be empty.
+  /// Returns the names of the products that are no longer sold.
+  Future<List<String>> startEditing(
+    PlacedOrder order,
+    ShopCatalog catalog,
+  ) async {
+    _lines.clear();
+    final missing = await repeat(order, catalog);
+    await _setEditing(order.id);
+    notifyListeners();
+    await _saveCart();
+    return missing;
   }
 
   /// Updates names and prices with the catalog just loaded, and drops
@@ -283,7 +372,11 @@ class ShopCart extends ChangeNotifier {
         _lines.removeAt(i);
         dropped++;
       } else {
-        _lines[i] = _lines[i].copyWith(name: p.name, price: p.price, imageUrl: p.imageUrl);
+        _lines[i] = _lines[i].copyWith(
+          name: p.name,
+          price: p.price,
+          imageUrl: p.imageUrl,
+        );
       }
     }
     notifyListeners();
@@ -291,25 +384,47 @@ class ShopCart extends ChangeNotifier {
     return dropped;
   }
 
-  /// Sends the cart as an order. The server checks prices and stock again;
-  /// on success the cart is emptied and the order is kept in "Mis pedidos".
-  Future<OrderResult> placeOrder(OrderContact contact, {String note = ''}) async {
+  /// Sends the cart as an order, or saves the changes of the order being
+  /// edited. The server checks prices and stock again; on success the cart
+  /// is emptied and the order is kept in "Mis pedidos".
+  Future<OrderResult> placeOrder(
+    OrderContact contact, {
+    String note = '',
+  }) async {
     _contact = contact;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_contactKey, jsonEncode(contact.toJson()));
 
-    final res = await _api.post('shop/order.php', {
+    final body = {
       'name': contact.name,
       'phone': contact.phone,
       'address': contact.address,
       'note': note,
       'items': [
-        for (final l in _lines) {'productId': l.productId, 'quantity': l.quantity},
+        for (final l in _lines)
+          {'productId': l.productId, 'quantity': l.quantity},
       ],
-    });
+    };
+    final editingEntry = _editingId == null ? null : _entry(_editingId!);
+    final Map<String, dynamic> res;
+    if (editingEntry != null) {
+      res = await _api.post('shop/order_update.php', {
+        'id': editingEntry['id'],
+        'key': editingEntry['key'],
+        ...body,
+      });
+      editingEntry['order'] = (res['order'] as Map).cast<String, dynamic>();
+    } else {
+      res = await _api.post('shop/order.php', body);
+      final orderJson = (res['order'] as Map).cast<String, dynamic>();
+      _orders.insert(0, {
+        'id': orderJson['id'],
+        'key': res['orderKey'],
+        'order': orderJson,
+      });
+      if (_orders.length > 50) _orders = _orders.sublist(0, 50);
+    }
     final orderJson = (res['order'] as Map).cast<String, dynamic>();
-    _orders.insert(0, {'id': orderJson['id'], 'key': res['orderKey'], 'order': orderJson});
-    if (_orders.length > 50) _orders = _orders.sublist(0, 50);
     await _saveOrders();
     await clear();
     return OrderResult(
@@ -317,6 +432,13 @@ class ShopCart extends ChangeNotifier {
       res['whatsapp'] as String? ?? '',
       res['whatsappText'] as String? ?? '',
     );
+  }
+
+  Map<String, dynamic>? _entry(int orderId) {
+    for (final o in _orders) {
+      if (o['id'] == orderId) return o;
+    }
+    return null;
   }
 
   /// Asks the server how the orders are going and keeps the answer.
@@ -328,7 +450,8 @@ class ShopCart extends ChangeNotifier {
       ],
     });
     final byId = {
-      for (final o in res['orders'] as List) ((o as Map)['id'] as int): o.cast<String, dynamic>(),
+      for (final o in res['orders'] as List)
+        ((o as Map)['id'] as int): o.cast<String, dynamic>(),
     };
     for (final o in _orders) {
       final fresh = byId[o['id']];
@@ -338,4 +461,3 @@ class ShopCart extends ChangeNotifier {
     await _saveOrders();
   }
 }
-
