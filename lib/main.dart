@@ -25,10 +25,14 @@ import 'theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Dates are written in the language of the app, which is Spanish or English.
-  await initializeDateFormatting();
+  // Firebase starts while the rest loads.
+  final firebase = _startFirebase();
+  await Future.wait([
+    for (final code in AppLang.supported) initializeDateFormatting(code),
+  ]);
   final language = LanguageState();
   await language.load();
-  final auth = AuthState(await _startFirebase());
+  final auth = AuthState(await firebase);
   await auth.load();
   final pets = PetsState();
   await pets.load();

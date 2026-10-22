@@ -33,6 +33,14 @@ class AuthException implements Exception {
 abstract class AuthBackend {
   AuthUser? get currentUser;
 
+  /// Who was signed in the last time, once the service has restored them
+  /// (right at the start, [currentUser] can still be empty).
+  Future<AuthUser?> restoreUser();
+
+  /// Who is signed in, every time it changes: also when the service signs the
+  /// user out by itself (account disabled or deleted, token revoked).
+  Stream<AuthUser?> get changes;
+
   Future<AuthUser> signInWithEmail(String email, String password);
   Future<AuthUser> register(String email, String password);
 
@@ -60,6 +68,13 @@ class FirebaseAuthBackend implements AuthBackend {
 
   @override
   AuthUser? get currentUser => _user(_auth.currentUser);
+
+  @override
+  Future<AuthUser?> restoreUser() async =>
+      _user(await _auth.authStateChanges().first);
+
+  @override
+  Stream<AuthUser?> get changes => _auth.authStateChanges().map(_user);
 
   /// The message for a Firebase error code.
   static String messageFor(String code) => switch (code) {

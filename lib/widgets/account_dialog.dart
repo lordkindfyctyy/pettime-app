@@ -36,7 +36,14 @@ Future<void> showAccountDialog(BuildContext context) async {
       ],
     ),
   );
-  if (action == 'out') await auth.signOut();
+  if (action == 'out') {
+    final ok = await auth.signOut();
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.error ?? tr('No se pudo cerrar la sesión.'))),
+      );
+    }
+  }
   if (action == 'delete' && context.mounted) await _deleteAccount(context);
 }
 

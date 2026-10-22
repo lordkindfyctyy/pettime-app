@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -15,8 +17,25 @@ class FakeAuth implements AuthBackend {
   AuthUser? _user;
   String? resetFor;
 
+  /// Makes signOut fail, like a platform error.
+  bool signOutFails = false;
+
+  final _changes = StreamController<AuthUser?>.broadcast();
+
+  /// The service signs the user out (or in) by itself.
+  void emit(AuthUser? user) {
+    _user = user;
+    _changes.add(user);
+  }
+
   @override
   AuthUser? get currentUser => _user;
+
+  @override
+  Future<AuthUser?> restoreUser() async => _user;
+
+  @override
+  Stream<AuthUser?> get changes => _changes.stream;
 
   @override
   Future<AuthUser> signInWithEmail(String email, String password) async {
@@ -38,7 +57,10 @@ class FakeAuth implements AuthBackend {
   Future<void> sendPasswordReset(String email) async => resetFor = email;
 
   @override
-  Future<void> signOut() async => _user = null;
+  Future<void> signOut() async {
+    if (signOutFails) throw StateError('platform error');
+    _user = null;
+  }
 
   bool deleted = false;
 
@@ -106,6 +128,44 @@ void main() {
       expect(backend.deleted, isTrue);
       expect(auth.signedIn, isFalse);
       expect(auth.showLogin, isTrue);
+    });
+
+    test('restores the user of the last time', () async {
+      final backend = FakeAuth().._user = const AuthUser(uid: 'u1', email: 'a@b.c');
+      final auth = AuthState(backend);
+      await auth.load();
+      expect(auth.signedIn, isTrue);
+      expect(auth.showLogin, isFalse);
+    });
+
+    test('follows the service when it ends the session by itself', () async {
+      final backend = FakeAuth();
+      final auth = AuthState(backend);
+      await auth.load();
+      await auth.signInWithEmail('ana@example.com', 'secreto');
+      expect(auth.signedIn, isTrue);
+
+      // the account was disabled: the service signs the user out
+      backend.emit(null);
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.signedIn, isFalse);
+      expect(auth.showLogin, isTrue);
+    });
+
+    test('a failed sign out keeps the user and says so', () async {
+      final backend = FakeAuth();
+      final auth = AuthState(backend);
+      await auth.load();
+      await auth.signInWithEmail('ana@example.com', 'secreto');
+
+      backend.signOutFails = true;
+      expect(await auth.signOut(), isFalse);
+      expect(auth.signedIn, isTrue);
+      expect(auth.error, isNotNull);
+
+      backend.signOutFails = false;
+      expect(await auth.signOut(), isTrue);
+      expect(auth.signedIn, isFalse);
     });
 
     test('canceling Google is not an error', () async {

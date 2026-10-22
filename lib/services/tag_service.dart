@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_lang.dart';
 import '../models/pet.dart';
 import 'pettime_api.dart';
 
@@ -187,9 +188,17 @@ class TagService extends ChangeNotifier {
       },
     );
     final t = res['tag'] as Map<String, dynamic>;
+    // A new tag always comes with its key; without it this phone could never
+    // edit or turn the page off.
+    final ownerKey = res['ownerKey'] as String? ?? old?.ownerKey;
+    if (ownerKey == null) {
+      throw ApiException(
+        tr('El servidor no devolvió la clave de la chapita. Probá de nuevo.'),
+      );
+    }
     final tag = PetTag(
       code: t['code'] as String,
-      ownerKey: res['ownerKey'] as String? ?? old!.ownerKey,
+      ownerKey: ownerKey,
       url: t['url'] as String,
       contactName: t['contactName'] as String? ?? '',
       contactPhone: t['contactPhone'] as String? ?? '',

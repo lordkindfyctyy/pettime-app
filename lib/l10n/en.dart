@@ -569,4 +569,6 @@ const enStrings = <String, String>{
   'Última copia manual: {date}': 'Last manual backup: {date}',
   'Compartiendo…': 'Sharing…',
   'Buscando…': 'Searching…',
+  'No se pudo cerrar la sesión.': 'Could not sign out.',
+  'El servidor no devolvió la clave de la chapita. Probá de nuevo.': 'The server did not return the tag\'s key. Try again.',
 };

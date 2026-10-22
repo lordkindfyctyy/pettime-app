@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_lang.dart';
 import '../models/pet.dart';
 import '../models/supply.dart';
+import '../services/file_names.dart';
 import '../services/lost_pets_service.dart';
 import '../services/shop_settings.dart';
 import '../services/tag_pdf.dart';
@@ -262,7 +263,7 @@ class _TagViewState extends State<_TagView> {
         final image = await boundary.toImage(pixelRatio: 4);
         final png = await image.toByteData(format: ui.ImageByteFormat.png);
         final dir = await getTemporaryDirectory();
-        final file = File('${dir.path}/QR ${widget.pet.name}.png');
+        final file = File('${dir.path}/${safeFileName('QR ${widget.pet.name}')}.png');
         await file.writeAsBytes(png!.buffer.asUint8List());
         await SharePlus.instance.share(ShareParams(
           files: [XFile(file.path, mimeType: 'image/png')],

@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../l10n/app_lang.dart';
 import '../models/supply.dart';
 import 'vet_report.dart';
+import 'file_names.dart';
 
 /// A sheet to print a pet's tag QR: the same QR in several sizes to cut out
 /// and glue on (or take to have it engraved), and a card with the pet's name.
@@ -21,7 +22,7 @@ class TagPdf {
   static const sizesCm = [4.0, 3.0, 2.5, 2.0];
 
   static String fileName(String petName) =>
-      '${tr('Chapita de {pet}', {'pet': petName})}.pdf';
+      '${safeFileName(tr('Chapita de {pet}', {'pet': petName}))}.pdf';
 
   static Future<Uint8List> build({
     required String petName,

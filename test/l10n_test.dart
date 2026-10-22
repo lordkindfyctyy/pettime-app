@@ -103,6 +103,25 @@ void main() {
     expect(tr('Un texto sin traducir'), 'Un texto sin traducir');
   });
 
+  test('tr() does not replace the marks inside a value again', () {
+    expect(
+      tr('Toma de {name} registrada', {'name': 'X{n}'}),
+      'Toma de X{n} registrada',
+    );
+    expect(
+      tr('{name} y {name2}', {'name': '{name2}', 'name2': 'b'}),
+      '{name2} y b',
+    );
+    // a mark without a value stays as it is
+    expect(tr('Hola {nadie}', {'otro': 1}), 'Hola {nadie}');
+  });
+
+  test('decimals use a comma in Spanish and a point in English', () {
+    expect(localizedDecimal('2.5'), '2,5');
+    AppLang.code = 'en';
+    expect(localizedDecimal('2.5'), '2.5');
+  });
+
   test('the phone language: Spanish stays Spanish, anything else is English', () {
     expect(AppLang.fromSystem('es'), 'es');
     expect(AppLang.fromSystem('en'), 'en');

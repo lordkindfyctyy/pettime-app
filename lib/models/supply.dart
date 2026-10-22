@@ -128,7 +128,7 @@ double? parseAmount(String text) {
 String formatAmount(double value) {
   var s = value.toStringAsFixed(2);
   s = s.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
-  return s.replaceAll('.', ',');
+  return localizedDecimal(s);
 }
 
 /// WhatsApp message to order [supply] for [petName]. It stays in Spanish: the

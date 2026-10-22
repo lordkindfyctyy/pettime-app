@@ -106,5 +106,5 @@ double? parseKm(String text) {
 String formatKm(double km) {
   var s = km.toStringAsFixed(1);
   if (s.endsWith('.0')) s = s.substring(0, s.length - 2);
-  return '${s.replaceAll('.', ',')} km';
+  return '${localizedDecimal(s)} km';
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,6 +15,8 @@ class AuthState extends ChangeNotifier {
   static const skippedKey = 'login_skipped_v1';
 
   final AuthBackend? backend;
+
+  StreamSubscription<AuthUser?>? _changes;
 
   AuthUser? _user;
   AuthUser? get user => _user;
@@ -35,8 +39,23 @@ class AuthState extends ChangeNotifier {
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     _skipped = prefs.getBool(skippedKey) ?? false;
-    _user = backend?.currentUser;
+    _user = await backend?.restoreUser();
+    _changes ??= backend?.changes.listen(_onChanged);
     notifyListeners();
+  }
+
+  /// The service says who is signed in changed (e.g. the account was disabled
+  /// or deleted elsewhere and the session ended).
+  void _onChanged(AuthUser? user) {
+    if (user?.uid == _user?.uid) return;
+    _user = user;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _changes?.cancel();
+    super.dispose();
   }
 
   void clearError() {
@@ -70,8 +89,22 @@ class AuthState extends ChangeNotifier {
     return _guard(() => backend!.sendPasswordReset(email));
   }
 
-  Future<void> signOut() async {
-    await backend?.signOut();
+  /// Signs out. Returns whether it did; if not, [error] says so and the user
+  /// stays signed in.
+  Future<bool> signOut() async {
+    try {
+      await backend?.signOut();
+    } catch (e) {
+      debugPrint('Sign out failed: $e');
+      _error = tr('No se pudo cerrar la sesión.');
+      notifyListeners();
+      return false;
+    }
+    await _forgetUser();
+    return true;
+  }
+
+  Future<void> _forgetUser() async {
     _user = null;
     // Whoever signs out is asked again next time.
     _skipped = false;
@@ -84,7 +117,8 @@ class AuthState extends ChangeNotifier {
   /// says why.
   Future<bool> deleteAccount() async {
     final ok = await _guard(backend!.deleteAccount);
-    if (ok) await signOut();
+    // The account is gone: the phone forgets it even if signing out fails.
+    if (ok) await _forgetUser();
     return ok;
   }
 

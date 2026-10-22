@@ -14,6 +14,7 @@ import '../models/vet_visit.dart';
 import '../models/walk.dart';
 import '../models/weight_entry.dart';
 import 'shop_settings.dart';
+import 'file_names.dart';
 
 /// Fonts and logo of the report. Roboto is embedded because the PDF's
 /// built-in fonts can't write every Spanish character.
@@ -51,7 +52,10 @@ class VetReport {
   static DateFormat get _dayTime => DateFormat('dd/MM/yyyy HH:mm', AppLang.code);
 
   static String fileName(Pet pet, DateTime now) =>
-      tr('Ficha de {name} {date}.pdf', {'name': pet.name, 'date': DateFormat('yyyy-MM-dd').format(now)});
+      safeFileName(tr('Ficha de {name} {date}.pdf', {
+        'name': pet.name,
+        'date': DateFormat('yyyy-MM-dd').format(now),
+      }));
 
   /// Medications still going on at [now], and the ones that already ended.
   static (List<Medication>, List<Medication>) splitMedications(

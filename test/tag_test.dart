@@ -9,6 +9,7 @@ import 'package:http/testing.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:pettime_app/models/pet.dart';
 import 'package:pettime_app/screens/pet_tag_screen.dart';
+import 'package:pettime_app/services/file_names.dart';
 import 'package:pettime_app/services/pettime_api.dart';
 import 'package:pettime_app/services/tag_pdf.dart';
 import 'package:pettime_app/services/tag_service.dart';
@@ -25,6 +26,9 @@ class FakeTagServer {
 
   /// The server cannot be reached.
   bool offline = false;
+
+  /// The server forgets to send the key of a new tag.
+  bool omitKey = false;
 
   late final client = MockClient((request) async {
     if (offline) throw const SocketException('offline');
@@ -53,7 +57,7 @@ class FakeTagServer {
             'lost': field('lost') == '1',
             'url': 'https://sixsevenweb.com/pettime/chapita.php?c=K7Q2M9XP',
           },
-          if (creating) 'ownerKey': 'k3y',
+          if (creating && !omitKey) 'ownerKey': 'k3y',
         }),
         200,
         headers: {'content-type': 'application/json; charset=utf-8'},
@@ -147,6 +151,25 @@ void main() {
     await last.load();
     await last.retryPending();
     expect(server.requests.length, calls);
+  });
+
+  test('a new tag without a key is refused, not stored', () async {
+    final server = FakeTagServer()..omitKey = true;
+    final tags = TagService(api: PetTimeApi(client: server.client, base: 'https://x'));
+    await expectLater(
+      tags.save(pancho(), contactName: 'Lalo', contactPhone: '11 6472-2908'),
+      throwsA(isA<ApiException>()),
+    );
+    expect(tags.of('p1'), isNull);
+  });
+
+  test('file names do not break on / : or similar characters', () {
+    expect(safeFileName('Rocky/Max'), 'Rocky_Max');
+    expect(safeFileName(r'a\b:c*d?e"f<g>h|i'), 'a_b_c_d_e_f_g_h_i');
+    expect(safeFileName('  Luna  '), 'Luna');
+    expect(safeFileName('///'), '___');
+    expect(safeFileName(''), '_');
+    expect(TagPdf.fileName('Rocky/Max'), 'Chapita de Rocky_Max.pdf');
   });
 
   test('the printable sheet is a PDF', () async {

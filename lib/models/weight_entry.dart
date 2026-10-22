@@ -1,3 +1,5 @@
+import '../l10n/app_lang.dart';
+
 /// One weighing of a pet.
 class WeightEntry {
   WeightEntry({required this.id, required this.date, required this.kg});
@@ -31,5 +33,5 @@ double? parseKg(String text) {
 String formatKg(double kg) {
   var s = kg.toStringAsFixed(2);
   s = s.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
-  return '${s.replaceAll('.', ',')} kg';
+  return '${localizedDecimal(s)} kg';
 }
