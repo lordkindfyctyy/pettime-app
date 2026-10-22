@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_lang.dart';
+import '../models/expense.dart';
+import '../services/shop_orders.dart';
 import '../services/shop_service.dart';
 import '../theme.dart';
+import 'cart_screen.dart';
+import 'my_orders_screen.dart';
 
 /// "Tienda": Lo De Lalo's catalog, the same products as on the website,
-/// ordered by WhatsApp.
+/// with a cart that sends the order to the shop (or a question by WhatsApp).
 class ShopScreen extends StatefulWidget {
-  const ShopScreen({super.key, this.service});
+  const ShopScreen({super.key, this.service, this.cart});
 
   final ShopService? service;
+  final ShopCart? cart;
 
   @override
   State<ShopScreen> createState() => _ShopScreenState();
@@ -18,6 +23,7 @@ class ShopScreen extends StatefulWidget {
 
 class _ShopScreenState extends State<ShopScreen> {
   late final _service = widget.service ?? ShopService.instance;
+  late final _cart = widget.cart ?? ShopCart.instance;
   ShopCatalog? _catalog;
   String? _error;
   bool _loading = true;
@@ -30,6 +36,7 @@ class _ShopScreenState extends State<ShopScreen> {
     _service.cached().then((c) {
       if (mounted && c != null && _catalog == null) setState(() => _catalog = c);
     });
+    _cart.load();
     _load();
   }
 
@@ -41,12 +48,19 @@ class _ShopScreenState extends State<ShopScreen> {
     try {
       final catalog = await _service.fetch();
       if (mounted) setState(() => _catalog = catalog);
+      await _cart.load();
+      await _cart.syncWith(catalog);
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
+
+  void _openCart() => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => CartScreen(cart: _cart)),
+      );
 
   void _open(String url) => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 
@@ -92,19 +106,22 @@ class _ShopScreenState extends State<ShopScreen> {
                 Text(p.description),
               ],
               const SizedBox(height: 16),
-              if (shop.whatsapp.isNotEmpty)
+              if (p.inStock) _AddToCart(product: p, cart: _cart),
+              if (shop.whatsapp.isNotEmpty) ...[
+                const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF128C7E)),
                     icon: const Icon(Icons.chat_outlined),
-                    label: Text(p.inStock ? tr('Pedir por WhatsApp') : tr('Consultar por WhatsApp')),
+                    label: Text(tr('Consultar por WhatsApp')),
                     onPressed: () => _whatsApp(
                       shop,
-                      'Hola! Quiero pedir ${p.name} (${p.priceLabel}). Lo vi en PetTime.',
+                      'Hola! Quiero consultar por ${p.name} (${p.priceLabel}). Lo vi en PetTime.',
                     ),
                   ),
                 ),
+              ],
             ],
           ),
         ),
@@ -119,13 +136,52 @@ class _ShopScreenState extends State<ShopScreen> {
       appBar: AppBar(
         title: Text(catalog?.shop.name ?? tr('Tienda')),
         actions: [
-          if (catalog != null && catalog.shop.catalogUrl.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.public),
-              tooltip: tr('Ver el catálogo en la web'),
-              onPressed: () => _open(catalog.shop.catalogUrl),
+          ListenableBuilder(
+            listenable: _cart,
+            builder: (context, _) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_cart.hasOrders)
+                  IconButton(
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    tooltip: tr('Mis pedidos'),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => MyOrdersScreen(cart: _cart)),
+                    ),
+                  ),
+                IconButton(
+                  icon: Badge(
+                    isLabelVisible: _cart.count > 0,
+                    label: Text('${_cart.count}'),
+                    child: const Icon(Icons.shopping_cart_outlined),
+                  ),
+                  tooltip: tr('Carrito'),
+                  onPressed: _openCart,
+                ),
+              ],
             ),
+          ),
         ],
+      ),
+      bottomNavigationBar: ListenableBuilder(
+        listenable: _cart,
+        builder: (context, _) => _cart.isEmpty
+            ? const SizedBox.shrink()
+            : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                    icon: const Icon(Icons.shopping_cart_checkout),
+                    label: Text(tr('Ver carrito ({count}) · {total}', {
+                      'count': _cart.count,
+                      'total': formatMoney(_cart.total),
+                    })),
+                    onPressed: _openCart,
+                  ),
+                ),
+              ),
       ),
       body: RefreshIndicator(
         onRefresh: _load,
@@ -375,4 +431,63 @@ class _Tag extends StatelessWidget {
           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
         ),
       );
+}
+
+/// Quantity and "Agregar al carrito" in the product sheet.
+class _AddToCart extends StatefulWidget {
+  const _AddToCart({required this.product, required this.cart});
+
+  final ShopProduct product;
+  final ShopCart cart;
+
+  @override
+  State<_AddToCart> createState() => _AddToCartState();
+}
+
+class _AddToCartState extends State<_AddToCart> {
+  late final _inCart = widget.cart.lineFor(widget.product.id);
+  late double _quantity = _inCart?.quantity ?? 1;
+
+  double get _step => widget.product.byWeight ? 0.5 : 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.product;
+    return Column(
+      children: [
+        Row(
+          children: [
+            QuantityStepper(
+              label: formatCartQuantity(_quantity, byWeight: p.byWeight),
+              onMinus: _quantity > _step ? () => setState(() => _quantity -= _step) : null,
+              onPlus: _quantity < 999 ? () => setState(() => _quantity += _step) : null,
+            ),
+            const Spacer(),
+            Text(
+              formatMoney(p.price * _quantity),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            icon: const Icon(Icons.add_shopping_cart),
+            label: Text(_inCart == null ? tr('Agregar al carrito') : tr('Actualizar el carrito')),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              await widget.cart.add(p, _quantity, replace: true);
+              if (!context.mounted) return;
+              Navigator.pop(context);
+              messenger.showSnackBar(SnackBar(
+                content: Text(tr('Agregado al carrito: {name}', {'name': p.name})),
+                duration: const Duration(seconds: 2),
+              ));
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
