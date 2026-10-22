@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "446525904671",
+    "project_id": "pettime-511919",
+    "storage_bucket": "pettime-511919.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:446525904671:android:d94c7edf8c4d8d68d8822a",
+        "android_client_info": {
+          "package_name": "com.mascotas.pettime_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "446525904671-s00am4a5dpepvrjet83rg8pjoujo67hc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDo5eBMa5OyEPPMxnSAxuGbGNLtfIBeeWc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "446525904671-e0qg5gipu2nkm6sjmh071mnlg17uokv5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
