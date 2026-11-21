@@ -19,6 +19,9 @@ class PetTag {
     required this.contactName,
     required this.contactPhone,
     required this.message,
+    this.food = '',
+    this.conditions = '',
+    this.medications = '',
     required this.lost,
   });
 
@@ -36,28 +39,40 @@ class PetTag {
   /// What the family wants the finder to know (medicines, …).
   final String message;
 
+  /// Shown on the page under "what you should know about me": what it eats,
+  /// health conditions and medications (also what an NFC tag on the collar opens).
+  final String food;
+  final String conditions;
+  final String medications;
+
   /// Marked as lost: the page says so in big letters.
   final bool lost;
 
   factory PetTag.fromJson(Map<String, dynamic> json) => PetTag(
-        code: json['code'] as String,
-        ownerKey: json['ownerKey'] as String,
-        url: json['url'] as String,
-        contactName: json['contactName'] as String? ?? '',
-        contactPhone: json['contactPhone'] as String? ?? '',
-        message: json['message'] as String? ?? '',
-        lost: json['lost'] as bool? ?? false,
-      );
+    code: json['code'] as String,
+    ownerKey: json['ownerKey'] as String,
+    url: json['url'] as String,
+    contactName: json['contactName'] as String? ?? '',
+    contactPhone: json['contactPhone'] as String? ?? '',
+    message: json['message'] as String? ?? '',
+    food: json['food'] as String? ?? '',
+    conditions: json['conditions'] as String? ?? '',
+    medications: json['medications'] as String? ?? '',
+    lost: json['lost'] as bool? ?? false,
+  );
 
   Map<String, dynamic> toJson() => {
-        'code': code,
-        'ownerKey': ownerKey,
-        'url': url,
-        'contactName': contactName,
-        'contactPhone': contactPhone,
-        'message': message,
-        'lost': lost,
-      };
+    'code': code,
+    'ownerKey': ownerKey,
+    'url': url,
+    'contactName': contactName,
+    'contactPhone': contactPhone,
+    'message': message,
+    'food': food,
+    'conditions': conditions,
+    'medications': medications,
+    'lost': lost,
+  };
 }
 
 /// The tags of this phone's pets, by pet id. Kept on the phone (like the
@@ -166,6 +181,9 @@ class TagService extends ChangeNotifier {
     required String contactName,
     required String contactPhone,
     String message = '',
+    String food = '',
+    String conditions = '',
+    String medications = '',
     bool lost = false,
   }) async {
     final old = _tags[pet.id];
@@ -178,6 +196,9 @@ class TagService extends ChangeNotifier {
         'contactName': contactName.trim(),
         'contactPhone': contactPhone.trim(),
         'message': message.trim(),
+        'food': food.trim(),
+        'conditions': conditions.trim(),
+        'medications': medications.trim(),
         'lost': lost ? '1' : '0',
         if (old != null) 'code': old.code,
         if (old != null) 'ownerKey': old.ownerKey,
@@ -203,6 +224,10 @@ class TagService extends ChangeNotifier {
       contactName: t['contactName'] as String? ?? '',
       contactPhone: t['contactPhone'] as String? ?? '',
       message: t['message'] as String? ?? '',
+      // An older server doesn't send them back: keep what was typed
+      food: t['food'] as String? ?? food.trim(),
+      conditions: t['conditions'] as String? ?? conditions.trim(),
+      medications: t['medications'] as String? ?? medications.trim(),
       lost: t['lost'] as bool? ?? false,
     );
     _tags[pet.id] = tag;
@@ -218,6 +243,9 @@ class TagService extends ChangeNotifier {
       contactName: tag.contactName,
       contactPhone: tag.contactPhone,
       message: tag.message,
+      food: tag.food,
+      conditions: tag.conditions,
+      medications: tag.medications,
       lost: lost,
     );
   }

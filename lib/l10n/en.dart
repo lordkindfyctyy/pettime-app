@@ -27,7 +27,8 @@ const enStrings = <String, String>{
   '¡Se perdió {title}!': '{title} is lost!',
   'Se encontró esta mascota': 'This pet was found',
   'Zona: {zone}': 'Area: {zone}',
-  'Contacto por WhatsApp: https://wa.me/{contactPhone}': 'Contact on WhatsApp: https://wa.me/{contactPhone}',
+  'Contacto por WhatsApp: https://wa.me/{contactPhone}':
+      'Contact on WhatsApp: https://wa.me/{contactPhone}',
   'cada {m} min': 'every {m} min',
   'cada {h} h': 'every {h} h',
   'cada {h} h {m} min': 'every {h} h {m} min',
@@ -46,20 +47,26 @@ const enStrings = <String, String>{
   '{h} h {m} min': '{h} h {m} min',
   'No se pudo armar la copia: {e}': 'Could not create the backup: {e}',
   'Copia de seguridad de PetTime': 'PetTime backup',
-  'Copia de seguridad de PetTime. Para restaurarla: PetTime → Mascotas → ⋮ → Copia de seguridad → Restaurar.': 'PetTime backup. To restore it: PetTime → Pets → ⋮ → Backup → Restore.',
+  'Copia de seguridad de PetTime. Para restaurarla: PetTime → Mascotas → ⋮ → Copia de seguridad → Restaurar.':
+      'PetTime backup. To restore it: PetTime → Pets → ⋮ → Backup → Restore.',
   'Copia guardada en Descargas: {saved}': 'Backup saved to Downloads: {saved}',
   'Guardar la copia de PetTime': 'Save the PetTime backup',
   'Copia guardada': 'Backup saved',
   'Elegí la copia de PetTime': 'Choose the PetTime backup',
   'No se pudo abrir el archivo.': 'Could not open the file.',
-  'No hay ninguna copia de PetTime en tu Google Drive.': 'There is no PetTime backup in your Google Drive.',
-  'No se pudo bajar la copia de Drive: {e}': 'Could not download the backup from Drive: {e}',
-  'Copia automática activada y guardada en Drive': 'Automatic backup turned on and saved to Drive',
-  'No se pudo conectar con Google Drive: {e}': 'Could not connect to Google Drive: {e}',
+  'No hay ninguna copia de PetTime en tu Google Drive.':
+      'There is no PetTime backup in your Google Drive.',
+  'No se pudo bajar la copia de Drive: {e}':
+      'Could not download the backup from Drive: {e}',
+  'Copia automática activada y guardada en Drive':
+      'Automatic backup turned on and saved to Drive',
+  'No se pudo conectar con Google Drive: {e}':
+      'Could not connect to Google Drive: {e}',
   '¿Restaurar la copia?': 'Restore the backup?',
   'La copia tiene {count}: {names}.': 'The backup has {count}: {names}.',
   'Se cargan en este celular.': 'They will be loaded on this phone.',
-  'Reemplaza lo que hay ahora en este celular ({count}).': 'It replaces what is on this phone now ({count}).',
+  'Reemplaza lo que hay ahora en este celular ({count}).':
+      'It replaces what is on this phone now ({count}).',
   'Cancelar': 'Cancel',
   'Restaurar': 'Restore',
   'Copia restaurada': 'Backup restored',
@@ -70,30 +77,37 @@ const enStrings = <String, String>{
   'Incluye las mascotas con sus fotos, la medicación, las tomas dadas, los turnos y la libreta de vacunas.': 'It includes the pets with their photos, medication, doses given, appointments and the vaccine booklet.',
   'Copia automática en Google Drive': 'Automatic backup to Google Drive',
   'Activada': 'On',
-  'Se guarda sola una vez por día, cuando abrís la app': 'Saved automatically once a day, when you open the app',
+  'Se guarda sola una vez por día, cuando abrís la app':
+      'Saved automatically once a day, when you open the app',
   'Restaurar desde Google Drive': 'Restore from Google Drive',
   'Por ejemplo, en un celular nuevo': 'For example, on a new phone',
-  'Todavía no hiciste ninguna copia manual.': 'You haven\'t made a manual backup yet.',
+  'Todavía no hiciste ninguna copia manual.':
+      'You haven\'t made a manual backup yet.',
   'Guardar en Descargas': 'Save to Downloads',
   'Compartir copia (WhatsApp, mail…)': 'Share backup (WhatsApp, email…)',
   'Restaurar una copia': 'Restore a backup',
-  'Marcá un síntoma, escribí algo o agregá una foto': 'Tick a symptom, write something or add a photo',
+  'Marcá un síntoma, escribí algo o agregá una foto':
+      'Tick a symptom, write something or add a photo',
   '¿Borrar la anotación del diario del {n}?': 'Delete the diary entry of {n}?',
-  'Se borran también sus fotos. No se puede deshacer.': 'Its photos are deleted too. This cannot be undone.',
+  'Se borran también sus fotos. No se puede deshacer.':
+      'Its photos are deleted too. This cannot be undone.',
   'Borrar': 'Delete',
   'Anotar en el diario': 'Add to the diary',
   'Editar anotación': 'Edit entry',
   'Cuándo': 'When',
   '¿Qué le notaste?': 'What did you notice?',
   'Qué pasó': 'What happened',
-  'Vomitó dos veces a la mañana, después comió bien…': 'Vomited twice in the morning, then ate well…',
+  'Vomitó dos veces a la mañana, después comió bien…':
+      'Vomited twice in the morning, then ate well…',
   'Fotos': 'Photos',
   'Quitar foto': 'Remove photo',
-  'Las fotos quedan solo en este celular; lo escrito le llega a todos.': 'Photos stay only on this phone; what you write reaches everyone.',
+  'Las fotos quedan solo en este celular; lo escrito le llega a todos.':
+      'Photos stay only on this phone; what you write reaches everyone.',
   'Guardar': 'Save',
   '{months} meses': '{months} months',
   '¿Eliminar {name}?': 'Delete {name}?',
-  'Se borra de la libreta y deja de avisar.': 'It is removed from the booklet and stops reminding you.',
+  'Se borra de la libreta y deja de avisar.':
+      'It is removed from the booklet and stops reminding you.',
   'Eliminar': 'Delete',
   'Nueva aplicación': 'New application',
   'Editar': 'Edit',
@@ -104,13 +118,15 @@ const enStrings = <String, String>{
   'Próxima dosis': 'Next dose',
   'Sin próxima': 'No next one',
   'Sin próxima dosis': 'No next dose',
-  'Te avisamos 3 días antes y el mismo día · {n}': 'We remind you 3 days before and on the day · {n}',
+  'Te avisamos 3 días antes y el mismo día · {n}':
+      'We remind you 3 days before and on the day · {n}',
   'Notas': 'Notes',
   'Marca, lote, veterinaria…': 'Brand, batch, vet…',
   'Mascotas': 'Pets',
   'Perdidas': 'Lost',
   'Tienda': 'Shop',
-  'Te mandamos un email para elegir otra contraseña.': 'We sent you an email to choose a new password.',
+  'Te mandamos un email para elegir otra contraseña.':
+      'We sent you an email to choose a new password.',
   'Cuenta': 'Account',
   'Crear cuenta': 'Create account',
   'Iniciar sesión': 'Sign in',
@@ -135,10 +151,12 @@ const enStrings = <String, String>{
   'No hay avisos por ahora. Si se perdió tu mascota o encontraste una, publicá un aviso.': 'There are no notices right now. If your pet is lost or you found one, post a notice.',
   '¿Borrar el aviso?': 'Delete the notice?',
   '¿Denunciar el aviso?': 'Report the notice?',
-  'Deja de verse en la app y en la web.': 'It stops showing in the app and on the web.',
+  'Deja de verse en la app y en la web.':
+      'It stops showing in the app and on the web.',
   'Si es falso, ofensivo o no es de una mascota, avisanos. Con varias denuncias se oculta.': 'If it is fake, offensive or not about a pet, let us know. With several reports it is hidden.',
   'Denunciar': 'Report',
-  '¡Qué bueno! El aviso ya no se muestra.': 'Great! The notice is no longer shown.',
+  '¡Qué bueno! El aviso ya no se muestra.':
+      'Great! The notice is no longer shown.',
   'El aviso se muestra de nuevo.': 'The notice is shown again.',
   'Aviso borrado.': 'Notice deleted.',
   'Gracias, lo vamos a revisar.': 'Thanks, we will review it.',
@@ -151,9 +169,11 @@ const enStrings = <String, String>{
   'Mostrar de nuevo': 'Show again',
   'Borrar aviso': 'Delete notice',
   'WhatsApp a {contactName}': 'WhatsApp {contactName}',
-  'Todavía no publicaste avisos desde este celular.': 'You haven\'t posted any notices from this phone yet.',
+  'Todavía no publicaste avisos desde este celular.':
+      'You haven\'t posted any notices from this phone yet.',
   'Agregá al menos una foto de la mascota': 'Add at least one photo of the pet',
-  'Aviso publicado. Se ve en la app y en sixsevenweb.com': 'Notice posted. It shows in the app and on sixsevenweb.com',
+  'Aviso publicado. Se ve en la app y en sixsevenweb.com':
+      'Notice posted. It shows in the app and on sixsevenweb.com',
   'Se perdió': 'Lost',
   'La encontré': 'I found one',
   'Fotos (hasta {maxPhotos})': 'Photos (up to {maxPhotos})',
@@ -166,16 +186,19 @@ const enStrings = <String, String>{
   'Perro, gato…': 'Dog, cat…',
   'Raza o color': 'Breed or color',
   'Descripción': 'Description',
-  'Collar, señas, si es mansa o asustadiza…': 'Collar, markings, whether it is tame or skittish…',
+  'Collar, señas, si es mansa o asustadiza…':
+      'Collar, markings, whether it is tame or skittish…',
   'Cuándo se perdió': 'When it got lost',
   'Cuándo la viste': 'When you saw it',
   'EEEE d \'de\' MMMM, HH:mm': 'EEEE, MMMM d, HH:mm',
   'Zona': 'Area',
-  'Barrio y calles, ej. Villa Ballester, Pueyrredón y Alvear': 'Neighborhood and streets, e.g. Main St and 5th Ave',
+  'Barrio y calles, ej. Villa Ballester, Pueyrredón y Alvear':
+      'Neighborhood and streets, e.g. Main St and 5th Ave',
   'Indicá la zona': 'Enter the area',
   'Tu nombre (opcional)': 'Your name (optional)',
   'Tu WhatsApp': 'Your WhatsApp',
-  'Ingresá tu WhatsApp con código de área': 'Enter your WhatsApp with area code',
+  'Ingresá tu WhatsApp con código de área':
+      'Enter your WhatsApp with area code',
   'El aviso es público: se ve en PetTime y en sixsevenweb.com durante 60 días. No pongas tu dirección exacta.': 'The notice is public: it shows in PetTime and on sixsevenweb.com for 60 days. Don\'t put your exact address.',
   'Nueva medicación': 'New medication',
   'Editar medicación': 'Edit medication',
@@ -199,14 +222,17 @@ const enStrings = <String, String>{
   'Mascota': 'Pet',
   'Armando la ficha…': 'Preparing the record…',
   'Ficha de {name}': '{name}\'s record',
-  'Ficha de {name} para el veterinario, hecha con PetTime.': '{name}\'s record for the vet, made with PetTime.',
+  'Ficha de {name} para el veterinario, hecha con PetTime.':
+      '{name}\'s record for the vet, made with PetTime.',
   'No se pudo armar la ficha: {e}': 'Could not prepare the record: {e}',
   'Ficha para el veterinario': 'Record for the vet',
   'Editar ficha': 'Edit record',
   '¿Eliminar a {name}?': 'Delete {name}?',
-  'Se borra la ficha y su medicación.': 'The record and its medication are deleted.',
+  'Se borra la ficha y su medicación.':
+      'The record and its medication are deleted.',
   'Se borra la ficha y su medicación, y se deja de compartir: la familia se queda con su copia.': 'The record and its medication are deleted and sharing stops: the family keeps its copy.',
-  'Se borra de este celular. La familia la sigue teniendo.': 'It is deleted from this phone. The family still has it.',
+  'Se borra de este celular. La familia la sigue teniendo.':
+      'It is deleted from this phone. The family still has it.',
   'Mi cuidado': 'My care',
   'Compartir con la familia': 'Share with the family',
   'Dejar con un cuidador': 'Leave with a caregiver',
@@ -226,7 +252,8 @@ const enStrings = <String, String>{
   'Anotar': 'Add',
   'Reposición': 'Restock',
   'Agregar': 'Add',
-  'Cargá el alimento o los remedios y te avisamos antes de que se terminen': 'Add the food or medicines and we\'ll warn you before they run out',
+  'Cargá el alimento o los remedios y te avisamos antes de que se terminen':
+      'Add the food or medicines and we\'ll warn you before they run out',
   'Gastos': 'Expenses',
   'Gasto': 'Expense',
   'Medicación': 'Medication',
@@ -239,7 +266,8 @@ const enStrings = <String, String>{
   'Anteriores': 'Past',
   'Ver en Google Maps': 'View in Google Maps',
   'Eliminar turno': 'Delete appointment',
-  'el turno de {toLowerCase} {clinic} del {n}': 'the {toLowerCase} appointment at {clinic} on {n}',
+  'el turno de {toLowerCase} {clinic} del {n}':
+      'the {toLowerCase} appointment at {clinic} on {n}',
   'Nueva mascota': 'New pet',
   'Ingresá un nombre': 'Enter a name',
   'Especie (perro, gato…)': 'Species (dog, cat…)',
@@ -255,7 +283,8 @@ const enStrings = <String, String>{
   'Perdidas en la web': 'Lost pets on the web',
   'Buscar alimento, piedras, juguetes…': 'Search food, litter, toys…',
   'Todo': 'All',
-  'Sin conexión: mostramos el catálogo guardado.': 'Offline: showing the saved catalog.',
+  'Sin conexión: mostramos el catálogo guardado.':
+      'Offline: showing the saved catalog.',
   'No hay productos que coincidan': 'No matching products',
   'Sin stock': 'Out of stock',
   'Deja de avisar cuando se termine.': 'Stops reminding you when it runs out.',
@@ -274,7 +303,8 @@ const enStrings = <String, String>{
   'Avisar antes': 'Warn before',
   '{days} días': '{days} days',
   'Dura {n} días: se termina el {n2}': 'Lasts {n} days: runs out on {n2}',
-  'Te avisamos el {n} y el día que se termina.': 'We\'ll warn you on {n} and on the day it runs out.',
+  'Te avisamos el {n} y el día que se termina.':
+      'We\'ll warn you on {n} and on the day it runs out.',
   'Medicación · todo dado ✓': 'Medication · all given ✓',
   'Medicación · faltan {left}': 'Medication · {left} left',
   'Dada a las {n}': 'Given at {n}',
@@ -287,56 +317,79 @@ const enStrings = <String, String>{
   'Por reponer': 'To restock',
   'Registrar que se aplicó': 'Log that it was given',
   'EEEE d \'de\' MMMM': 'EEEE, MMMM d',
-  'Agregá tu primera mascota en la pestaña Mascotas': 'Add your first pet in the Pets tab',
+  'Agregá tu primera mascota en la pestaña Mascotas':
+      'Add your first pet in the Pets tab',
   'No hay nada para hoy 🎉': 'Nothing for today 🎉',
   'Nuevo turno': 'New appointment',
   'Editar turno': 'Edit appointment',
   'Ingresá el nombre del lugar': 'Enter the name of the place',
   'Dirección o link de Google Maps': 'Address or Google Maps link',
-  'Calle y número, o pegá el link del lugar': 'Street and number, or paste the place\'s link',
+  'Calle y número, o pegá el link del lugar':
+      'Street and number, or paste the place\'s link',
   'Fecha y hora': 'Date and time',
   'Motivo': 'Reason',
   'Control, vacuna, baño y corte…': 'Check-up, vaccine, bath and trim…',
   'El email no es válido.': 'The email is not valid.',
   'Email o contraseña incorrectos.': 'Wrong email or password.',
-  'Ya hay una cuenta con ese email.': 'There is already an account with that email.',
-  'La contraseña es muy débil: usá al menos 6 caracteres.': 'The password is too weak: use at least 6 characters.',
+  'Ya hay una cuenta con ese email.':
+      'There is already an account with that email.',
+  'La contraseña es muy débil: usá al menos 6 caracteres.':
+      'The password is too weak: use at least 6 characters.',
   'Esta cuenta está deshabilitada.': 'This account is disabled.',
   'No hay conexión a internet.': 'There is no internet connection.',
-  'Demasiados intentos. Probá de nuevo en un rato.': 'Too many attempts. Try again in a while.',
+  'Demasiados intentos. Probá de nuevo en un rato.':
+      'Too many attempts. Try again in a while.',
   'No se pudo iniciar sesión ({code}).': 'Could not sign in ({code}).',
   'No se pudo iniciar sesión.': 'Could not sign in.',
   'El archivo no es una copia de PetTime.': 'The file is not a PetTime backup.',
-  'Hay que volver a conectar Google Drive.': 'Google Drive has to be connected again.',
+  'Hay que volver a conectar Google Drive.':
+      'Google Drive has to be connected again.',
   'Ese código de cuidador ya no sirve.': 'That caregiver code no longer works.',
-  'Ese código de cuidador no existe. Revisalo o pedí uno nuevo.': 'That caregiver code doesn\'t exist. Check it or ask for a new one.',
+  'Ese código de cuidador no existe. Revisalo o pedí uno nuevo.':
+      'That caregiver code doesn\'t exist. Check it or ask for a new one.',
   'Ese código de cuidador ya venció.': 'That caregiver code has expired.',
-  '{name} ya está compartida en este celular.': '{name} is already shared on this phone.',
-  '{name} ya está en este celular: la compartiste desde acá.': '{name} is already on this phone: you shared it from here.',
-  'Cargá el nombre o la dirección del lugar': 'Enter the name or address of the place',
+  '{name} ya está compartida en este celular.':
+      '{name} is already shared on this phone.',
+  '{name} ya está en este celular: la compartiste desde acá.':
+      '{name} is already on this phone: you shared it from here.',
+  'Cargá el nombre o la dirección del lugar':
+      'Enter the name or address of the place',
   'No se pudo abrir Google Maps': 'Could not open Google Maps',
-  'Avisos para dar la medicación a tus mascotas': 'Reminders to give your pets their medication',
+  'Avisos para dar la medicación a tus mascotas':
+      'Reminders to give your pets their medication',
   'Dada ✓': 'Given ✓',
   'Medicación de {name}': '{name}\'s medication',
-  'Es hora de darle {name}{dose} a {name2}': 'Time to give {name2} {name}{dose}',
-  '¿Ya le diste {name}{dose} a {name2}? Era a las {n}:{n2}': 'Did you already give {name2} {name}{dose}? It was at {n}:{n2}',
+  'Es hora de darle {name}{dose} a {name2}':
+      'Time to give {name2} {name}{dose}',
+  '¿Ya le diste {name}{dose} a {name2}? Era a las {n}:{n2}':
+      'Did you already give {name2} {name}{dose}? It was at {n}:{n2}',
   '{kind} de {name}': '{name}\'s {kind}',
   'En {daysBefore} días': 'In {daysBefore} days',
   '{when} le toca {name} a {name2}': '{when} {name2} is due for {name}',
-  'Avisos de vacunas y antiparasitarios por vencer': 'Reminders of vaccines and antiparasitics coming due',
+  'Avisos de vacunas y antiparasitarios por vencer':
+      'Reminders of vaccines and antiparasitics coming due',
   'Reponer {toLowerCase} de {name}': 'Restock {toLowerCase} for {name}',
-  'Hoy se termina {name}. Pedilo desde PetTime.': '{name} runs out today. Order it from PetTime.',
-  'Quedan unos {warnDaysBefore} días de {name}. Pedilo desde PetTime.': 'About {warnDaysBefore} days of {name} left. Order it from PetTime.',
-  'Avisos de alimento y remedios por terminarse': 'Reminders of food and medicines running out',
+  'Hoy se termina {name}. Pedilo desde PetTime.':
+      '{name} runs out today. Order it from PetTime.',
+  'Quedan unos {warnDaysBefore} días de {name}. Pedilo desde PetTime.':
+      'About {warnDaysBefore} days of {name} left. Order it from PetTime.',
+  'Avisos de alimento y remedios por terminarse':
+      'Reminders of food and medicines running out',
   'Paseo de {name}': '{name}\'s walk',
-  '¿{name} ya salió a pasear hoy? Si salió, anotalo en PetTime.': 'Has {name} gone for a walk today? If so, log it in PetTime.',
-  'Avisos cuando una mascota todavía no salió a pasear': 'Reminders when a pet hasn\'t gone for a walk yet',
+  '¿{name} ya salió a pasear hoy? Si salió, anotalo en PetTime.':
+      'Has {name} gone for a walk today? If so, log it in PetTime.',
+  'Avisos cuando una mascota todavía no salió a pasear':
+      'Reminders when a pet hasn\'t gone for a walk yet',
   'Terminó el cuidado de {name}': 'Care of {name} has ended',
-  'Gracias por cuidar a {name}. Ya no está en tu PetTime.': 'Thanks for caring for {name}. It is no longer in your PetTime.',
+  'Gracias por cuidar a {name}. Ya no está en tu PetTime.':
+      'Thanks for caring for {name}. It is no longer in your PetTime.',
   'Cuidado de mascotas': 'Pet care',
-  'Avisos de cuando termina el cuidado de una mascota': 'Reminders for when the care of a pet ends',
-  'El servidor no responde. Probá de nuevo en un rato.': 'The server is not responding. Try again in a while.',
-  'Algo salió mal en el servidor. Probá de nuevo en un rato.': 'Something went wrong on the server. Try again in a while.',
+  'Avisos de cuando termina el cuidado de una mascota':
+      'Reminders for when the care of a pet ends',
+  'El servidor no responde. Probá de nuevo en un rato.':
+      'The server is not responding. Try again in a while.',
+  'Algo salió mal en el servidor. Probá de nuevo en un rato.':
+      'Something went wrong on the server. Try again in a while.',
   'No se pudo bajar la foto.': 'Could not download the photo.',
   '{price} el kg': '{price} per kg',
   'Promo': 'Promo',
@@ -356,7 +409,8 @@ const enStrings = <String, String>{
   'Última toma': 'Last dose',
   'Medicación anterior': 'Past medication',
   'Tomas dadas': 'Doses given',
-  'No hay vacunas ni antiparasitarios cargados.': 'No vaccines or antiparasitics added.',
+  'No hay vacunas ni antiparasitarios cargados.':
+      'No vaccines or antiparasitics added.',
   'Aplicada': 'Applied',
   'Próxima': 'Next',
   'Fecha': 'Date',
@@ -369,12 +423,14 @@ const enStrings = <String, String>{
   'Nacimiento': 'Birth',
   'Peso actual': 'Current weight',
   '{kg} (el {date})': '{kg} (on {date})',
-  'Escribí tu email para recuperar la contraseña.': 'Enter your email to recover the password.',
+  'Escribí tu email para recuperar la contraseña.':
+      'Enter your email to recover the password.',
   'Cerrar': 'Close',
   'Cerrar sesión': 'Sign out',
   'hasta el {n}': 'until {n}',
   'Te dejo a {name} en PetTime {n}: vas a ver sus remedios, vacunas, turnos y paseos, y te avisa cuándo darle cada cosa.\n\n1. Instalá PetTime: https://sixsevenweb.com/pettime/\n2. En "Mascotas" tocá ⋮ → "Unirme con un código"\n3. Copiá este mensaje y tocá "Pegar", o escribí el código: {code}\n\nCuando termine, {name2} desaparece de tu PetTime.': 'I\'m leaving {name} with you in PetTime {n}: you will see their medicines, vaccines, appointments and walks, and it will tell you when to give each thing.\n\n1. Install PetTime: https://sixsevenweb.com/pettime/\n2. In "Pets" tap ⋮ → "Join with a code"\n3. Copy this message and tap "Paste", or type the code: {code}\n\nWhen it ends, {name2} disappears from your PetTime.',
-  'No hay internet: el código va a funcionar cuando PetTime se sincronice.': 'No internet: the code will work once PetTime syncs.',
+  'No hay internet: el código va a funcionar cuando PetTime se sincronice.':
+      'No internet: the code will work once PetTime syncs.',
   '¿Terminar el cuidado de {name}?': 'End the care of {name}?',
   '{name} sale del celular de {name2} la próxima vez que se conecte. Lo que anotó queda acá.': '{name} leaves {name2}\'s phone the next time it connects. What they logged stays here.',
   'Terminar': 'End',
@@ -403,13 +459,15 @@ const enStrings = <String, String>{
   'Todavía no registraste ninguna toma': 'You haven\'t logged any dose yet',
   'Quitar toma': 'Remove dose',
   'la toma de {name} del {n}': 'the dose of {name} on {n}',
-  'Queda como no dada. No se puede deshacer.': 'It goes back to not given. This cannot be undone.',
+  'Queda como no dada. No se puede deshacer.':
+      'It goes back to not given. This cannot be undone.',
   'el gasto de {n} ({label})': 'the expense of {n} ({label})',
   'Gasto en {name}': 'Expense for {name}',
   'Monto': 'Amount',
   'Ingresá cuánto gastaste': 'Enter how much you spent',
   'Detalle (opcional)': 'Details (optional)',
-  'Royal Canin 15 kg, consulta, vacuna…': 'Royal Canin 15 kg, consultation, vaccine…',
+  'Royal Canin 15 kg, consulta, vacuna…':
+      'Royal Canin 15 kg, consultation, vaccine…',
   'Anotá lo que gastás en {name}: alimento, veterinaria, remedios… y te mostramos cuánto es por mes.': 'Log what you spend on {name}: food, vet, medicines… and we\'ll show you how much it is per month.',
   'Este mes': 'This month',
   'El mes pasado: {n}': 'Last month: {n}',
@@ -419,13 +477,16 @@ const enStrings = <String, String>{
   'Sumate a {name} en PetTime: así los dos vemos y marcamos sus remedios, vacunas y turnos.\n\n1. Instalá PetTime: https://sixsevenweb.com/pettime/\n2. En "Mascotas" tocá ⋮ → "Unirme con un código"\n3. Copiá este mensaje y tocá "Pegar", o escribí el código: {displayCode}': 'Join {name} in PetTime: that way we both see and mark their medicines, vaccines and appointments.\n\n1. Install PetTime: https://sixsevenweb.com/pettime/\n2. In "Pets" tap ⋮ → "Join with a code"\n3. Copy this message and tap "Paste", or type the code: {displayCode}',
   'Compartir a {name} con la familia': 'Share {name} with the family',
   'Terminó tu cuidado de {name}. Sale de este celular cuando se envíen tus últimos cambios.': 'Your care of {name} has ended. It leaves this phone when your last changes are sent.',
-  'Cuidás a {name} {n}. Lo que marques le llega a su familia.': 'You are caring for {name} {n}. What you mark reaches their family.',
-  'Hay cambios por enviar (se envían al tener internet)': 'There are changes to send (sent when you have internet)',
+  'Cuidás a {name} {n}. Lo que marques le llega a su familia.':
+      'You are caring for {name} {n}. What you mark reaches their family.',
+  'Hay cambios por enviar (se envían al tener internet)':
+      'There are changes to send (sent when you have internet)',
   'Al día con la familia': 'Up to date with the family',
   'Sincronizar ahora': 'Sync now',
   'Listo': 'Done',
   '¿Terminar el cuidado ahora?': 'End the care now?',
-  '{name} sale de este celular. Lo que anotaste ya le llegó a su familia.': '{name} leaves this phone. What you logged already reached their family.',
+  '{name} sale de este celular. Lo que anotaste ya le llegó a su familia.':
+      '{name} leaves this phone. What you logged already reached their family.',
   'Terminar el cuidado ahora': 'End the care now',
   'Los que se sumen con el código ven a la mascota en su PetTime y pueden marcar las tomas, cargar vacunas, turnos y gastos. Los cambios de cada uno les llegan a todos, y todos reciben los avisos de los remedios.': 'Those who join with the code see the pet in their PetTime and can mark doses and add vaccines, appointments and expenses. Everyone\'s changes reach everybody, and everyone gets the medicine reminders.',
   'Para eso la mascota se guarda en sixsevenweb.com. Pasale el código solo a quien quieras.': 'For that, the pet is stored on sixsevenweb.com. Give the code only to whoever you want.',
@@ -436,17 +497,20 @@ const enStrings = <String, String>{
   'Dejar de compartir': 'Stop sharing',
   'Ya no se comparte': 'No longer shared',
   '¿Dejar de recibir cambios?': 'Stop receiving changes?',
-  '{name} queda en este celular, pero ya no se sincroniza con la familia.': '{name} stays on this phone, but is no longer synced with the family.',
+  '{name} queda en este celular, pero ya no se sincroniza con la familia.':
+      '{name} stays on this phone, but is no longer synced with the family.',
   'Dejar de recibir': 'Stop receiving',
   'Dejar de recibir cambios': 'Stop receiving changes',
   'No hay ningún código copiado. Copiá el mensaje que te mandaron y volvé a tocar "Pegar".': 'There is no copied code. Copy the message you were sent and tap "Paste" again.',
-  'El código de la familia tiene 8 letras y números, el de un cuidador 12': 'A family code has 8 letters and numbers, a caregiver\'s has 12',
+  'El código de la familia tiene 8 letras y números, el de un cuidador 12':
+      'A family code has 8 letters and numbers, a caregiver\'s has 12',
   'Copiá el mensaje que te mandaron y tocá "Pegar", o escribí el código: el de la familia o el de cuidador.': 'Copy the message you were sent and tap "Paste", or type the code: the family\'s or the caregiver\'s.',
   'Pegar': 'Paste',
   'Código': 'Code',
   'K7Q2-M9XP': 'K7Q2-M9XP',
   'Unirme': 'Join',
-  'Sin vacunas ni antiparasitarios cargados': 'No vaccines or antiparasitics added',
+  'Sin vacunas ni antiparasitarios cargados':
+      'No vaccines or antiparasitics added',
   '{label} · aplicada {n}': '{label} · applied {n}',
   'Próxima: {n} · {n2}': 'Next: {n} · {n2}',
   'Automático (idioma del celular)': 'Automatic (phone language)',
@@ -459,7 +523,8 @@ const enStrings = <String, String>{
   'Dada ahora': 'Given now',
   'Eliminar medicación': 'Delete medication',
   'la medicación {name}': 'the medication {name}',
-  'Se borran también sus alarmas y el historial de tomas. No se puede deshacer.': 'Its alarms and dose history are deleted too. This cannot be undone.',
+  'Se borran también sus alarmas y el historial de tomas. No se puede deshacer.':
+      'Its alarms and dose history are deleted too. This cannot be undone.',
   'Elegir de la galería': 'Choose from gallery',
   'Sacar una foto': 'Take a photo',
   'No se pudo abrir WhatsApp': 'Could not open WhatsApp',
@@ -477,14 +542,16 @@ const enStrings = <String, String>{
   'Ingresá los km, por ejemplo 2,5': 'Enter the km, for example 2.5',
   'Nota (opcional)': 'Note (optional)',
   'Plaza, con la correa nueva…': 'Park, with the new leash…',
-  'Si a esta hora no salió, te avisamos': 'If it hasn\'t gone out by this time, we\'ll let you know',
+  'Si a esta hora no salió, te avisamos':
+      'If it hasn\'t gone out by this time, we\'ll let you know',
   'Hoy todavía no salió': 'Hasn\'t gone out yet today',
   'Hoy: {count} paseo · {time}': 'Today: {count} walk · {time}',
   'Hoy: {count} paseos · {time}': 'Today: {count} walks · {time}',
   'Últimos 7 días: {time}': 'Last 7 days: {time}',
   '{streak} días seguidos': '{streak} days in a row',
   'Avisarme si no salió': 'Remind me if it didn\'t go out',
-  'Un aviso por día, si no anotaste ningún paseo': 'One reminder a day, if you haven\'t logged any walk',
+  'Un aviso por día, si no anotaste ningún paseo':
+      'One reminder a day, if you haven\'t logged any walk',
   'Todos los días a las {label}': 'Every day at {label}',
   'Cambiar la hora': 'Change the time',
   'Historial ({length})': 'History ({length})',
@@ -515,7 +582,8 @@ const enStrings = <String, String>{
   'Otros': 'Other',
   'Vacuna': 'Vaccine',
   'Antirrábica, séxtuple, triple felina…': 'Rabies, DHPP, FVRCP…',
-  'Pastilla o jarabe para parásitos internos': 'Tablet or syrup for internal parasites',
+  'Pastilla o jarabe para parásitos internos':
+      'Tablet or syrup for internal parasites',
   'Pulgas y garrapatas': 'Fleas and ticks',
   'Pipeta, collar o pastilla': 'Spot-on, collar or tablet',
   'Encontrada': 'Found',
@@ -523,13 +591,16 @@ const enStrings = <String, String>{
   'Otro': 'Other',
   'Peluquería / spa': 'Grooming / spa',
   // QR collar tag
-  'Mensaje para quien la encuentre (opcional)': 'Message for whoever finds it (optional)',
-  'Toma un remedio para el corazón. Es mansa.': 'Takes heart medication. Friendly.',
+  'Mensaje para quien la encuentre (opcional)':
+      'Message for whoever finds it (optional)',
+  'Toma un remedio para el corazón. Es mansa.':
+      'Takes heart medication. Friendly.',
   'Guardando…': 'Saving…',
   'Crear chapita': 'Create tag',
   'Guardar cambios': 'Save changes',
   'Si me encontraste, escaneame': 'If you found me, scan me',
-  'Si se pierde, activalo: la página del QR lo dice bien grande.': 'If it gets lost, turn this on: the QR page says so in big letters.',
+  'Si se pierde, activalo: la página del QR lo dice bien grande.':
+      'If it gets lost, turn this on: the QR page says so in big letters.',
   'Imprimir o guardar en PDF': 'Print or save as PDF',
   'Compartir el QR como imagen': 'Share the QR as an image',
   'Pedir la chapita grabada a {shop}': 'Order the engraved tag from {shop}',
@@ -543,33 +614,29 @@ const enStrings = <String, String>{
   'Para recortar': 'To cut out',
   'Borrar cuenta': 'Delete account',
   '¿Borrar tu cuenta?': 'Delete your account?',
-  'Se borra la cuenta {email}. Tus mascotas y sus datos siguen en este celular.':
-      'The account {email} is deleted. Your pets and their data stay on this phone.',
+  'Se borra la cuenta {email}. Tus mascotas y sus datos siguen en este celular.': 'The account {email} is deleted. Your pets and their data stay on this phone.',
   'Cuenta borrada.': 'Account deleted.',
   'Por seguridad, cerrá sesión, volvé a entrar y probá de nuevo.':
       'For security, sign out, sign in again and try once more.',
-  'No se pudo borrar la cuenta ({code}).': 'Could not delete the account ({code}).',
+  'No se pudo borrar la cuenta ({code}).':
+      'Could not delete the account ({code}).',
   'Chapita de {pet}': "{pet}'s tag",
-  'Una chapita con un QR para el collar. Si {pet} se pierde, quien la encuentre escanea el QR con la cámara y ve su foto y tu WhatsApp, sin instalar nada.':
-      "A tag with a QR code for the collar. If {pet} gets lost, whoever finds it scans the QR with their camera and sees its photo and your WhatsApp, without installing anything.",
-  'Se muestran en una página pública de sixsevenweb.com: el nombre y la foto de {pet}, tu nombre, tu WhatsApp y el mensaje.':
-      "Shown on a public page on sixsevenweb.com: {pet}'s name and photo, your name, your WhatsApp and the message.",
-  'Hola! Quiero una chapita grabada con el QR de {pet}. Este es el link del QR: {url}':
-      "Hi! I'd like an engraved tag with {pet}'s QR code. This is the QR link: {url}",
+  'Una chapita con un QR para el collar. Si {pet} se pierde, quien la encuentre escanea el QR con la cámara y ve su foto y tu WhatsApp, sin instalar nada.': "A tag with a QR code for the collar. If {pet} gets lost, whoever finds it scans the QR with their camera and sees its photo and your WhatsApp, without installing anything.",
+  'Se muestran en una página pública de sixsevenweb.com: el nombre y la foto de {pet}, tu nombre, tu WhatsApp, el mensaje, qué come, sus enfermedades y sus medicamentos.': "Shown on a public page on sixsevenweb.com: {pet}'s name and photo, your name, your WhatsApp, the message, what it eats, its health conditions and its medications.",
+  'Hola! Quiero una chapita grabada con el QR de {pet}. Este es el link del QR: {url}': "Hi! I'd like an engraved tag with {pet}'s QR code. This is the QR link: {url}",
   'la chapita de {pet}': "{pet}'s tag",
-  'El QR deja de mostrar a {pet}. Si la volvés a crear, tiene un QR nuevo y hay que reimprimirlo.':
-      "The QR stops showing {pet}. If you create it again, it gets a new QR that has to be printed again.",
+  'El QR deja de mostrar a {pet}. Si la volvés a crear, tiene un QR nuevo y hay que reimprimirlo.': "The QR stops showing {pet}. If you create it again, it gets a new QR that has to be printed again.",
   'La página del QR dice que está perdida y que la están buscando.':
       "The QR page says it is lost and that you're looking for it.",
-  'Si cambiás la foto o el nombre de {pet}, tocá el lápiz y Guardar para actualizar la página. El QR no cambia.':
-      "If you change {pet}'s photo or name, tap the pencil and Save to update the page. The QR doesn't change.",
+  'Si cambiás la foto o el nombre de {pet}, tocá el lápiz y Guardar para actualizar la página. El QR no cambia.': "If you change {pet}'s photo or name, tap the pencil and Save to update the page. The QR doesn't change.",
   'Copia de Drive del {date}.': 'Drive backup from {date}.',
   'Última: {date}': 'Last: {date}',
   'Última copia manual: {date}': 'Last manual backup: {date}',
   'Compartiendo…': 'Sharing…',
   'Buscando…': 'Searching…',
   'No se pudo cerrar la sesión.': 'Could not sign out.',
-  'El servidor no devolvió la clave de la chapita. Probá de nuevo.': 'The server did not return the tag\'s key. Try again.',
+  'El servidor no devolvió la clave de la chapita. Probá de nuevo.':
+      'The server did not return the tag\'s key. Try again.',
   // Cart and orders in the shop.
   '¡Recibimos tu pedido!': 'We got your order!',
   'Pedido #{number} por {total}. Lo De Lalo te va a avisar por WhatsApp cuando lo acepte. Podés ver cómo va en "Mis pedidos".': 'Order #{number} for {total}. Lo De Lalo will let you know on WhatsApp when they accept it. You can follow it in "My orders".',
@@ -578,21 +645,25 @@ const enStrings = <String, String>{
   'Tu carrito': 'Your cart',
   'Todavía no agregaste productos.': 'You haven\'t added any products yet.',
   'Total': 'Total',
-  'El precio final lo confirma Lo De Lalo al aceptar el pedido.': 'Lo De Lalo confirms the final price when they accept the order.',
+  'El precio final lo confirma Lo De Lalo al aceptar el pedido.':
+      'Lo De Lalo confirms the final price when they accept the order.',
   '¿A quién y dónde lo entregamos?': 'Who and where do we deliver it to?',
   'Tu nombre': 'Your name',
   'Escribí tu nombre': 'Write your name',
   'Ej: 11 6472-2908': 'E.g. 11 6472-2908',
-  'Escribí tu WhatsApp con código de área': 'Write your WhatsApp with the area code',
+  'Escribí tu WhatsApp con código de área':
+      'Write your WhatsApp with the area code',
   'Dirección de entrega': 'Delivery address',
   'Escribí la dirección de entrega': 'Write the delivery address',
   'Aclaraciones (opcional)': 'Notes (optional)',
-  'Ej: tocar timbre 2B, entregar después de las 18': 'E.g. ring bell 2B, deliver after 6 pm',
+  'Ej: tocar timbre 2B, entregar después de las 18':
+      'E.g. ring bell 2B, deliver after 6 pm',
   'Hacer pedido · {total}': 'Place order · {total}',
   'Menos': 'Less',
   'Más': 'More',
   'Mis pedidos': 'My orders',
-  'Sin conexión: mostramos el último estado guardado.': 'Offline: showing the last saved status.',
+  'Sin conexión: mostramos el último estado guardado.':
+      'Offline: showing the last saved status.',
   'Todavía no hiciste pedidos.': 'You haven\'t placed any orders yet.',
   'Pedido #{number}': 'Order #{number}',
   'Total: {total}': 'Total: {total}',
@@ -608,17 +679,40 @@ const enStrings = <String, String>{
   'Agregado al carrito: {name}': 'Added to the cart: {name}',
   // Cart and orders in the shop (more).
   '¿Descartar los cambios?': 'Discard the changes?',
-  'El pedido queda como estaba y se vacía el carrito.': 'The order stays as it was and the cart is emptied.',
+  'El pedido queda como estaba y se vacía el carrito.':
+      'The order stays as it was and the cart is emptied.',
   'Seguir editando': 'Keep editing',
   'Descartar': 'Discard',
   '¡Listo, pedido modificado!': 'Done, order changed!',
   'Pedido #{number}, ahora por {total}. Le avisamos a Lo De Lalo del cambio.': 'Order #{number}, now for {total}. We let Lo De Lalo know about the change.',
   'Modificar pedido #{number}': 'Change order #{number}',
-  'Estás cambiando el pedido #{number}. Podés sumar productos desde la Tienda.': 'You are changing order #{number}. You can add products from the Shop.',
+  'Estás cambiando el pedido #{number}. Podés sumar productos desde la Tienda.':
+      'You are changing order #{number}. You can add products from the Shop.',
   'Guardar cambios · {total}': 'Save changes · {total}',
   'Repetir pedido': 'Order again',
   'Modificar': 'Change',
   '¿Vaciar el carrito?': 'Empty the cart?',
-  'Para modificar el pedido se reemplaza lo que tenés en el carrito.': 'To change the order, what you have in the cart is replaced.',
+  'Para modificar el pedido se reemplaza lo que tenés en el carrito.':
+      'To change the order, what you have in the cart is replaced.',
   'Ya no están a la venta: {names}': 'No longer for sale: {names}',
+  // Placa NFC del collar y datos de salud en la chapita
+  "Lo que tiene que saber quien la encuentre": "What whoever finds it should know",
+  "Qué come (opcional)": "What it eats (optional)",
+  "Royal Canin Mini Adult, 2 tazas por día": "Royal Canin Mini Adult, 2 cups a day",
+  "Enfermedades o cuidados (opcional)": "Health conditions or care (optional)",
+  "Alergia al pollo. Es sorda.": "Allergic to chicken. She's deaf.",
+  "Medicamentos (opcional)": "Medications (optional)",
+  "Apoquel 5,4 mg, 1 por día": "Apoquel 5.4 mg, 1 a day",
+  "Se completa con los medicamentos que cargaste.": "Filled in with the medications you added.",
+  "Este teléfono no tiene NFC.": "This phone has no NFC.",
+  "El NFC está apagado: prendelo en los ajustes del teléfono.": "NFC is off: turn it on in the phone's settings.",
+  "Grabar placa NFC de {pet}": "Write {pet}'s NFC tag",
+  "Apoyá la placa en la parte de atrás del celular y dejala quieta hasta que diga listo.": "Hold the tag against the back of the phone and keep it still until it says done.",
+  "✅ Listo: si alguien apoya el celular en la placa, ve la página de {pet}.": "✅ Done: anyone who touches the tag with their phone sees {pet}'s page.",
+  "Grabar en una placa NFC": "Write to an NFC tag",
+  "No se acercó ninguna placa. Probá de nuevo.": "No tag was brought close. Try again.",
+  "Esa placa está bloqueada y no se puede grabar.": "That tag is locked and can't be written.",
+  "La placa es muy chica para el link.": "The tag is too small for the link.",
+  "Esa placa no sirve para grabar (no es NFC NDEF).": "That tag can't be written (it isn't NFC NDEF).",
+  "No se pudo grabar. Dejá la placa quieta contra el celular y probá de nuevo.": "Couldn't write it. Keep the tag still against the phone and try again.",
 };

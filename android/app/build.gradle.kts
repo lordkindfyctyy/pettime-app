@@ -7,9 +7,14 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Copia de prueba para instalar al lado de la de Play (que viene firmada por Google y
+// no se puede reemplazar): flutter build apk --release -Pprueba=true
+// Se instala como com.mascotas.pettime_app.prueba ("PetTime prueba"), sin login.
+val esPrueba = project.hasProperty("prueba")
+
 // Firebase (login) needs android/app/google-services.json, from the Firebase
 // console. Without it the app builds and runs with no login.
-if (file("google-services.json").exists()) {
+if (file("google-services.json").exists() && !esPrueba) {
     apply(plugin = "com.google.gms.google-services")
 }
 
@@ -51,6 +56,8 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        if (esPrueba) applicationIdSuffix = ".prueba"
+        manifestPlaceholders["appLabel"] = if (esPrueba) "PetTime prueba" else "PetTime"
     }
 
     signingConfigs {
