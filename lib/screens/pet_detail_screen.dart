@@ -201,6 +201,14 @@ class PetDetailScreen extends StatelessWidget {
                   ),
                 ),
               PopupMenuItem(
+                value: 'tag',
+                child: ListTile(
+                  leading: Icon(Icons.qr_code_2),
+                  title: Text(tr('Chapita del collar (QR y NFC)')),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
                 value: 'lost',
                 child: ListTile(
                   leading: Icon(Icons.campaign_outlined),

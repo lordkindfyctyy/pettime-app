@@ -715,4 +715,5 @@ const enStrings = <String, String>{
   "La placa es muy chica para el link.": "The tag is too small for the link.",
   "Esa placa no sirve para grabar (no es NFC NDEF).": "That tag can't be written (it isn't NFC NDEF).",
   "No se pudo grabar. Dejá la placa quieta contra el celular y probá de nuevo.": "Couldn't write it. Keep the tag still against the phone and try again.",
+  "Chapita del collar (QR y NFC)": "Collar tag (QR and NFC)",
 };
