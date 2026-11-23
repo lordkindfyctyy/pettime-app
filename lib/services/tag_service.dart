@@ -90,28 +90,32 @@ class TagSighting {
   });
 
   final int id;
-  final double lat;
-  final double lng;
+
+  /// The phone's location, when the finder shared it; null when they only
+  /// typed where the pet is.
+  final double? lat;
+  final double? lng;
 
   /// Meters; null if the browser didn't say.
   final int? accuracy;
 
-  /// Approximate street address (OpenStreetMap); may be empty.
+  /// What the finder typed, or the approximate address of the point
+  /// (OpenStreetMap); may be empty.
   final String address;
 
-  /// Google Maps on that point.
+  /// Google Maps on that point (or searching what was typed).
   final String mapsUrl;
   final DateTime at;
 
   /// The address, or the coordinates when there is none.
-  String get label => address.isNotEmpty
+  String get label => address.isNotEmpty || lat == null || lng == null
       ? address
-      : '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}';
+      : '${lat!.toStringAsFixed(5)}, ${lng!.toStringAsFixed(5)}';
 
   factory TagSighting.fromJson(Map<String, dynamic> json) => TagSighting(
     id: (json['id'] as num).toInt(),
-    lat: (json['lat'] as num).toDouble(),
-    lng: (json['lng'] as num).toDouble(),
+    lat: (json['lat'] as num?)?.toDouble(),
+    lng: (json['lng'] as num?)?.toDouble(),
     accuracy: (json['accuracy'] as num?)?.toInt(),
     address: json['address'] as String? ?? '',
     mapsUrl: json['mapsUrl'] as String,

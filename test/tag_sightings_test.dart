@@ -63,6 +63,17 @@ void main() {
     expect(s.at.toUtc(), DateTime.utc(2026, 11, 23, 1, 54, 8));
     expect(s.label, '-34.44250, -58.55900');
     expect(TagSighting.fromJson(sighting(4, '2026-11-23T01:54:08Z')).label, 'Belgrano 1042, San Fernando');
+    final typed = TagSighting.fromJson({
+      'id': 9,
+      'lat': null,
+      'lng': null,
+      'accuracy': null,
+      'address': 'Belgrano y Sarmiento',
+      'mapsUrl': 'https://www.google.com/maps/search/?api=1&query=Belgrano%20y%20Sarmiento',
+      'at': '2026-11-23T02:42:11Z',
+    });
+    expect(typed.lat, isNull);
+    expect(typed.label, 'Belgrano y Sarmiento');
   });
 
   test('tells about new sightings only once, with the tag key', () async {
