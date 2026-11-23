@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -14,6 +15,7 @@ import '../models/pet.dart';
 import '../models/supply.dart';
 import '../services/file_names.dart';
 import '../services/lost_pets_service.dart';
+import '../services/maps_service.dart';
 import '../services/nfc_tag_writer.dart';
 import '../services/shop_settings.dart';
 import '../services/tag_pdf.dart';
@@ -558,6 +560,8 @@ class _TagViewState extends State<_TagView> {
           ),
         ),
         const Divider(height: 32),
+        _Sightings(pet: widget.pet, tags: widget.tags),
+        const Divider(height: 32),
         ListTile(
           leading: const Icon(Icons.person_outline),
           title: Text(
@@ -589,6 +593,105 @@ class _TagViewState extends State<_TagView> {
           style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
           onPressed: _busy ? null : _delete,
         ),
+      ],
+    );
+  }
+}
+
+/// Where people who scanned the tag (QR or NFC) said the pet is, newest first.
+/// Each one opens in Google Maps.
+class _Sightings extends StatefulWidget {
+  const _Sightings({required this.pet, required this.tags});
+
+  final Pet pet;
+  final TagService tags;
+
+  @override
+  State<_Sightings> createState() => _SightingsState();
+}
+
+class _SightingsState extends State<_Sightings> {
+  bool _loading = false;
+  bool _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _failed = false;
+    });
+    try {
+      await widget.tags.fetchSightings(widget.pet.id);
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final list = widget.tags.sightingsOf(widget.pet.id);
+    final when = DateFormat(tr('d MMM, HH:mm'), AppLang.code);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.place_outlined, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                tr('Dónde lo vieron'),
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
+            _loading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.refresh),
+                    tooltip: tr('Actualizar'),
+                    onPressed: _load,
+                  ),
+          ],
+        ),
+        if (_failed && list.isEmpty)
+          Text(
+            tr('No se pudo cargar. Revisá la conexión y tocá Actualizar.'),
+            style: theme.textTheme.bodySmall,
+          )
+        else if (list.isEmpty && !_loading)
+          Text(
+            tr(
+              'Si alguien escanea la chapita de {pet} y comparte dónde está, '
+              'aparece acá con el mapa y te llega un aviso.',
+              {'pet': widget.pet.name},
+            ),
+            style: theme.textTheme.bodySmall,
+          ),
+        for (final s in list.take(10))
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.location_on, color: Colors.red),
+            title: Text(s.label),
+            subtitle: Text(
+              s.accuracy == null
+                  ? when.format(s.at)
+                  : '${when.format(s.at)} · ± ${s.accuracy} m',
+            ),
+            trailing: const Icon(Icons.map_outlined),
+            onTap: () => openInMaps(context, Uri.parse(s.mapsUrl)),
+          ),
       ],
     );
   }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -75,6 +76,49 @@ class PetTag {
   };
 }
 
+/// Where someone who scanned the tag (QR or NFC) said the pet is: their
+/// browser asked them and they agreed to share their location.
+class TagSighting {
+  const TagSighting({
+    required this.id,
+    required this.lat,
+    required this.lng,
+    required this.address,
+    required this.mapsUrl,
+    required this.at,
+    this.accuracy,
+  });
+
+  final int id;
+  final double lat;
+  final double lng;
+
+  /// Meters; null if the browser didn't say.
+  final int? accuracy;
+
+  /// Approximate street address (OpenStreetMap); may be empty.
+  final String address;
+
+  /// Google Maps on that point.
+  final String mapsUrl;
+  final DateTime at;
+
+  /// The address, or the coordinates when there is none.
+  String get label => address.isNotEmpty
+      ? address
+      : '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}';
+
+  factory TagSighting.fromJson(Map<String, dynamic> json) => TagSighting(
+    id: (json['id'] as num).toInt(),
+    lat: (json['lat'] as num).toDouble(),
+    lng: (json['lng'] as num).toDouble(),
+    accuracy: (json['accuracy'] as num?)?.toInt(),
+    address: json['address'] as String? ?? '',
+    mapsUrl: json['mapsUrl'] as String,
+    at: DateTime.parse(json['at'] as String).toLocal(),
+  );
+}
+
 /// The tags of this phone's pets, by pet id. Kept on the phone (like the
 /// lost & found notices published from it): the key that edits a tag never
 /// leaves it.
@@ -84,9 +128,22 @@ class TagService extends ChangeNotifier {
   static final instance = TagService();
   static const _key = 'pet_tags_v1';
   static const _pendingKey = 'pet_tags_to_delete_v1';
+  static const _seenKey = 'tag_sightings_seen_v1';
+
+  /// A sighting this recent still deserves a notice the first time this phone
+  /// looks (e.g. right after updating the app).
+  static const freshSighting = Duration(hours: 24);
 
   final PetTimeApi _api;
   Map<String, PetTag> _tags = {};
+
+  /// The last sightings fetched, by pet id (newest first).
+  final Map<String, List<TagSighting>> _sightings = {};
+
+  /// The newest sighting id this phone already told the family about, by pet id.
+  Map<String, int>? _seen;
+  Timer? _watch;
+  void Function(String petId, TagSighting sighting)? _onNewSighting;
 
   /// Tags of pets that were deleted, still to be turned off on the server (it
   /// was not reachable, or the app closed before). They keep their key, which
@@ -248,6 +305,87 @@ class TagService extends ChangeNotifier {
       medications: tag.medications,
       lost: lost,
     );
+  }
+
+  /// The last sightings already fetched for the pet (newest first).
+  List<TagSighting> sightingsOf(String petId) => _sightings[petId] ?? const [];
+
+  /// Where people who scanned the pet's tag said it is (newest first).
+  Future<List<TagSighting>> fetchSightings(String petId) async {
+    final tag = _tags[petId];
+    if (tag == null) return const [];
+    final res = await _api.post('tags/sightings.php', {
+      'code': tag.code,
+      'ownerKey': tag.ownerKey,
+    });
+    final list = [
+      for (final s in res['sightings'] as List? ?? const [])
+        TagSighting.fromJson(s as Map<String, dynamic>),
+    ];
+    _sightings[petId] = list;
+    notifyListeners();
+    return list;
+  }
+
+  /// Looks for sightings this phone hasn't told the family about yet. The
+  /// first time a tag is checked, only one from the last [freshSighting] counts
+  /// (old ones would be noise). An unreachable server is tried next time.
+  Future<List<(String, TagSighting)>> checkNewSightings({DateTime? now}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = _seen ??= {
+      for (final MapEntry(:key, :value)
+          in (jsonDecode(prefs.getString(_seenKey) ?? '{}') as Map<String, dynamic>)
+              .entries)
+        key: (value as num).toInt(),
+    };
+    final clock = now ?? DateTime.now();
+    final found = <(String, TagSighting)>[];
+    for (final petId in _tags.keys.toList()) {
+      List<TagSighting> list;
+      try {
+        list = await fetchSightings(petId);
+      } catch (e) {
+        debugPrint('Could not check the sightings of $petId: $e');
+        continue;
+      }
+      final last = seen[petId];
+      final fresh = last == null
+          ? list.take(1).where((s) => clock.difference(s.at) < freshSighting)
+          : list.where((s) => s.id > last);
+      found.addAll([for (final s in fresh) (petId, s)]);
+      if (list.isNotEmpty) seen[petId] = list.first.id;
+      if (last == null && list.isEmpty) seen[petId] = 0;
+    }
+    seen.removeWhere((petId, _) => !_tags.containsKey(petId));
+    await prefs.setString(_seenKey, jsonEncode(seen));
+    return found;
+  }
+
+  /// While the app is open: look for new sightings now and every few minutes,
+  /// and tell [onNew] about each one.
+  void startWatching(void Function(String petId, TagSighting sighting) onNew) {
+    _onNewSighting = onNew;
+    resumeWatching();
+  }
+
+  void resumeWatching() {
+    if (_onNewSighting == null) return;
+    _watch?.cancel();
+    _watch = Timer.periodic(const Duration(minutes: 3), (_) => _check());
+    unawaited(_check());
+  }
+
+  void pauseWatching() {
+    _watch?.cancel();
+    _watch = null;
+  }
+
+  Future<void> _check() async {
+    final onNew = _onNewSighting;
+    if (onNew == null || _tags.isEmpty) return;
+    for (final (petId, s) in await checkNewSightings()) {
+      onNew(petId, s);
+    }
   }
 
   /// Turns the tag off: its QR no longer shows the pet.

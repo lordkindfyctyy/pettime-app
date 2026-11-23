@@ -716,4 +716,12 @@ const enStrings = <String, String>{
   "Esa placa no sirve para grabar (no es NFC NDEF).": "That tag can't be written (it isn't NFC NDEF).",
   "No se pudo grabar. Dejá la placa quieta contra el celular y probá de nuevo.": "Couldn't write it. Keep the tag still against the phone and try again.",
   "Chapita del collar (QR y NFC)": "Collar tag (QR and NFC)",
+  '📍 Escanearon la chapita de {name}': "📍 Someone scanned {name}'s tag",
+  'Está cerca de: {where}. Abrí la chapita para verlo en el mapa.': 'Near: {where}. Open the tag to see it on the map.',
+  'Chapita escaneada': 'Tag scanned',
+  'Avisos de cuando alguien escanea la chapita y comparte dónde está la mascota': 'Notices when someone scans the tag and shares where the pet is',
+  'Dónde lo vieron': 'Where they were seen',
+  'Actualizar': 'Refresh',
+  'No se pudo cargar. Revisá la conexión y tocá Actualizar.': "Couldn't load. Check the connection and tap Refresh.",
+  'Si alguien escanea la chapita de {pet} y comparte dónde está, aparece acá con el mapa y te llega un aviso.': "If someone scans {pet}'s tag and shares where they are, it shows up here with the map and you get a notice.",
 };

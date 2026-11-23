@@ -50,8 +50,12 @@ Future<void> main() async {
     onResume: () async {
       await pets.load();
       FamilySync.instance.resume();
+      TagService.instance.resumeWatching();
     },
-    onPause: FamilySync.instance.pause,
+    onPause: () {
+      FamilySync.instance.pause();
+      TagService.instance.pauseWatching();
+    },
   );
   // The alarms and the widget carry text: redo them in the new language.
   language.onLanguageChanged = () {
@@ -98,6 +102,14 @@ Future<void> _startAlarms(PetsState pets) async {
     await NotificationService.instance.syncAll(pets.pets);
   } catch (e) {
     debugPrint('Could not schedule the alarms: $e');
+  } finally {
+    // Someone scanned a pet's tag and shared where it is: tell the family.
+    // Only once notifications are ready, so the first check isn't lost.
+    TagService.instance.startWatching((petId, sighting) {
+      final pet = pets.byId(petId);
+      if (pet == null) return;
+      unawaited(NotificationService.instance.showSighting(pet, sighting.label));
+    });
   }
 }
 

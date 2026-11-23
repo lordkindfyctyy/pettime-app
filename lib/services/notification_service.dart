@@ -664,6 +664,27 @@ class NotificationService {
     );
   }
 
+  /// Someone scanned the pet's tag and shared where it is.
+  Future<void> showSighting(Pet pet, String where) async {
+    if (!_ready) return;
+    await _plugin.show(
+      id: baseId('sighting:${pet.id}'),
+      title: tr('📍 Escanearon la chapita de {name}', {'name': pet.name}),
+      body: tr('Está cerca de: {where}. Abrí la chapita para verlo en el mapa.', {'where': where}),
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          'tag_sightings',
+          tr('Chapita escaneada'),
+          channelDescription: tr('Avisos de cuando alguien escanea la chapita y comparte dónde está la mascota'),
+          importance: Importance.high,
+          priority: Priority.high,
+          color: Color(0xFF00897B),
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   /// Schedules everything again, e.g. after the language changed: the alarms
   /// already pending keep the text they were scheduled with.
   Future<void> rescheduleAll(Iterable<Pet> pets) async {
